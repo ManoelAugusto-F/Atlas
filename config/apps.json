@@ -1,0 +1,24 @@
+{
+  "apps": [
+    {
+      "name": "Google Chrome",
+      "manager": "winget",
+      "id": "Google.Chrome"
+    },
+    {
+      "name": "Visual Studio Code",
+      "manager": "winget",
+      "id": "Microsoft.VisualStudioCode"
+    },
+    {
+      "name": "Git",
+      "manager": "winget",
+      "id": "Git.Git"
+    },
+    {
+      "name": "7-Zip",
+      "manager": "winget",
+      "id": "7zip.7zip"
+    }
+  ]
+}
