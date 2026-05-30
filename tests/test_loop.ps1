@@ -7,6 +7,7 @@
 . "$PSScriptRoot/../modules/printer.ps1"
 . "$PSScriptRoot/../modules/windows-repair.ps1"
 . "$PSScriptRoot/../modules/support-report.ps1"
+. "$PSScriptRoot/../modules/quick-diagnostic.ps1"
 
 # ── Validar funcoes do modulo cleanup ──────────────────────────────
 Write-Host ""
@@ -247,6 +248,42 @@ if (-not $allOk) {
 Write-Host ""
 Write-Host "Todas as funcoes de support-report validadas." -ForegroundColor Green
 
+# ── Validar funcoes do modulo quick-diagnostic ──────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes de quick-diagnostic.ps1" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$diagFunctions = @(
+    'Get-DiskAlert',
+    'Get-MemoryAlert',
+    'Get-UptimeAlert',
+    'Get-InternetAlert',
+    'Get-OneDriveAlert',
+    'Get-SpoolerAlert',
+    'Get-RebootPendingAlert',
+    'Invoke-QuickDiagnostic'
+)
+
+$allOk = $true
+foreach ($fn in $diagFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes de quick-diagnostic nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "Todas as funcoes de quick-diagnostic validadas." -ForegroundColor Green
+
 $running = $true
 $inputs  = @('1','2','3','4','5','6','7','99','0')
 $idx     = 0
@@ -259,7 +296,7 @@ while ($running) {
     Write-Host "========================================" -ForegroundColor DarkCyan
 
     switch ($option) {
-        '1'  { Show-FeaturePlaceholder -FeatureName "Diagnostico rapido" }
+        '1'  { Invoke-QuickDiagnostic }
         '2'  { Write-Log -Message "Limpeza segura (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '3'  { Write-Log -Message "Rede e internet (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '4'  { Write-Log -Message "OneDrive (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }

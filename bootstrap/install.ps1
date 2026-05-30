@@ -13,6 +13,7 @@
 . "$PSScriptRoot/../modules/printer.ps1"
 . "$PSScriptRoot/../modules/windows-repair.ps1"
 . "$PSScriptRoot/../modules/support-report.ps1"
+. "$PSScriptRoot/../modules/quick-diagnostic.ps1"
 
 Write-Log -Message "Atlas iniciado" -Level "INFO"
 
@@ -28,7 +29,7 @@ while ($running) {
     switch ($option) {
 
         "1" {
-            Show-FeaturePlaceholder -FeatureName "Diagnostico rapido"
+            Invoke-QuickDiagnostic
             Wait-UserInput
         }
 
