@@ -1,5 +1,5 @@
 ATLAS — Diagnostico Corporativo de Rede
-Gerado em : 29/05/2026 21:51:47
+Gerado em : 29/05/2026 22:01:14
 Hostname  : pop-os
 Plataforma: Linux
 ==================================================
@@ -10,7 +10,7 @@ Plataforma: Linux
 [ DNS ]
   TCP 53 em 127.0.0.53                   OK (Servidor DNS configurado)
   Resolucao google.com                   OK (172.217.29.78)
-  Resolucao microsoft.com                OK (13.107.253.34)
+  Resolucao microsoft.com                OK (13.107.226.34)
 
 [ INTERNET ]
   Ping 8.8.8.8                           OK (8.8.8.8  (Google DNS))

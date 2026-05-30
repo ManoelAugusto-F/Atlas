@@ -16,6 +16,7 @@
 . "$PSScriptRoot/../modules/evidence.ps1"
 . "$PSScriptRoot/../modules/inventory.ps1"
 . "$PSScriptRoot/../modules/diagnostics.ps1"
+. "$PSScriptRoot/../modules/health.ps1"
 
 Write-Log -Message "Atlas iniciado" -Level "INFO"
 
@@ -125,6 +126,11 @@ while ($running) {
             Write-Log -Message "Diagnostico corporativo de rede" -Level "INFO"
             Invoke-CorporateDiagnostic
             Wait-UserInput
+        }
+
+        "17" {
+            Write-Log -Message "Saude Windows" -Level "INFO"
+            Show-WindowsHealthMenu
         }
 
         "0" {

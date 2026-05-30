@@ -1,0 +1,8 @@
+
+Uso de disco:
+
+Partições (df -h):
+  /dev/nvme0n1p1  465G  318G  124G  72% /
+[2026-05-29 22:01:10] [INFO] Get-DiskUsage executado
+
+

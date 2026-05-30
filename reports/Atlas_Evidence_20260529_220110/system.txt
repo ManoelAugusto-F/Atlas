@@ -1,0 +1,14 @@
+ATLAS - Evidencias de Suporte
+Gerado em: 29/05/2026 22:01:10
+==================================================
+
+SISTEMA
+Hostname    : pop-os
+SO          : Pop!_OS 22.04 LTS
+Arquitetura : X64
+PowerShell  : 7.6.2
+Usuario     : manoel
+Ultimo boot : 29/05/2026 20:31:38
+Uptime      : 0d 1h 29m
+Mem Total   : 23.3 GB
+Mem Livre   : 11.3 GB

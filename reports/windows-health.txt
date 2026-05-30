@@ -1,0 +1,8 @@
+ATLAS - Saude do Windows
+Gerado em : 29/05/2026 22:01:14
+Hostname  : pop-os
+Plataforma: Linux
+==================================================
+
+AVISO: Este relatorio e exclusivo do Windows.
+Execute no Windows para obter dados completos.
