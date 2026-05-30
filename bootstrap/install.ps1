@@ -11,6 +11,7 @@
 . "$PSScriptRoot/../modules/network-tools.ps1"
 . "$PSScriptRoot/../modules/onedrive.ps1"
 . "$PSScriptRoot/../modules/printer.ps1"
+. "$PSScriptRoot/../modules/windows-repair.ps1"
 
 Write-Log -Message "Atlas iniciado" -Level "INFO"
 
@@ -47,8 +48,7 @@ while ($running) {
         }
 
         "6" {
-            Show-FeaturePlaceholder -FeatureName "Reparos Windows"
-            Wait-UserInput
+            Show-WindowsRepairMenu
         }
 
         "7" {

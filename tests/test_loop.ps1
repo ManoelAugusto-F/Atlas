@@ -5,6 +5,7 @@
 . "$PSScriptRoot/../modules/network-tools.ps1"
 . "$PSScriptRoot/../modules/onedrive.ps1"
 . "$PSScriptRoot/../modules/printer.ps1"
+. "$PSScriptRoot/../modules/windows-repair.ps1"
 
 # ── Validar funcoes do modulo cleanup ──────────────────────────────
 Write-Host ""
@@ -183,6 +184,41 @@ Get-PrinterDrivers
 Write-Host ""
 Write-Host "Todas as funcoes de printer validadas." -ForegroundColor Green
 
+# ── Validar funcoes do modulo windows-repair ───────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes de windows-repair.ps1" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$repairFunctions = @(
+    'Test-SfcVerifyOnly',
+    'Invoke-SfcScannowSafe',
+    'Test-DismCheckHealth',
+    'Invoke-DismScanHealthSafe',
+    'Invoke-DismRestoreHealthSafe',
+    'Reset-WindowsUpdateSafe',
+    'Show-WindowsRepairMenu'
+)
+
+$allOk = $true
+foreach ($fn in $repairFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes de windows-repair nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "Todas as funcoes de windows-repair validadas (sem execucao de SFC/DISM)." -ForegroundColor Green
+
 $running = $true
 $inputs  = @('1','2','3','4','5','6','7','99','0')
 $idx     = 0
@@ -200,7 +236,7 @@ while ($running) {
         '3'  { Write-Log -Message "Rede e internet (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '4'  { Write-Log -Message "OneDrive (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '5'  { Write-Log -Message "Impressoras (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
-        '6'  { Show-FeaturePlaceholder -FeatureName "Reparos Windows" }
+        '6'  { Write-Log -Message "Reparos Windows (modulo validado acima, sem execucao de SFC/DISM)" -Level "INFO" }
         '7'  { Show-FeaturePlaceholder -FeatureName "Relatorio de suporte" }
         '0'  { Write-Log -Message "Atlas encerrado" -Level "INFO"; $running = $false }
         default {
