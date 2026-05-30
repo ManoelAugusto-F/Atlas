@@ -1,0 +1,15 @@
+{
+  "hostname": "pop-os",
+  "os": "Pop!_OS 22.04 LTS",
+  "psVersion": "7.6.2",
+  "arch": "X64",
+  "generatedAt": "2026-05-29 21:45:16",
+  "platform": "Linux",
+  "files": [
+    "system.txt",
+    "network.txt",
+    "disk.txt",
+    "services.txt",
+    "security.txt"
+  ]
+}

@@ -1,0 +1,33 @@
+ATLAS — Inventario Completo
+Gerado em: 29/05/2026 21:45:16
+==================================================
+
+[ SISTEMA ]
+Hostname    : pop-os
+Sistema     : Pop!_OS 22.04 LTS
+Build       : 6.17.9-76061709-generic
+Arquitetura : X64
+PowerShell  : 7.6.2
+
+[ USUARIO ]
+Usuario     : manoel
+Computador  : pop-os
+Dominio     : uid=1000(manoel) gid=1000(manoel) grupos=1000(manoel),4(adm),27(sudo),109(kvm),124(lpadmin),134(vboxusers),136(ubridge),137(wireshark),139(libvirt),999(docker)
+
+[ HARDWARE ]
+Fabricante  : N/A
+Modelo      : N/A
+CPU         : AMD Ryzen 5 5600G with Radeon Graphics
+Nucleos     : N/A fisicos / 12 logicos
+RAM Total   : 23.3 GB
+Disco       : / Total:465G Usado:318G Livre:124G
+BIOS        : N/A vN/A (N/A)
+
+[ REDE ]
+Interface   : enp4s0 — 192.168.1.101/24
+Interface   : virbr0 — 192.168.122.1/24
+Interface   : docker0 — 172.17.0.1/16
+Interface   : br-e3e402ce426f — 172.18.0.1/16
+Interface   : veth10232a6@if2 — fe80::2486:3aff:fe74:2d82/64
+Gateway     : 192.168.1.254
+DNS         : 127.0.0.53

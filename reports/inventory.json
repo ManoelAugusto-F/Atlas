@@ -1,0 +1,69 @@
+{
+  "geradoEm": "2026-05-29 21:45:16",
+  "plataforma": "Linux",
+  "sistema": {
+    "Hostname": "pop-os",
+    "Sistema": "Pop!_OS 22.04 LTS",
+    "Build": "6.17.9-76061709-generic",
+    "Arquitetura": "X64",
+    "PowerShell": "7.6.2"
+  },
+  "usuario": {
+    "Usuario": "manoel",
+    "Computador": "pop-os",
+    "Dominio": "uid=1000(manoel) gid=1000(manoel) grupos=1000(manoel),4(adm),27(sudo),109(kvm),124(lpadmin),134(vboxusers),136(ubridge),137(wireshark),139(libvirt),999(docker)",
+    "ParteDominio": false
+  },
+  "hardware": {
+    "Fabricante": "N/A",
+    "Modelo": "N/A",
+    "CPU": "AMD Ryzen 5 5600G with Radeon Graphics",
+    "CpuNucleos": "N/A",
+    "CpuLogicos": 12,
+    "CpuFreqMHz": "N/A",
+    "RamTotalGB": 23.3,
+    "Discos": [
+      {
+        "Drive": "/",
+        "TotalGB": "465G",
+        "UsadoGB": "318G",
+        "LivreGB": "124G",
+        "Pct": "72%"
+      }
+    ],
+    "BiosFabricante": "N/A",
+    "BiosVersao": "N/A",
+    "BiosData": "N/A"
+  },
+  "rede": {
+    "Interfaces": [
+      {
+        "Interface": "enp4s0",
+        "IP": "192.168.1.101/24",
+        "Prefixo": ""
+      },
+      {
+        "Interface": "virbr0",
+        "IP": "192.168.122.1/24",
+        "Prefixo": ""
+      },
+      {
+        "Interface": "docker0",
+        "IP": "172.17.0.1/16",
+        "Prefixo": ""
+      },
+      {
+        "Interface": "br-e3e402ce426f",
+        "IP": "172.18.0.1/16",
+        "Prefixo": ""
+      },
+      {
+        "Interface": "veth10232a6@if2",
+        "IP": "fe80::2486:3aff:fe74:2d82/64",
+        "Prefixo": ""
+      }
+    ],
+    "Gateway": "192.168.1.254",
+    "DNS": "127.0.0.53"
+  }
+}

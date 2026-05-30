@@ -22,6 +22,7 @@ function Show-MainMenu {
     Write-Host "[12] Verificar updates e reboot pendente"
     Write-Host "[13] Verificar seguranca basica"
     Write-Host "[14] Coletar evidencias para atendimento"
+    Write-Host "[15] Inventario completo"
     Write-Host "[0]  Sair"
     Write-Host ""
 }

@@ -14,6 +14,7 @@
 . "$PSScriptRoot/../modules/corporate-network.ps1"
 . "$PSScriptRoot/../modules/windows-health.ps1"
 . "$PSScriptRoot/../modules/evidence.ps1"
+. "$PSScriptRoot/../modules/inventory.ps1"
 
 Write-Log -Message "Atlas iniciado" -Level "INFO"
 
@@ -110,6 +111,12 @@ while ($running) {
         "14" {
             Write-Log -Message "Coletando evidencias para atendimento" -Level "INFO"
             New-SupportEvidenceBundle
+            Wait-UserInput
+        }
+
+        "15" {
+            Write-Log -Message "Inventario completo" -Level "INFO"
+            Invoke-FullInventory
             Wait-UserInput
         }
 
