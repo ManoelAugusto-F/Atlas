@@ -1,0 +1,55 @@
+==================================================
+ ATLAS - Relatorio de Diagnostico
+ Gerado em: 29/05/2026 21:12:00
+==================================================
+
+[ SISTEMA ]
+Hostname    : pop-os
+Sistema     : Pop!_OS 22.04 LTS
+Arquitetura : X64
+PowerShell  : 7.6.2
+Usuario     : manoel
+Kernel      : 6.17.9-76061709-generic
+
+[ ULTIMO BOOT ]
+Boot   : 29/05/2026 20:31:38
+Uptime : 0d 0h 40m
+
+[ REDE ]
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+enp4s0           UP             192.168.1.101/24 2804:6134:200:5d00:bae6:2c91:c78c:fe3a/64 2804:6134:200:5d00:90fb:136:b5a:b946/64 fe80::e026:9588:138d:504a/64 
+virbr0           DOWN           192.168.122.1/24 
+docker0          UP             172.17.0.1/16 fe80::28e9:78ff:fef4:195/64 
+br-e3e402ce426f  DOWN           172.18.0.1/16 
+veth10232a6@if2  UP             fe80::2486:3aff:fe74:2d82/64 
+
+[ DISCO ]
+/dev/nvme0n1p1  465G  318G  124G  72% /
+
+[ TOP 10 CPU ]
+chrome --type=renderer --crashpad-handler-pid=10 --enable-crash-reporter=, --change-stack-guard-on-fork=enable --disable-accelerated-video-decode --ozone-platform=x11 --lang=pt-BR --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=7 --time-ticks-at-unix-epoch=-1780097497992724 --launch-time-ticks=218651208 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,6898700986198885145,838234476248222421,2097152 --field-trial-handle=3,i,2105340748348133515,2295376932233510814,262144 --enable-features=WebRTCPipeWireCapturer --disable-features=DesktopPWAsRunOnOsLogin,PdfUseSkiaRenderer,WebAssemblyTrapHandler --variations-seed-version --pseudonymization-salt-handle=7,i,2355602824025938174,3951585207549424872,4 --trace-process-track-uuid=3190708992871164437 PID:8100    CPU:     314s  Mem:  565,7MB
+code                           PID:9191    CPU:   289,7s  Mem:  464,6MB
+firefox-bin                    PID:20824   CPU:     135s  Mem:  679,5MB
+code                           PID:9128    CPU:   118,9s  Mem:  181,9MB
+Isolated Web Co                PID:22571   CPU:    91,4s  Mem:  814,2MB
+gnome-shell                    PID:3369    CPU:    81,2s  Mem:  350,5MB
+Isolated Web Co                PID:23106   CPU:    67,4s  Mem:  660,6MB
+Xorg                           PID:3220    CPU:    66,7s  Mem:  112,7MB
+chrome --type=gpu-process --disable-gpu-rasterization --ozone-platform=x11 --crashpad-handler-pid=10 --enable-crash-reporter=, --change-stack-guard-on-fork=enable --gpu-preferences=UAAAAAAAAAAhAQAEAAAAAAAAAAAAAGAAAQAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAYAAAAAAAAABgAAAAAAAAAAQAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --shared-files --metrics-shmem-handle=4,i,1546875623513426608,3708854499252039422,262144 --field-trial-handle=3,i,2105340748348133515,2295376932233510814,262144 --enable-features=WebRTCPipeWireCapturer --disable-features=DesktopPWAsRunOnOsLogin,PdfUseSkiaRenderer,WebAssemblyTrapHandler --variations-seed-version --pseudonymization-salt-handle=7,i,2355602824025938174,3951585207549424872,4 --trace-process-track-uuid=3190708988185955192 PID:7996    CPU:    61,1s  Mem:  150,3MB
+io.elementary.appcenter        PID:5045    CPU:    58,1s  Mem: 1259,6MB
+
+[ TOP 10 MEMORIA ]
+io.elementary.appcenter        PID:5045    Mem: 1259,6MB  CPU:    58,1s
+Isolated Web Co                PID:22571   Mem:  814,2MB  CPU:    91,4s
+firefox-bin                    PID:20824   Mem:  679,5MB  CPU:   135,1s
+Isolated Web Co                PID:23106   Mem:  660,6MB  CPU:    67,5s
+chrome --type=renderer --crashpad-handler-pid=10 --enable-crash-reporter=, --change-stack-guard-on-fork=enable --disable-accelerated-video-decode --ozone-platform=x11 --lang=pt-BR --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=7 --time-ticks-at-unix-epoch=-1780097497992724 --launch-time-ticks=218651208 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,6898700986198885145,838234476248222421,2097152 --field-trial-handle=3,i,2105340748348133515,2295376932233510814,262144 --enable-features=WebRTCPipeWireCapturer --disable-features=DesktopPWAsRunOnOsLogin,PdfUseSkiaRenderer,WebAssemblyTrapHandler --variations-seed-version --pseudonymization-salt-handle=7,i,2355602824025938174,3951585207549424872,4 --trace-process-track-uuid=3190708992871164437 PID:8100    Mem:  565,7MB  CPU:     314s
+code                           PID:9589    Mem:  544,3MB  CPU:    50,2s
+Isolated Web Co                PID:21119   Mem:  479,5MB  CPU:    19,4s
+code                           PID:9191    Mem:  465,3MB  CPU:   289,8s
+gnome-shell                    PID:3369    Mem:  350,5MB  CPU:    81,2s
+code                           PID:11454   Mem:  331,7MB  CPU:     3,5s
+
+==================================================
+ Fim do relatorio
+==================================================

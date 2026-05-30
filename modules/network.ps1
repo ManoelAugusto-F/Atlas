@@ -95,3 +95,44 @@ function Test-NetworkConnectivity {
 
     Write-Host ""
 }
+
+function Test-CommonPorts {
+
+    Write-Host ""
+    Write-Host "Testando portas comuns no localhost:" -ForegroundColor Yellow
+    Write-Host ""
+
+    $ports = @(
+        @{ Port = 53;   Name = "DNS"     },
+        @{ Port = 80;   Name = "HTTP"    },
+        @{ Port = 443;  Name = "HTTPS"   },
+        @{ Port = 445;  Name = "SMB"     },
+        @{ Port = 3389; Name = "RDP"     },
+        @{ Port = 5985; Name = "WinRM"   }
+    )
+
+    foreach ($entry in $ports) {
+        $port = $entry.Port
+        $name = $entry.Name
+        Write-Host ("  {0,-6} ({1,-7}) ... " -f $port, $name) -NoNewline
+
+        try {
+            $tcp = [System.Net.Sockets.TcpClient]::new()
+            $result = $tcp.BeginConnect("127.0.0.1", $port, $null, $null)
+            $success = $result.AsyncWaitHandle.WaitOne(500)
+            if ($success -and $tcp.Connected) {
+                Write-Host "ABERTA" -ForegroundColor Green
+            }
+            else {
+                Write-Host "fechada" -ForegroundColor DarkGray
+            }
+            $tcp.Close()
+        }
+        catch {
+            Write-Host "fechada" -ForegroundColor DarkGray
+        }
+    }
+
+    Write-Host ""
+    Write-Log -Message "Test-CommonPorts executado no localhost" -Level "INFO"
+}

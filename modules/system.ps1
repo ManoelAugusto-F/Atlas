@@ -58,3 +58,42 @@ function Get-SystemInformation {
         if ($kernel) { Write-Host $kernel }
     }
 }
+
+function Get-InstalledUpdates {
+
+    Write-Host ""
+    Write-Host "Atualizacoes instaladas:" -ForegroundColor Yellow
+    Write-Host ""
+
+    if (-not (Test-IsWindows)) {
+        Write-Host "Esta funcao e exclusiva do Windows." -ForegroundColor DarkGray
+        Write-Host "No Linux, use 'apt list --installed' ou o gerenciador de pacotes do sistema."
+        Write-Log -Message "Get-InstalledUpdates chamado no Linux (sem acao)" -Level "INFO"
+        return
+    }
+
+    try {
+        $hotfixes = Get-HotFix -ErrorAction Stop |
+            Sort-Object InstalledOn -Descending |
+            Select-Object -First 20
+
+        if ($hotfixes) {
+            $hotfixes | ForEach-Object {
+                [PSCustomObject]@{
+                    ID          = $_.HotFixID
+                    Tipo        = $_.Description
+                    InstalladoEm = if ($_.InstalledOn) { $_.InstalledOn.ToString('dd/MM/yyyy') } else { 'N/A' }
+                }
+            } | Format-Table ID, Tipo, InstalladoEm -AutoSize
+        }
+        else {
+            Write-Host "Nenhuma atualizacao encontrada." -ForegroundColor DarkGray
+        }
+
+        Write-Log -Message "Get-InstalledUpdates executado. Hotfixes: $($hotfixes.Count)" -Level "INFO"
+    }
+    catch {
+        Write-Host "Erro ao obter atualizacoes: $_" -ForegroundColor Red
+        Write-Log -Message "Erro em Get-InstalledUpdates: $_" -Level "ERROR"
+    }
+}
