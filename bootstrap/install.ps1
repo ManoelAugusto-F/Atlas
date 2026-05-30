@@ -10,10 +10,10 @@
 . "$PSScriptRoot/../modules/network.ps1"
 . "$PSScriptRoot/../modules/maintenance.ps1"
 . "$PSScriptRoot/../modules/disk.ps1"
-. "$PSScriptRoot/../modules/process.ps1"
-. "$PSScriptRoot/../modules/events.ps1"
-. "$PSScriptRoot/../modules/security.ps1"
-. "$PSScriptRoot/../modules/report.ps1"
+. "$PSScriptRoot/../modules/triage.ps1"
+. "$PSScriptRoot/../modules/corporate-network.ps1"
+. "$PSScriptRoot/../modules/windows-health.ps1"
+. "$PSScriptRoot/../modules/evidence.ps1"
 
 Write-Log -Message "Atlas iniciado" -Level "INFO"
 
@@ -71,44 +71,45 @@ while ($running) {
         }
 
         "8" {
-            Write-Log -Message "Top processos por CPU" -Level "INFO"
-            Get-TopCpuProcesses
+            Write-Log -Message "Diagnostico rapido da maquina" -Level "INFO"
+            Invoke-QuickMachineTriage
             Wait-UserInput
         }
 
         "9" {
-            Write-Log -Message "Top processos por memoria" -Level "INFO"
-            Get-TopMemoryProcesses
+            Write-Log -Message "Verificacao de saude de rede corporativa" -Level "INFO"
+            Test-CorporateNetworkHealth
             Wait-UserInput
         }
 
         "10" {
-            Write-Log -Message "Teste de portas comuns" -Level "INFO"
-            Test-CommonPorts
+            Write-Log -Message "Verificacao de servicos essenciais" -Level "INFO"
+            Test-EssentialWindowsServices
             Wait-UserInput
         }
 
         "11" {
-            Write-Log -Message "Eventos recentes de erro" -Level "INFO"
-            Get-RecentErrorEvents
+            Write-Log -Message "Verificacao de disco e pastas pesadas" -Level "INFO"
+            Get-HeavyUserFolders
             Wait-UserInput
         }
 
         "12" {
-            Write-Log -Message "Atualizacoes instaladas" -Level "INFO"
-            Get-InstalledUpdates
+            Write-Log -Message "Verificacao de updates e reboot pendente" -Level "INFO"
+            Test-PendingReboot
+            Get-WindowsUpdateSummary
             Wait-UserInput
         }
 
         "13" {
-            Write-Log -Message "Status do Defender" -Level "INFO"
-            Get-DefenderStatus
+            Write-Log -Message "Verificacao de seguranca basica" -Level "INFO"
+            Get-BasicSecurityStatus
             Wait-UserInput
         }
 
         "14" {
-            Write-Log -Message "Gerando relatorio TXT" -Level "INFO"
-            New-AtlasTxtReport
+            Write-Log -Message "Coletando evidencias para atendimento" -Level "INFO"
+            New-SupportEvidenceBundle
             Wait-UserInput
         }
 

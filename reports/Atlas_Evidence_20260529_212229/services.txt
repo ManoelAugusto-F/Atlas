@@ -1,0 +1,1 @@
+Funcao exclusiva do Windows. No Linux, use 'systemctl list-units --state=failed'.
