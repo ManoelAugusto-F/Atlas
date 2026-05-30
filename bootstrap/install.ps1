@@ -8,6 +8,7 @@
 . "$PSScriptRoot/../modules/core.ps1"
 . "$PSScriptRoot/../modules/menu.ps1"
 . "$PSScriptRoot/../modules/cleanup.ps1"
+. "$PSScriptRoot/../modules/network-tools.ps1"
 
 Write-Log -Message "Atlas iniciado" -Level "INFO"
 
@@ -32,8 +33,7 @@ while ($running) {
         }
 
         "3" {
-            Show-FeaturePlaceholder -FeatureName "Rede e internet"
-            Wait-UserInput
+            Show-NetworkMenu
         }
 
         "4" {
