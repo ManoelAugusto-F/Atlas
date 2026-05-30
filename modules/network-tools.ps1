@@ -29,7 +29,7 @@ function Test-InternetConnectionBasic {
 
     # Resolucao DNS
     try {
-        $resolved = [System.Net.Dns]::GetHostAddresses("google.com")
+        [System.Net.Dns]::GetHostAddresses("google.com") | Out-Null
         Write-Host "  [OK] Resolucao DNS de google.com" -ForegroundColor Green
     } catch {
         Write-Host "  [FALHA] Resolucao DNS de google.com: $_" -ForegroundColor Red
@@ -177,7 +177,7 @@ function Clear-DnsCacheSafe {
 # [5] Renovar IP
 # ──────────────────────────────────────────
 
-function Renew-IpAddressSafe {
+function Update-IpAddressLeaseSafe {
     Write-Log -Message "Iniciando renovacao de IP" -Level "INFO"
 
     if (-not (script:IsWindows-Network)) {
@@ -311,7 +311,7 @@ function Show-NetworkMenu {
             "2" { Test-DnsBasic;                Wait-UserInput }
             "3" { Get-NetworkConfigBasic;        Wait-UserInput }
             "4" { Clear-DnsCacheSafe;            Wait-UserInput }
-            "5" { Renew-IpAddressSafe;           Wait-UserInput }
+            "5" { Update-IpAddressLeaseSafe;      Wait-UserInput }
             "6" { Reset-WinsockSafe;             Wait-UserInput }
             "7" { Reset-TcpIpSafe;               Wait-UserInput }
             "0" {

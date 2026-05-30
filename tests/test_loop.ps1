@@ -56,7 +56,7 @@ $networkFunctions = @(
     'Test-DnsBasic',
     'Get-NetworkConfigBasic',
     'Clear-DnsCacheSafe',
-    'Renew-IpAddressSafe',
+    'Update-IpAddressLeaseSafe',
     'Reset-WinsockSafe',
     'Reset-TcpIpSafe',
     'Show-NetworkMenu'
