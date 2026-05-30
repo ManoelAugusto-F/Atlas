@@ -1,6 +1,6 @@
-# Atlas v0.1
+# Atlas v0.1 — Reset de produto
 
-**Data de release:** 2026-05-29
+**Data de release:** 2026-05-30
 **Branch:** main
 
 ---
@@ -24,7 +24,15 @@
 
 ## Histórico
 
-### v0.1 — 2026-05-29
+### v0.1 — 2026-05-30 — Reset de produto
+
+- Redefinição de escopo: Atlas passa a ser Assistente de Manutenção Windows
+- Criado `docs/PRODUCT_SCOPE.md` com objetivo, público-alvo, restrições e roadmap
+- Novo menu principal definido com 7 opções de manutenção do dia a dia
+- Módulos planejados: diagnostics, cleanup, network, onedrive, printers, repair, report
+- Código funcional existente preservado sem alterações
+
+### v0.1 — 2026-05-29 — Baseline
 
 - Arquitetura modular consolidada com 10 módulos independentes
 - 19 funções públicas seguindo padrão Verb-Noun PascalCase
