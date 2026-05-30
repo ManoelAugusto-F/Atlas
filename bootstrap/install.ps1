@@ -7,6 +7,7 @@
 . "$PSScriptRoot/../modules/logger.ps1"
 . "$PSScriptRoot/../modules/core.ps1"
 . "$PSScriptRoot/../modules/menu.ps1"
+. "$PSScriptRoot/../modules/cleanup.ps1"
 
 Write-Log -Message "Atlas iniciado" -Level "INFO"
 
@@ -27,8 +28,7 @@ while ($running) {
         }
 
         "2" {
-            Show-FeaturePlaceholder -FeatureName "Limpeza segura"
-            Wait-UserInput
+            Show-CleanupMenu
         }
 
         "3" {
