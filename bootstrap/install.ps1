@@ -12,6 +12,7 @@
 . "$PSScriptRoot/../modules/onedrive.ps1"
 . "$PSScriptRoot/../modules/printer.ps1"
 . "$PSScriptRoot/../modules/windows-repair.ps1"
+. "$PSScriptRoot/../modules/support-report.ps1"
 
 Write-Log -Message "Atlas iniciado" -Level "INFO"
 
@@ -52,7 +53,7 @@ while ($running) {
         }
 
         "7" {
-            Show-FeaturePlaceholder -FeatureName "Relatorio de suporte"
+            New-AtlasSupportReport
             Wait-UserInput
         }
 
