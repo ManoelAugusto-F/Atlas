@@ -10,6 +10,7 @@
 . "$PSScriptRoot/../modules/cleanup.ps1"
 . "$PSScriptRoot/../modules/network-tools.ps1"
 . "$PSScriptRoot/../modules/onedrive.ps1"
+. "$PSScriptRoot/../modules/printer.ps1"
 
 Write-Log -Message "Atlas iniciado" -Level "INFO"
 
@@ -42,8 +43,7 @@ while ($running) {
         }
 
         "5" {
-            Show-FeaturePlaceholder -FeatureName "Impressoras"
-            Wait-UserInput
+            Show-PrinterMenu
         }
 
         "6" {

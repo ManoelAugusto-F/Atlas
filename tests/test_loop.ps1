@@ -4,6 +4,7 @@
 . "$PSScriptRoot/../modules/cleanup.ps1"
 . "$PSScriptRoot/../modules/network-tools.ps1"
 . "$PSScriptRoot/../modules/onedrive.ps1"
+. "$PSScriptRoot/../modules/printer.ps1"
 
 # ── Validar funcoes do modulo cleanup ──────────────────────────────
 Write-Host ""
@@ -135,6 +136,53 @@ if ($exe) {
 Write-Host ""
 Write-Host "Todas as funcoes de onedrive validadas." -ForegroundColor Green
 
+# ── Validar funcoes do modulo printer ──────────────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes de printer.ps1" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$printerFunctions = @(
+    'Get-PrinterList',
+    'Get-PrintQueueStatus',
+    'Restart-SpoolerSafe',
+    'Clear-PrintQueueSafe',
+    'Get-PrinterDrivers',
+    'Show-PrinterMenu'
+)
+
+$allOk = $true
+foreach ($fn in $printerFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes de printer nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+# Executar funcoes somente-leitura (N/A no Linux, sem erro)
+Write-Host ""
+Write-Host "[TESTE] Executando Get-PrinterList" -ForegroundColor Magenta
+Get-PrinterList
+
+Write-Host ""
+Write-Host "[TESTE] Executando Get-PrintQueueStatus" -ForegroundColor Magenta
+Get-PrintQueueStatus
+
+Write-Host ""
+Write-Host "[TESTE] Executando Get-PrinterDrivers" -ForegroundColor Magenta
+Get-PrinterDrivers
+
+Write-Host ""
+Write-Host "Todas as funcoes de printer validadas." -ForegroundColor Green
+
 $running = $true
 $inputs  = @('1','2','3','4','5','6','7','99','0')
 $idx     = 0
@@ -151,7 +199,7 @@ while ($running) {
         '2'  { Write-Log -Message "Limpeza segura (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '3'  { Write-Log -Message "Rede e internet (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '4'  { Write-Log -Message "OneDrive (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
-        '5'  { Show-FeaturePlaceholder -FeatureName "Impressoras" }
+        '5'  { Write-Log -Message "Impressoras (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '6'  { Show-FeaturePlaceholder -FeatureName "Reparos Windows" }
         '7'  { Show-FeaturePlaceholder -FeatureName "Relatorio de suporte" }
         '0'  { Write-Log -Message "Atlas encerrado" -Level "INFO"; $running = $false }
