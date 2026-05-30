@@ -3,6 +3,7 @@
 . "$PSScriptRoot/../modules/menu.ps1"
 . "$PSScriptRoot/../modules/cleanup.ps1"
 . "$PSScriptRoot/../modules/network-tools.ps1"
+. "$PSScriptRoot/../modules/onedrive.ps1"
 
 # ── Validar funcoes do modulo cleanup ──────────────────────────────
 Write-Host ""
@@ -85,6 +86,55 @@ Test-DnsBasic
 Write-Host ""
 Write-Host "Todas as funcoes de network-tools validadas." -ForegroundColor Green
 
+# ── Validar funcoes do modulo onedrive ───────────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes de onedrive.ps1" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$onedriveFunctions = @(
+    'Get-OneDriveStatus',
+    'Restart-OneDriveSafe',
+    'Reset-OneDriveSafe',
+    'Open-OneDriveFolder',
+    'Open-OneDriveLogs',
+    'Find-OneDriveExecutable',
+    'Show-OneDriveMenu'
+)
+
+$allOk = $true
+foreach ($fn in $onedriveFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes de onedrive nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+# Executar apenas funcao de leitura (N/A no Linux, sem erro)
+Write-Host ""
+Write-Host "[TESTE] Executando Get-OneDriveStatus" -ForegroundColor Magenta
+Get-OneDriveStatus
+
+Write-Host ""
+Write-Host "[TESTE] Executando Find-OneDriveExecutable" -ForegroundColor Magenta
+$exe = Find-OneDriveExecutable
+if ($exe) {
+    Write-Host "  Executavel: $exe" -ForegroundColor Green
+} else {
+    Write-Host "  Executavel nao encontrado (esperado no Linux)." -ForegroundColor Gray
+}
+
+Write-Host ""
+Write-Host "Todas as funcoes de onedrive validadas." -ForegroundColor Green
+
 $running = $true
 $inputs  = @('1','2','3','4','5','6','7','99','0')
 $idx     = 0
@@ -100,7 +150,7 @@ while ($running) {
         '1'  { Show-FeaturePlaceholder -FeatureName "Diagnostico rapido" }
         '2'  { Write-Log -Message "Limpeza segura (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '3'  { Write-Log -Message "Rede e internet (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
-        '4'  { Show-FeaturePlaceholder -FeatureName "OneDrive" }
+        '4'  { Write-Log -Message "OneDrive (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '5'  { Show-FeaturePlaceholder -FeatureName "Impressoras" }
         '6'  { Show-FeaturePlaceholder -FeatureName "Reparos Windows" }
         '7'  { Show-FeaturePlaceholder -FeatureName "Relatorio de suporte" }

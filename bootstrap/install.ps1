@@ -9,6 +9,7 @@
 . "$PSScriptRoot/../modules/menu.ps1"
 . "$PSScriptRoot/../modules/cleanup.ps1"
 . "$PSScriptRoot/../modules/network-tools.ps1"
+. "$PSScriptRoot/../modules/onedrive.ps1"
 
 Write-Log -Message "Atlas iniciado" -Level "INFO"
 
@@ -37,8 +38,7 @@ while ($running) {
         }
 
         "4" {
-            Show-FeaturePlaceholder -FeatureName "OneDrive"
-            Wait-UserInput
+            Show-OneDriveMenu
         }
 
         "5" {
