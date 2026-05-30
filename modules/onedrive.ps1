@@ -6,7 +6,7 @@
 # Helpers internos
 # ──────────────────────────────────────────
 
-function script:IsWindows-OneDrive {
+function script:Test-IsWindowsOneDrive {
     return ($IsWindows -or $env:OS -eq 'Windows_NT')
 }
 
@@ -23,7 +23,7 @@ function script:Confirm-OneDriveAction {
 # ──────────────────────────────────────────
 
 function Find-OneDriveExecutable {
-    if (-not (script:IsWindows-OneDrive)) { return $null }
+    if (-not (script:Test-IsWindowsOneDrive)) { return $null }
 
     $candidates = @(
         "$env:LOCALAPPDATA\Microsoft\OneDrive\OneDrive.exe",
@@ -47,7 +47,7 @@ function Find-OneDriveExecutable {
 function Get-OneDriveStatus {
     Write-Log -Message "Verificando status do OneDrive" -Level "INFO"
 
-    if (-not (script:IsWindows-OneDrive)) {
+    if (-not (script:Test-IsWindowsOneDrive)) {
         Write-Host ""
         Write-Host "OneDrive e disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -93,7 +93,7 @@ function Get-OneDriveStatus {
 function Restart-OneDriveSafe {
     Write-Log -Message "Iniciando reinicializacao do OneDrive" -Level "INFO"
 
-    if (-not (script:IsWindows-OneDrive)) {
+    if (-not (script:Test-IsWindowsOneDrive)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -146,7 +146,7 @@ function Restart-OneDriveSafe {
 function Reset-OneDriveSafe {
     Write-Log -Message "Iniciando reset do OneDrive" -Level "INFO"
 
-    if (-not (script:IsWindows-OneDrive)) {
+    if (-not (script:Test-IsWindowsOneDrive)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -202,7 +202,7 @@ function Reset-OneDriveSafe {
 function Open-OneDriveFolder {
     Write-Log -Message "Abrindo pasta do OneDrive" -Level "INFO"
 
-    if (-not (script:IsWindows-OneDrive)) {
+    if (-not (script:Test-IsWindowsOneDrive)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -240,7 +240,7 @@ function Open-OneDriveFolder {
 function Open-OneDriveLogs {
     Write-Log -Message "Abrindo pasta de logs do OneDrive" -Level "INFO"
 
-    if (-not (script:IsWindows-OneDrive)) {
+    if (-not (script:Test-IsWindowsOneDrive)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return

@@ -6,7 +6,7 @@
 # Helpers internos
 # ──────────────────────────────────────────
 
-function script:IsWindows-Printer {
+function script:Test-IsWindowsPrinter {
     return ($IsWindows -or $env:OS -eq 'Windows_NT')
 }
 
@@ -19,7 +19,7 @@ function script:Confirm-PrinterAction {
 }
 
 function script:Test-PrinterAdmin {
-    if (script:IsWindows-Printer) {
+    if (script:Test-IsWindowsPrinter) {
         $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
         return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     }
@@ -33,7 +33,7 @@ function script:Test-PrinterAdmin {
 function Get-PrinterList {
     Write-Log -Message "Listando impressoras instaladas" -Level "INFO"
 
-    if (-not (script:IsWindows-Printer)) {
+    if (-not (script:Test-IsWindowsPrinter)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -67,7 +67,7 @@ function Get-PrinterList {
 function Get-PrintQueueStatus {
     Write-Log -Message "Verificando fila de impressao" -Level "INFO"
 
-    if (-not (script:IsWindows-Printer)) {
+    if (-not (script:Test-IsWindowsPrinter)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -116,7 +116,7 @@ function Get-PrintQueueStatus {
 function Restart-SpoolerSafe {
     Write-Log -Message "Iniciando reinicio do Spooler" -Level "INFO"
 
-    if (-not (script:IsWindows-Printer)) {
+    if (-not (script:Test-IsWindowsPrinter)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -157,7 +157,7 @@ function Restart-SpoolerSafe {
 function Clear-PrintQueueSafe {
     Write-Log -Message "Iniciando limpeza da fila de impressao" -Level "INFO"
 
-    if (-not (script:IsWindows-Printer)) {
+    if (-not (script:Test-IsWindowsPrinter)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -221,7 +221,7 @@ function Clear-PrintQueueSafe {
 function Get-PrinterDrivers {
     Write-Log -Message "Listando drivers de impressora" -Level "INFO"
 
-    if (-not (script:IsWindows-Printer)) {
+    if (-not (script:Test-IsWindowsPrinter)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return

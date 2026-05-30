@@ -9,7 +9,7 @@ $script:_SupportModuleDir = $PSScriptRoot
 # Helpers internos
 # ──────────────────────────────────────────
 
-function script:IsWindows-SupportReport {
+function script:Test-IsWindowsSupportReport {
     return ($IsWindows -or $env:OS -eq 'Windows_NT')
 }
 
@@ -22,7 +22,7 @@ function script:Build-SystemSection {
     $lines += "Plataforma    : $([System.Environment]::OSVersion.Platform)"
     $lines += "Versao OS     : $([System.Environment]::OSVersion.VersionString)"
 
-    if (script:IsWindows-SupportReport) {
+    if (script:Test-IsWindowsSupportReport) {
         try {
             $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
             $lines += "Nome OS       : $($os.Caption)"
@@ -56,7 +56,7 @@ function script:Build-SystemSection {
 function script:Build-DiskSection {
     $lines = @()
 
-    if (script:IsWindows-SupportReport) {
+    if (script:Test-IsWindowsSupportReport) {
         try {
             $drives = Get-PSDrive -PSProvider FileSystem -ErrorAction Stop
             foreach ($d in $drives) {
@@ -110,7 +110,7 @@ function script:Build-NetworkSection {
     $lines += ""
     $lines += "--- Configuracao de Rede ---"
 
-    if (script:IsWindows-SupportReport) {
+    if (script:Test-IsWindowsSupportReport) {
         try {
             $adapters = Get-NetAdapter -ErrorAction Stop | Where-Object { $_.Status -eq 'Up' }
             foreach ($a in $adapters) {
@@ -155,7 +155,7 @@ function script:Build-NetworkSection {
 function script:Build-OneDriveSection {
     $lines = @()
 
-    if (-not (script:IsWindows-SupportReport)) {
+    if (-not (script:Test-IsWindowsSupportReport)) {
         $lines += "OneDrive disponivel apenas no Windows."
         return ($lines -join "`n")
     }
@@ -185,7 +185,7 @@ function script:Build-OneDriveSection {
 function script:Build-PrinterSection {
     $lines = @()
 
-    if (-not (script:IsWindows-SupportReport)) {
+    if (-not (script:Test-IsWindowsSupportReport)) {
         $lines += "Impressoras disponiveis apenas no Windows."
         return ($lines -join "`n")
     }
@@ -233,7 +233,7 @@ function script:Build-QuickDiagnosticSection {
 
     $lines += ""
     $lines += "--- Disco ---"
-    if (script:IsWindows-SupportReport) {
+    if (script:Test-IsWindowsSupportReport) {
         try {
             Get-PSDrive -PSProvider FileSystem |
                 Where-Object { $null -ne $_.Used -and ($_.Used + $_.Free) -gt 0 } |
@@ -252,7 +252,7 @@ function script:Build-QuickDiagnosticSection {
 
     $lines += ""
     $lines += "--- Memoria ---"
-    if (script:IsWindows-SupportReport) {
+    if (script:Test-IsWindowsSupportReport) {
         try {
             $os      = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
             $freeGB  = [math]::Round($os.FreePhysicalMemory / 1MB, 2)

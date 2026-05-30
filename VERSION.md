@@ -8,7 +8,7 @@
 ## Módulos
 
 | Grupo | Arquivo | Funções |
-|-------|---------|---------|
+| --- | --- | --- |
 | Inventário | `modules/system.ps1` | `Get-SystemInformation`, `Get-SystemEnvironment`, `Get-InstalledUpdates` |
 | Rede | `modules/network.ps1` | `Get-NetworkInformation`, `Test-NetworkConnectivity`, `Test-CommonPorts` |
 | Disco | `modules/disk.ps1` | `Get-DiskUsage`, `Get-LastBootTime` |
@@ -18,7 +18,7 @@
 | Saúde Windows | `modules/windows-health.ps1` | `Test-EssentialWindowsServices`, `Get-HeavyUserFolders`, `Test-PendingReboot`, `Get-WindowsUpdateSummary`, `Get-BasicSecurityStatus` |
 | Evidências | `modules/evidence.ps1` | `New-SupportEvidenceBundle` |
 
-**Total: 10 módulos, 19 funções públicas**
+### Total: 10 módulos, 19 funções públicas
 
 ---
 

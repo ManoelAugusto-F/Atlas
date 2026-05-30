@@ -14,7 +14,7 @@ function script:Confirm-NetworkAction {
     return ($resp -match '^[sS]$')
 }
 
-function script:IsWindows-Network {
+function script:Test-IsWindowsNetwork {
     return ($IsWindows -or $env:OS -eq 'Windows_NT')
 }
 
@@ -75,7 +75,7 @@ function Test-DnsBasic {
 
     # DNS configurado
     try {
-        if (script:IsWindows-Network) {
+        if (script:Test-IsWindowsNetwork) {
             $dnsServers = Get-DnsClientServerAddress -ErrorAction SilentlyContinue |
                 Where-Object { $_.AddressFamily -eq 2 -and $_.ServerAddresses.Count -gt 0 } |
                 Select-Object -ExpandProperty ServerAddresses
@@ -112,7 +112,7 @@ function Get-NetworkConfigBasic {
     Write-Log -Message "Exibindo configuracao de rede" -Level "INFO"
     Write-Host ""
 
-    if (script:IsWindows-Network) {
+    if (script:Test-IsWindowsNetwork) {
         Write-Host "Configuracao de rede (ipconfig /all):" -ForegroundColor Cyan
         try {
             & ipconfig /all
@@ -147,7 +147,7 @@ function Get-NetworkConfigBasic {
 function Clear-DnsCacheSafe {
     Write-Log -Message "Iniciando limpeza do cache DNS" -Level "INFO"
 
-    if (-not (script:IsWindows-Network)) {
+    if (-not (script:Test-IsWindowsNetwork)) {
         Write-Host ""
         Write-Host "Flush de cache DNS e focado em Windows." -ForegroundColor Yellow
         Write-Host "No Linux, reinicie o servico de DNS local (systemd-resolved, dnsmasq, etc.) manualmente se necessario."
@@ -180,7 +180,7 @@ function Clear-DnsCacheSafe {
 function Update-IpAddressLeaseSafe {
     Write-Log -Message "Iniciando renovacao de IP" -Level "INFO"
 
-    if (-not (script:IsWindows-Network)) {
+    if (-not (script:Test-IsWindowsNetwork)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -217,7 +217,7 @@ function Update-IpAddressLeaseSafe {
 function Reset-WinsockSafe {
     Write-Log -Message "Iniciando reset do Winsock" -Level "INFO"
 
-    if (-not (script:IsWindows-Network)) {
+    if (-not (script:Test-IsWindowsNetwork)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -252,7 +252,7 @@ function Reset-WinsockSafe {
 function Reset-TcpIpSafe {
     Write-Log -Message "Iniciando reset do TCP/IP" -Level "INFO"
 
-    if (-not (script:IsWindows-Network)) {
+    if (-not (script:Test-IsWindowsNetwork)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return

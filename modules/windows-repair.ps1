@@ -6,7 +6,7 @@
 # Helpers internos
 # ──────────────────────────────────────────
 
-function script:IsWindows-Repair {
+function script:Test-IsWindowsRepair {
     return ($IsWindows -or $env:OS -eq 'Windows_NT')
 }
 
@@ -19,7 +19,7 @@ function script:Confirm-RepairAction {
 }
 
 function script:Test-RepairAdmin {
-    if (script:IsWindows-Repair) {
+    if (script:Test-IsWindowsRepair) {
         $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
         return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     }
@@ -33,7 +33,7 @@ function script:Test-RepairAdmin {
 function Test-SfcVerifyOnly {
     Write-Log -Message "Executando SFC /verifyonly" -Level "INFO"
 
-    if (-not (script:IsWindows-Repair)) {
+    if (-not (script:Test-IsWindowsRepair)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -59,7 +59,7 @@ function Test-SfcVerifyOnly {
 function Invoke-SfcScannowSafe {
     Write-Log -Message "Iniciando SFC /scannow" -Level "INFO"
 
-    if (-not (script:IsWindows-Repair)) {
+    if (-not (script:Test-IsWindowsRepair)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -101,7 +101,7 @@ function Invoke-SfcScannowSafe {
 function Test-DismCheckHealth {
     Write-Log -Message "Executando DISM CheckHealth" -Level "INFO"
 
-    if (-not (script:IsWindows-Repair)) {
+    if (-not (script:Test-IsWindowsRepair)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -127,7 +127,7 @@ function Test-DismCheckHealth {
 function Invoke-DismScanHealthSafe {
     Write-Log -Message "Iniciando DISM ScanHealth" -Level "INFO"
 
-    if (-not (script:IsWindows-Repair)) {
+    if (-not (script:Test-IsWindowsRepair)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -162,7 +162,7 @@ function Invoke-DismScanHealthSafe {
 function Invoke-DismRestoreHealthSafe {
     Write-Log -Message "Iniciando DISM RestoreHealth" -Level "INFO"
 
-    if (-not (script:IsWindows-Repair)) {
+    if (-not (script:Test-IsWindowsRepair)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return
@@ -205,7 +205,7 @@ function Invoke-DismRestoreHealthSafe {
 function Reset-WindowsUpdateSafe {
     Write-Log -Message "Iniciando reset dos componentes do Windows Update" -Level "INFO"
 
-    if (-not (script:IsWindows-Repair)) {
+    if (-not (script:Test-IsWindowsRepair)) {
         Write-Host ""
         Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
         return

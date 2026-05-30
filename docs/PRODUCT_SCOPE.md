@@ -26,7 +26,7 @@ A operação é simples: o usuário abre o menu, escolhe o que precisa e o Atlas
 ## Problemas que o Atlas resolve
 
 | Sintoma | Ação do Atlas |
-|---------|--------------|
+| --- | --- |
 | Computador lento | Diagnóstico de CPU, RAM, processos pesados e tempo de inicialização |
 | Disco cheio | Identificar pastas grandes, limpar temporários e cache do Windows Update |
 | Internet / DNS com problema | Testes de conectividade, flush de DNS, diagnóstico de adaptadores |
@@ -41,7 +41,7 @@ A operação é simples: o usuário abre o menu, escolhe o que precisa e o Atlas
 
 ## Menu principal
 
-```
+```text
 Atlas — Assistente de Manutenção Windows
 
 [1] Diagnóstico rápido
@@ -59,7 +59,7 @@ Atlas — Assistente de Manutenção Windows
 ## Módulos planejados
 
 | Opção | Módulo | Responsabilidade |
-|-------|--------|-----------------|
+| --- | --- | --- |
 | [1] Diagnóstico rápido | `modules/diagnostics.ps1` | CPU, RAM, disco, processos pesados, tempo de boot |
 | [2] Limpeza segura | `modules/cleanup.ps1` | Temporários, lixeira, cache Windows Update, prefetch |
 | [3] Rede e internet | `modules/network.ps1` | Conectividade, DNS, adaptadores, flush de DNS |
@@ -76,7 +76,7 @@ Atlas — Assistente de Manutenção Windows
 ## O que NÃO será feito (restrições obrigatórias)
 
 | Categoria | Restrição |
-|-----------|-----------|
+| --- | --- |
 | Instalação de software | Não instalar programas de terceiros ou da Microsoft Store |
 | Debloat | Não remover apps nativos do Windows nem fazer otimizações agressivas |
 | Registro | Não aplicar tweaks de registro nesta fase |
@@ -103,7 +103,7 @@ Atlas — Assistente de Manutenção Windows
 ## O que será aproveitado da versão anterior
 
 | Artefato | Motivo |
-|----------|--------|
+| --- | --- |
 | `bootstrap/install.ps1` | Ponto de entrada principal, será adaptado para o novo menu |
 | `modules/logger.ps1` | Sistema de log já consolidado e funcional |
 | `modules/system.ps1` | Utilitários de sistema reaproveitáveis |
@@ -119,7 +119,7 @@ Atlas — Assistente de Manutenção Windows
 ## Roadmap de fases
 
 | Fase | Entregável |
-|------|-----------|
+| --- | --- |
 | **Fase 0 (atual)** | Reset de escopo, documentação, sem alteração de código |
 | **Fase 1** | Novo menu principal + módulos de diagnóstico e limpeza |
 | **Fase 2** | Módulos de rede, OneDrive e impressoras |

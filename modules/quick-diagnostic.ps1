@@ -6,7 +6,7 @@
 # Helpers internos
 # ──────────────────────────────────────────
 
-function script:IsWindows-Diag {
+function script:Test-IsWindowsDiag {
     return ($IsWindows -or $env:OS -eq 'Windows_NT')
 }
 
@@ -19,7 +19,7 @@ function script:IsWindows-Diag {
 
 function Get-DiskAlert {
     try {
-        if (script:IsWindows-Diag) {
+        if (script:Test-IsWindowsDiag) {
             $drive = Get-PSDrive -Name C -PSProvider FileSystem -ErrorAction Stop
             $total = $drive.Used + $drive.Free
             if ($total -le 0) { throw "Disco C: sem dados" }
@@ -70,7 +70,7 @@ function Get-DiskAlert {
 
 function Get-MemoryAlert {
     try {
-        if (script:IsWindows-Diag) {
+        if (script:Test-IsWindowsDiag) {
             $os      = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
             $total   = $os.TotalVisibleMemorySize
             $free    = $os.FreePhysicalMemory
@@ -116,7 +116,7 @@ function Get-MemoryAlert {
 
 function Get-UptimeAlert {
     try {
-        if (script:IsWindows-Diag) {
+        if (script:Test-IsWindowsDiag) {
             $os   = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
             $span = (Get-Date) - $os.LastBootUpTime
         } else {
@@ -206,7 +206,7 @@ function Get-InternetAlert {
 # ──────────────────────────────────────────
 
 function Get-OneDriveAlert {
-    if (-not (script:IsWindows-Diag)) {
+    if (-not (script:Test-IsWindowsDiag)) {
         return [pscustomobject]@{
             Label      = "OneDrive"
             Status     = "NA"
@@ -238,7 +238,7 @@ function Get-OneDriveAlert {
 # ──────────────────────────────────────────
 
 function Get-SpoolerAlert {
-    if (-not (script:IsWindows-Diag)) {
+    if (-not (script:Test-IsWindowsDiag)) {
         return [pscustomobject]@{
             Label      = "Spooler"
             Status     = "NA"
@@ -279,7 +279,7 @@ function Get-SpoolerAlert {
 # ──────────────────────────────────────────
 
 function Get-RebootPendingAlert {
-    if (-not (script:IsWindows-Diag)) {
+    if (-not (script:Test-IsWindowsDiag)) {
         return [pscustomobject]@{
             Label      = "Reboot Pendente"
             Status     = "NA"
