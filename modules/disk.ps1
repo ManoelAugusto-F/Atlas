@@ -41,6 +41,7 @@ function Get-DiskUsage {
         }
     }
 
+    Write-Log -Message "Get-DiskUsage executado" -Level "INFO"
     Write-Host ""
 }
 
@@ -93,5 +94,6 @@ function Get-LastBootTime {
         }
     }
 
+    Write-Log -Message "Get-LastBootTime executado" -Level "INFO"
     Write-Host ""
 }

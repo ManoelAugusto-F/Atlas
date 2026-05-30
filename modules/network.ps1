@@ -93,6 +93,7 @@ function Test-NetworkConnectivity {
         Write-Host " FALHOU ($_)" -ForegroundColor Red
     }
 
+    Write-Log -Message "Test-NetworkConnectivity executado" -Level "INFO"
     Write-Host ""
 }
 

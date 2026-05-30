@@ -32,6 +32,8 @@ function Get-SystemEnvironment {
     } else {
         Write-Host $env:USER
     }
+
+    Write-Log -Message "Get-SystemEnvironment executado" -Level "INFO"
 }
 
 function Get-SystemInformation {
@@ -57,6 +59,8 @@ function Get-SystemInformation {
         $kernel = & uname -r 2>$null
         if ($kernel) { Write-Host $kernel }
     }
+
+    Write-Log -Message "Get-SystemInformation executado" -Level "INFO"
 }
 
 function Get-InstalledUpdates {

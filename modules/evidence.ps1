@@ -21,8 +21,8 @@ function New-SupportEvidenceBundle {
     Write-Host "Pasta: $bundleDir" -ForegroundColor DarkGray
     Write-Host ""
 
-    # Funcao auxiliar para capturar saida como texto sem exibir no terminal
-    function Capture-Output {
+    # Helper privado: captura saida de um bloco sem exibir no terminal
+    function Get-CommandOutput {
         param([scriptblock]$Block)
         try {
             $output = $( & $Block *>&1 ) | Out-String
@@ -75,39 +75,39 @@ function New-SupportEvidenceBundle {
             $sysLines.Add("Mem Livre   : $([math]::Round([long]$avail/1MB,1)) GB")
         }
     }
-    $sysLines | Set-Content "$bundleDir\system.txt" -Encoding UTF8
+    $sysLines | Set-Content (Join-Path $bundleDir "system.txt") -Encoding UTF8
     Write-Host " OK" -ForegroundColor Green
 
     # --- network.txt ---
     Write-Host "  [2/6] Coletando informacoes de rede..." -NoNewline
-    $netOut = Capture-Output { Get-NetworkInformation }
-    $netOut | Set-Content "$bundleDir\network.txt" -Encoding UTF8
+    $netOut = Get-CommandOutput { Get-NetworkInformation }
+    $netOut | Set-Content (Join-Path $bundleDir "network.txt") -Encoding UTF8
     Write-Host " OK" -ForegroundColor Green
 
     # --- disk.txt ---
     Write-Host "  [3/6] Coletando informacoes de disco..." -NoNewline
-    $diskOut = Capture-Output { Get-DiskUsage }
-    $diskOut | Set-Content "$bundleDir\disk.txt" -Encoding UTF8
+    $diskOut = Get-CommandOutput { Get-DiskUsage }
+    $diskOut | Set-Content (Join-Path $bundleDir "disk.txt") -Encoding UTF8
     Write-Host " OK" -ForegroundColor Green
 
     # --- services.txt ---
     Write-Host "  [4/6] Coletando informacoes de servicos..." -NoNewline
     if (Test-IsWindows) {
-        $svcOut = Capture-Output { Test-EssentialWindowsServices }
+        $svcOut = Get-CommandOutput { Test-EssentialWindowsServices }
     } else {
         $svcOut = "Funcao exclusiva do Windows. No Linux, use 'systemctl list-units --state=failed'."
     }
-    $svcOut | Set-Content "$bundleDir\services.txt" -Encoding UTF8
+    $svcOut | Set-Content (Join-Path $bundleDir "services.txt") -Encoding UTF8
     Write-Host " OK" -ForegroundColor Green
 
     # --- security.txt ---
     Write-Host "  [5/6] Coletando status de seguranca..." -NoNewline
     if (Test-IsWindows) {
-        $secOut = Capture-Output { Get-BasicSecurityStatus }
+        $secOut = Get-CommandOutput { Get-BasicSecurityStatus }
     } else {
         $secOut = "Funcao exclusiva do Windows."
     }
-    $secOut | Set-Content "$bundleDir\security.txt" -Encoding UTF8
+    $secOut | Set-Content (Join-Path $bundleDir "security.txt") -Encoding UTF8
     Write-Host " OK" -ForegroundColor Green
 
     # --- summary.json ---
@@ -121,7 +121,7 @@ function New-SupportEvidenceBundle {
         platform    = if (Test-IsWindows) { "Windows" } else { "Linux" }
         files       = @("system.txt", "network.txt", "disk.txt", "services.txt", "security.txt")
     }
-    $summary | ConvertTo-Json -Depth 3 | Set-Content "$bundleDir\summary.json" -Encoding UTF8
+    $summary | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $bundleDir "summary.json") -Encoding UTF8
     Write-Host " OK" -ForegroundColor Green
 
     Write-Host ""
