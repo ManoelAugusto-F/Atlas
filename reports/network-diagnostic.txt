@@ -1,0 +1,30 @@
+ATLAS — Diagnostico Corporativo de Rede
+Gerado em : 29/05/2026 21:51:47
+Hostname  : pop-os
+Plataforma: Linux
+==================================================
+
+[ GATEWAY ]
+  Ping 192.168.1.254                     OK (Gateway padrao)
+
+[ DNS ]
+  TCP 53 em 127.0.0.53                   OK (Servidor DNS configurado)
+  Resolucao google.com                   OK (172.217.29.78)
+  Resolucao microsoft.com                OK (13.107.253.34)
+
+[ INTERNET ]
+  Ping 8.8.8.8                           OK (8.8.8.8  (Google DNS))
+  Ping 1.1.1.1                           OK (1.1.1.1  (Cloudflare))
+
+[ HTTPS ]
+  TCP 443 google.com                     OK
+  TCP 443 microsoft.com                  OK
+
+[ DOMINIO ]
+  Verificacao de dominio                 N/A (Exclusivo Windows)
+
+==================================================
+RESUMO
+Total de testes : 9
+OK              : 8
+Falhou          : 0

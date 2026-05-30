@@ -15,6 +15,7 @@
 . "$PSScriptRoot/../modules/windows-health.ps1"
 . "$PSScriptRoot/../modules/evidence.ps1"
 . "$PSScriptRoot/../modules/inventory.ps1"
+. "$PSScriptRoot/../modules/diagnostics.ps1"
 
 Write-Log -Message "Atlas iniciado" -Level "INFO"
 
@@ -117,6 +118,12 @@ while ($running) {
         "15" {
             Write-Log -Message "Inventario completo" -Level "INFO"
             Invoke-FullInventory
+            Wait-UserInput
+        }
+
+        "16" {
+            Write-Log -Message "Diagnostico corporativo de rede" -Level "INFO"
+            Invoke-CorporateDiagnostic
             Wait-UserInput
         }
 

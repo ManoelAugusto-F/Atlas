@@ -23,6 +23,7 @@ function Show-MainMenu {
     Write-Host "[13] Verificar seguranca basica"
     Write-Host "[14] Coletar evidencias para atendimento"
     Write-Host "[15] Inventario completo"
+    Write-Host "[16] Diagnostico corporativo de rede"
     Write-Host "[0]  Sair"
     Write-Host ""
 }
