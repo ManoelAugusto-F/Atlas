@@ -1,30 +1,19 @@
-# Atlas v0.1 — Reset de produto
-
-**Data de release:** 2026-05-30
-**Branch:** main
+# Versão Atual: Atlas v0.2-dev
 
 ---
 
-## Módulos
+## Histórico de Versões
 
-| Grupo | Arquivo | Funções |
-| --- | --- | --- |
-| Inventário | `modules/system.ps1` | `Get-SystemInformation`, `Get-SystemEnvironment`, `Get-InstalledUpdates` |
-| Rede | `modules/network.ps1` | `Get-NetworkInformation`, `Test-NetworkConnectivity`, `Test-CommonPorts` |
-| Disco | `modules/disk.ps1` | `Get-DiskUsage`, `Get-LastBootTime` |
-| Manutenção | `modules/maintenance.ps1` | `Clear-UserTempFiles`, `Get-StoppedImportantServices` |
-| Triagem | `modules/triage.ps1` | `Invoke-QuickMachineTriage` |
-| Rede Corporativa | `modules/corporate-network.ps1` | `Test-CorporateNetworkHealth` |
-| Saúde Windows | `modules/windows-health.ps1` | `Test-EssentialWindowsServices`, `Get-HeavyUserFolders`, `Test-PendingReboot`, `Get-WindowsUpdateSummary`, `Get-BasicSecurityStatus` |
-| Evidências | `modules/evidence.ps1` | `New-SupportEvidenceBundle` |
+### v0.2.0-dev - Em desenvolvimento (Sprint v0.2)
+- Planejamento e criacao dos modulos de automacao corporativos em fase alfa isolada.
+- Adicionados os modulos: outlook.ps1, teams.ps1, browser.ps1, programs.ps1 e services.ps1.
 
-### Total: 10 módulos, 19 funções públicas
+### v0.1.0 — 2026-05-31 — Primeira versão validada no Windows
+- Primeira release funcional validada com sucesso no Windows PowerShell 5.1 e PowerShell 7.
+- Remocao total de caracteres estendidos, sintonizando todo o core do assistente para ASCII puro.
+- Importacao limpa de todas as funcoes de suporte, incluindo SFC, DISM e gerador de relatorios.
 
----
-
-## Histórico
-
-### v0.1 — 2026-05-30 — Reset de produto
+### v0.1-pre — 2026-05-30 — Reset de produto
 
 - Redefinição de escopo: Atlas passa a ser Assistente de Manutenção Windows
 - Criado `docs/PRODUCT_SCOPE.md` com objetivo, público-alvo, restrições e roadmap
