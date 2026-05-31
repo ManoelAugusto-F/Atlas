@@ -4,7 +4,7 @@
 $Global:AtlasLoadedModules = $Global:AtlasLoadedModules | Where-Object { $_ -ne "Services" }
 $Global:AtlasLoadedModules += "Services"
 
-function Get-EssentialServicesStatus {
+function Get-CriticalServices {
     <#
     .SYNOPSIS
         Analisa e retorna dados de saude de servicos de rede e servicos corporativos estruturais.
@@ -117,10 +117,10 @@ function Get-StoppedAutomaticServices {
     return $issues
 }
 
-function Start-ServiceSafe {
+function Restart-ServiceSafe {
     <#
     .SYNOPSIS
-        Tenta iniciar de forma unificada e assistida um servico do Windows.
+        Tenta reiniciar de forma unificada e assistida um servico do Windows.
     .PARAMETER ServiceName
         Nome interno simplificado do servico. Se for informado de forma invalida, retorna falha.
     #>
@@ -130,7 +130,7 @@ function Start-ServiceSafe {
         [string]$ServiceName
     )
 
-    Write-Log -Level "INFO" -Message "Tentativa de inicializacao assistida do servico: $ServiceName"
+    Write-Log -Level "INFO" -Message "Tentativa de reinicializacao assistida do servico: $ServiceName"
 
     if (!($IsWindows) -and !($env:OS -like "*Windows*")) {
         Write-Log -Level "WARN" -Message "Modificacao de servicos negada fora do Windows."
@@ -143,26 +143,21 @@ function Start-ServiceSafe {
         return $false
     }
 
-    if ($srv.Status -eq "Running") {
-        Write-Log -Level "WARN" -Message "Servico $ServiceName ja esta em execucao."
-        return $true
-    }
-
     try {
-        Write-Log -Level "INFO" -Message "Executando comando de inicializacao para o servico: $ServiceName..."
-        Start-Service -Name $ServiceName -ErrorAction Stop
+        Write-Log -Level "INFO" -Message "Executando comando de reinicio para o servico: $ServiceName..."
+        Restart-Service -Name $ServiceName -ErrorAction Stop
         # Loop curto para aguardar atualizacao de status
         for ($i = 0; $i -lt 5; $i++) {
             $srv = Get-Service -Name $ServiceName
             if ($srv.Status -eq "Running") {
-                Write-Log -Level "INFO" -Message "Servico $ServiceName iniciado com exito."
+                Write-Log -Level "INFO" -Message "Servico $ServiceName reiniciado com exito."
                 return $true
             }
             Start-Sleep -Seconds 1
         }
     } catch {
         $errMsg = $_.Exception.Message
-        Write-Log -Level "ERROR" -Message "Nao foi possivel inicializar o servico $ServiceName. Erro: $errMsg"
+        Write-Log -Level "ERROR" -Message "Nao foi possivel reiniciar o servico $ServiceName. Erro: $errMsg"
     }
 
     return $false

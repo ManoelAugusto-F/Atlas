@@ -46,7 +46,7 @@ $expectedFunctions = @(
     "Get-TeamsStatus", "Clear-TeamsCache",
     "Get-BrowserProfiles", "Clear-BrowserCache",
     "Get-InstalledPrograms", "Export-InstalledProgramsCsv",
-    "Get-EssentialServicesStatus", "Get-StoppedAutomaticServices", "Start-ServiceSafe"
+    "Get-CriticalServices", "Get-StoppedAutomaticServices", "Restart-ServiceSafe"
 )
 
 foreach ($fn in $expectedFunctions) {
