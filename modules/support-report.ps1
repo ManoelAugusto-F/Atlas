@@ -305,7 +305,8 @@ function New-AtlasSupportReport {
 
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $repoRoot  = Split-Path $script:_SupportModuleDir -Parent
-    $reportDir = Join-Path $repoRoot "reports" "atlas_support_$timestamp"
+    $reportsRoot = Join-Path $repoRoot "reports"
+    $reportDir   = Join-Path $reportsRoot "atlas_support_$timestamp"
 
     Write-Host ""
     Write-Host "Gerando relatorio de suporte..." -ForegroundColor Cyan
@@ -354,7 +355,8 @@ function New-AtlasSupportReport {
 
     # Logs recentes do Atlas
     Write-Host "  Coletando: Logs recentes do Atlas..." -ForegroundColor Gray
-    $logFile = Join-Path $repoRoot "logs" "provisionador.log"
+    $logsRoot = Join-Path $repoRoot "logs"
+    $logFile  = Join-Path $logsRoot "provisionador.log"
     if (Test-Path $logFile) {
         try {
             $tail   = Get-Content $logFile -Tail 100 -ErrorAction Stop
