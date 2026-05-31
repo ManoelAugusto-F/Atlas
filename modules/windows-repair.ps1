@@ -1,10 +1,10 @@
 # ==========================================
-# Atlas — Modulo de Reparos Windows
+# Atlas - Modulo de Reparos Windows
 # ==========================================
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # Helpers internos
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function script:Test-IsWindowsRepair {
     return ($IsWindows -or $env:OS -eq 'Windows_NT')
@@ -26,9 +26,9 @@ function script:Test-RepairAdmin {
     return $false
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [1] Verificar integridade SFC (somente leitura)
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Test-SfcVerifyOnly {
     Write-Log -Message "Executando SFC /verifyonly" -Level "INFO"
@@ -41,7 +41,7 @@ function Test-SfcVerifyOnly {
 
     Write-Host ""
     Write-Host "Executando: sfc /verifyonly" -ForegroundColor Cyan
-    Write-Host "Apenas verifica — nenhuma alteracao sera feita." -ForegroundColor Gray
+    Write-Host "Apenas verifica - nenhuma alteracao sera feita." -ForegroundColor Gray
 
     try {
         & sfc /verifyonly
@@ -52,9 +52,9 @@ function Test-SfcVerifyOnly {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [2] SFC /scannow
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Invoke-SfcScannowSafe {
     Write-Log -Message "Iniciando SFC /scannow" -Level "INFO"
@@ -94,9 +94,9 @@ function Invoke-SfcScannowSafe {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [3] DISM CheckHealth (somente leitura)
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Test-DismCheckHealth {
     Write-Log -Message "Executando DISM CheckHealth" -Level "INFO"
@@ -109,7 +109,7 @@ function Test-DismCheckHealth {
 
     Write-Host ""
     Write-Host "Executando: DISM /Online /Cleanup-Image /CheckHealth" -ForegroundColor Cyan
-    Write-Host "Apenas verifica estado da imagem — nenhuma alteracao sera feita." -ForegroundColor Gray
+    Write-Host "Apenas verifica estado da imagem - nenhuma alteracao sera feita." -ForegroundColor Gray
 
     try {
         & DISM /Online /Cleanup-Image /CheckHealth
@@ -120,9 +120,9 @@ function Test-DismCheckHealth {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [4] DISM ScanHealth
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Invoke-DismScanHealthSafe {
     Write-Log -Message "Iniciando DISM ScanHealth" -Level "INFO"
@@ -155,9 +155,9 @@ function Invoke-DismScanHealthSafe {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [5] DISM RestoreHealth
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Invoke-DismRestoreHealthSafe {
     Write-Log -Message "Iniciando DISM RestoreHealth" -Level "INFO"
@@ -198,9 +198,9 @@ function Invoke-DismRestoreHealthSafe {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [6] Reset Windows Update
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Reset-WindowsUpdateSafe {
     Write-Log -Message "Iniciando reset dos componentes do Windows Update" -Level "INFO"
@@ -298,9 +298,9 @@ function Reset-WindowsUpdateSafe {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # Menu de reparos Windows
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Show-WindowsRepairMenu {
     $repairRunning = $true
