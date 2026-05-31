@@ -1,10 +1,10 @@
 # ==========================================
-# Atlas — Modulo OneDrive
+# Atlas - Modulo OneDrive
 # ==========================================
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # Helpers internos
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function script:Test-IsWindowsOneDrive {
     return ($IsWindows -or $env:OS -eq 'Windows_NT')
@@ -18,9 +18,9 @@ function script:Confirm-OneDriveAction {
     return ($resp -match '^[sS]$')
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [6] Localizar executavel (usada internamente por outras funcoes)
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Find-OneDriveExecutable {
     if (-not (script:Test-IsWindowsOneDrive)) { return $null }
@@ -40,9 +40,9 @@ function Find-OneDriveExecutable {
     return $null
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [1] Verificar se OneDrive esta rodando
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Get-OneDriveStatus {
     Write-Log -Message "Verificando status do OneDrive" -Level "INFO"
@@ -59,7 +59,7 @@ function Get-OneDriveStatus {
     try {
         $procs = Get-Process -Name "OneDrive" -ErrorAction SilentlyContinue
         if ($procs) {
-            Write-Host ("  [RODANDO] OneDrive — PID(s): {0}" -f ($procs.Id -join ', ')) -ForegroundColor Green
+            Write-Host ("  [RODANDO] OneDrive - PID(s): {0}" -f ($procs.Id -join ', ')) -ForegroundColor Green
         } else {
             Write-Host "  [PARADO] Processo OneDrive nao encontrado." -ForegroundColor Yellow
         }
@@ -86,9 +86,9 @@ function Get-OneDriveStatus {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [2] Reiniciar OneDrive
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Restart-OneDriveSafe {
     Write-Log -Message "Iniciando reinicializacao do OneDrive" -Level "INFO"
@@ -139,9 +139,9 @@ function Restart-OneDriveSafe {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [3] Resetar OneDrive
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Reset-OneDriveSafe {
     Write-Log -Message "Iniciando reset do OneDrive" -Level "INFO"
@@ -195,9 +195,9 @@ function Reset-OneDriveSafe {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [4] Abrir pasta do OneDrive
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Open-OneDriveFolder {
     Write-Log -Message "Abrindo pasta do OneDrive" -Level "INFO"
@@ -233,9 +233,9 @@ function Open-OneDriveFolder {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [5] Abrir logs do OneDrive
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Open-OneDriveLogs {
     Write-Log -Message "Abrindo pasta de logs do OneDrive" -Level "INFO"
@@ -265,9 +265,9 @@ function Open-OneDriveLogs {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # Menu OneDrive
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Show-OneDriveMenu {
     $odRunning = $true

@@ -1,10 +1,10 @@
 # ==========================================
-# Atlas — Modulo de Impressoras
+# Atlas - Modulo de Impressoras
 # ==========================================
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # Helpers internos
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function script:Test-IsWindowsPrinter {
     return ($IsWindows -or $env:OS -eq 'Windows_NT')
@@ -26,9 +26,9 @@ function script:Test-PrinterAdmin {
     return $false
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [1] Listar impressoras
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Get-PrinterList {
     Write-Log -Message "Listando impressoras instaladas" -Level "INFO"
@@ -47,7 +47,7 @@ function Get-PrinterList {
             $printers | ForEach-Object {
                 $defaultMark = if ($_.Default) { " [PADRAO]" } else { "" }
                 $shared      = if ($_.Shared)  { " [COMPARTILHADA]" } else { "" }
-                Write-Host ("  {0}{1}{2} — {3}" -f $_.Name, $defaultMark, $shared, $_.PrinterStatus) -ForegroundColor White
+                Write-Host ("  {0}{1}{2} - {3}" -f $_.Name, $defaultMark, $shared, $_.PrinterStatus) -ForegroundColor White
             }
             Write-Host ""
             Write-Host ("Total: {0} impressora(s)" -f $printers.Count) -ForegroundColor Gray
@@ -60,9 +60,9 @@ function Get-PrinterList {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [2] Ver fila de impressao
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Get-PrintQueueStatus {
     Write-Log -Message "Verificando fila de impressao" -Level "INFO"
@@ -88,12 +88,12 @@ function Get-PrintQueueStatus {
                 if ($jobs) {
                     Write-Host ("Impressora: {0}" -f $printer.Name) -ForegroundColor Cyan
                     $jobs | ForEach-Object {
-                        Write-Host ("  [Job {0}] {1} — {2} — {3}" -f $_.Id, $_.DocumentName, $_.JobStatus, $_.SubmittedTime) -ForegroundColor White
+                        Write-Host ("  [Job {0}] {1} - {2} - {3}" -f $_.Id, $_.DocumentName, $_.JobStatus, $_.SubmittedTime) -ForegroundColor White
                     }
                     $totalJobs += $jobs.Count
                 }
             } catch {
-                # Impressora sem suporte a Get-PrintJob — ignorar silenciosamente
+                # Impressora sem suporte a Get-PrintJob - ignorar silenciosamente
             }
         }
 
@@ -109,9 +109,9 @@ function Get-PrintQueueStatus {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [3] Reiniciar Spooler
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Restart-SpoolerSafe {
     Write-Log -Message "Iniciando reinicio do Spooler" -Level "INFO"
@@ -150,9 +150,9 @@ function Restart-SpoolerSafe {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [4] Limpar fila de impressao
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Clear-PrintQueueSafe {
     Write-Log -Message "Iniciando limpeza da fila de impressao" -Level "INFO"
@@ -214,9 +214,9 @@ function Clear-PrintQueueSafe {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [5] Ver drivers de impressora
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Get-PrinterDrivers {
     Write-Log -Message "Listando drivers de impressora" -Level "INFO"
@@ -233,7 +233,7 @@ function Get-PrinterDrivers {
         if ($drivers) {
             Write-Host "Drivers de impressora instalados:" -ForegroundColor Cyan
             $drivers | ForEach-Object {
-                Write-Host ("  {0} — {1}" -f $_.Name, $_.PrinterEnvironment) -ForegroundColor White
+                Write-Host ("  {0} - {1}" -f $_.Name, $_.PrinterEnvironment) -ForegroundColor White
             }
             Write-Host ""
             Write-Host ("Total: {0} driver(s)" -f $drivers.Count) -ForegroundColor Gray
@@ -246,9 +246,9 @@ function Get-PrinterDrivers {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # Menu de impressoras
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Show-PrinterMenu {
     $printerRunning = $true

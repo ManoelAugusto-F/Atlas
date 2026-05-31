@@ -1,10 +1,10 @@
 # ==========================================
-# Atlas — Modulo de Diagnostico Rapido
+# Atlas - Modulo de Diagnostico Rapido
 # ==========================================
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # Helpers internos
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function script:Test-IsWindowsDiag {
     return ($IsWindows -or $env:OS -eq 'Windows_NT')
@@ -13,9 +13,9 @@ function script:Test-IsWindowsDiag {
 # Retorna objeto: @{ Label; Status; Message; Suggestion }
 # Status: "OK" | "ATENCAO" | "CRITICO" | "NA"
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [1] Disco
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Get-DiskAlert {
     try {
@@ -28,7 +28,7 @@ function Get-DiskAlert {
             $freeGB  = [math]::Round($drive.Free  / 1GB, 2)
             $totalGB = [math]::Round($total        / 1GB, 2)
             $label   = "Disco C:"
-            $detail  = "${pctFree}% livre (${freeGB}GB / ${totalGB}GB)"
+            $detail  = "$($pctFree)% livre ($($freeGB)GB / $($totalGB)GB)"
         } else {
             $dfOut = (& df / 2>&1) | Select-Object -Skip 1 | Select-Object -First 1
             if (-not $dfOut) { throw "df sem saida" }
@@ -37,14 +37,14 @@ function Get-DiskAlert {
             $pctUsed = [double]($cols[4] -replace '%', '')
             $pctFree = [math]::Round(100 - $pctUsed, 1)
             $label   = "Disco /"
-            $detail  = "${pctFree}% livre"
+            $detail  = "$($pctFree)% livre"
         }
 
         $status = if ($pctFree -lt 10) { "CRITICO" }
                   elseif ($pctFree -lt 15) { "ATENCAO" }
                   else { "OK" }
 
-        $suggestion = if ($status -eq "CRITICO") { "Execute Limpeza Segura (opcao 2) urgentemente — disco critico." }
+        $suggestion = if ($status -eq "CRITICO") { "Execute Limpeza Segura (opcao 2) urgentemente - disco critico." }
                       elseif ($status -eq "ATENCAO") { "Execute Limpeza Segura (opcao 2) para liberar espaco." }
                       else { $null }
 
@@ -64,9 +64,9 @@ function Get-DiskAlert {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [2] Memoria
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Get-MemoryAlert {
     try {
@@ -90,14 +90,14 @@ function Get-MemoryAlert {
                    elseif ($pctUsed -gt 80) { "ATENCAO" }
                    else { "OK" }
 
-        $suggestion = if ($status -eq "CRITICO") { "Memoria critica (${pctUsed}% em uso). Feche programas desnecessarios ou reinicie." }
-                      elseif ($status -eq "ATENCAO") { "Memoria alta (${pctUsed}% em uso). Considere fechar programas pesados." }
+        $suggestion = if ($status -eq "CRITICO") { "Memoria critica ($($pctUsed)% em uso). Feche programas desnecessarios ou reinicie." }
+                      elseif ($status -eq "ATENCAO") { "Memoria alta ($($pctUsed)% em uso). Considere fechar programas pesados." }
                       else { $null }
 
         return [pscustomobject]@{
             Label      = "Memoria"
             Status     = $status
-            Message    = "Memoria: ${pctUsed}% em uso (livre: ${freeGB}GB / total: ${totalGB}GB)"
+            Message    = "Memoria: $($pctUsed)% em uso (livre: $($freeGB)GB / total: $($totalGB)GB)"
             Suggestion = $suggestion
         }
     } catch {
@@ -110,9 +110,9 @@ function Get-MemoryAlert {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [3] Uptime
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Get-UptimeAlert {
     try {
@@ -131,7 +131,7 @@ function Get-UptimeAlert {
         $days        = [int]$span.TotalDays
         $hrs         = $span.Hours
         $mins        = $span.Minutes
-        $detail      = "${days}d ${hrs}h ${mins}m"
+        $detail      = "$($days)d $($hrs)h $($mins)m"
         $status      = if ($days -ge 30) { "CRITICO" }
                        elseif ($days -ge 15) { "ATENCAO" }
                        else { "OK" }
@@ -156,9 +156,9 @@ function Get-UptimeAlert {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [4] Internet / DNS
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Get-InternetAlert {
     $dnsOk = $false
@@ -201,9 +201,9 @@ function Get-InternetAlert {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [5] OneDrive (Windows only)
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Get-OneDriveAlert {
     if (-not (script:Test-IsWindowsDiag)) {
@@ -233,9 +233,9 @@ function Get-OneDriveAlert {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [6] Spooler (Windows only)
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Get-SpoolerAlert {
     if (-not (script:Test-IsWindowsDiag)) {
@@ -274,9 +274,9 @@ function Get-SpoolerAlert {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # [7] Reboot pendente (Windows only)
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Get-RebootPendingAlert {
     if (-not (script:Test-IsWindowsDiag)) {
@@ -331,9 +331,9 @@ function Get-RebootPendingAlert {
     }
 }
 
-# ──────────────────────────────────────────
+# ------------------------------------------
 # Funcao principal
-# ──────────────────────────────────────────
+# ------------------------------------------
 
 function Invoke-QuickDiagnostic {
     Write-Log -Message "Iniciando diagnostico rapido" -Level "INFO"
@@ -362,7 +362,7 @@ function Invoke-QuickDiagnostic {
         if ($r.Status -eq "ATENCAO" -and $overallStatus -ne "CRITICO") { $overallStatus = "ATENCAO" }
     }
 
-    Write-Log -Message "Diagnostico concluido — Status geral: $overallStatus" -Level "INFO"
+    Write-Log -Message "Diagnostico concluido - Status geral: $overallStatus" -Level "INFO"
 
     # Exibir status geral
     $statusColor = switch ($overallStatus) {
