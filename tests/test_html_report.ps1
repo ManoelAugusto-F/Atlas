@@ -60,10 +60,15 @@ $validations = @(
     @{ Pattern = "<!DOCTYPE html>"; Name = "DOCTYPE HTML" },
     @{ Pattern = "<html"; Name = "Tag HTML" },
     @{ Pattern = "Atlas"; Name = "Titulo Atlas" },
-    @{ Pattern = "Relatorio de Suporte"; Name = "Titulo do Relatorio" },
+    @{ Pattern = "Relatorio de Suporte da Maquina"; Name = "Titulo do Relatorio v0.2.1" },
     @{ Pattern = "<style>"; Name = "CSS embutido" },
     @{ Pattern = "section-title"; Name = "Classes CSS" },
-    @{ Pattern = "Sistema"; Name = "Secao Sistema" },
+    @{ Pattern = "Resumo de Problemas Encontrados"; Name = "Secao Resumo de Problemas" },
+    @{ Pattern = "Lentidao e Travamentos"; Name = "Secao Lentidao e Travamentos" },
+    @{ Pattern = "Rede e RDP"; Name = "Secao Rede e RDP" },
+    @{ Pattern = "Inicializacao e Encerramento"; Name = "Secao Inicializacao e Encerramento" },
+    @{ Pattern = "Acoes Recomendadas"; Name = "Secao Acoes Recomendadas" },
+    @{ Pattern = "Informacoes do Sistema"; Name = "Secao Sistema" },
     @{ Pattern = "Disco"; Name = "Secao Disco" },
     @{ Pattern = "Rede"; Name = "Secao Rede" }
 )

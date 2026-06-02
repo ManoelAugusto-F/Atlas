@@ -1,6 +1,8 @@
-# Atlas - Assistente de Manutencao Windows
+# Atlas - Assistente de Manutencao Windows v0.2.1
 
 O **Atlas** e um assistente interativo e modular desenvolvido em PowerShell, focado no diagnostico preventivo, triagem rapida e correcao de estacoes de trabalho. Desenvolvido sob rigorosos criterios de compatibilidade, o Atlas e 100% compativel com o **Windows PowerShell 5.1** e **PowerShell Core 7+** (cross-platform, com simulacoes seguras em ambiente nao-Windows).
+
+**Versao Atual**: v0.2.1 — Menu reorganizado para 9 opcoes, relatorio HTML aprimorado com 5 novas secoes analiticas, melhorias de UX em todos os menus, e 2 novas funcoes de instalacao de impressoras.
 
 ---
 

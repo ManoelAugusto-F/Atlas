@@ -156,6 +156,8 @@ $printerFunctions = @(
     'Restart-SpoolerSafe',
     'Clear-PrintQueueSafe',
     'Get-PrinterDrivers',
+    'Add-TcpIpPrinterSafe',
+    'Add-SharedPrinterSafe',
     'Show-PrinterMenu'
 )
 
@@ -564,7 +566,7 @@ Write-Host ""
 Write-Host "Validacao de relatorio HTML concluida." -ForegroundColor Green
 
 $running = $true
-$inputs  = @('1','2','3','4','5','6','7','8','9','10','99','0')
+$inputs  = @('1','2','3','4','5','6','7','8','9','99','0')
 $idx     = 0
 
 while ($running) {
@@ -575,16 +577,15 @@ while ($running) {
     Write-Host "========================================" -ForegroundColor DarkCyan
 
     switch ($option) {
-        '1'  { Invoke-QuickDiagnostic }
+        '1'  { Write-Log -Message "Relatorio HTML (funcao New-AtlasSupportHtmlReport validada, sem geracao de arquivo)" -Level "INFO" }
         '2'  { Write-Log -Message "Limpeza segura (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '3'  { Write-Log -Message "Rede e internet (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '4'  { Write-Log -Message "OneDrive (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '5'  { Write-Log -Message "Impressoras (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '6'  { Write-Log -Message "Reparos Windows (modulo validado acima, sem execucao de SFC/DISM)" -Level "INFO" }
-        '7'  { Write-Log -Message "Relatorio HTML (funcao validada acima, sem geracao de arquivo)" -Level "INFO" }
-        '8'  { Write-Log -Message "Submenu Outlook (funcao Show-OutlookMenu validada)" -Level "INFO" }
-        '9'  { Write-Log -Message "Submenu Teams (funcao Show-TeamsMenu validada)" -Level "INFO" }
-        '10' { Write-Log -Message "Submenu Navegadores (funcao Show-BrowserMenu validada)" -Level "INFO" }
+        '7'  { Write-Log -Message "Submenu Outlook (funcao Show-OutlookMenu validada)" -Level "INFO" }
+        '8'  { Write-Log -Message "Submenu Teams (funcao Show-TeamsMenu validada)" -Level "INFO" }
+        '9'  { Write-Log -Message "Submenu Navegadores (funcao Show-BrowserMenu validada)" -Level "INFO" }
         '0'  { Write-Log -Message "Atlas encerrado" -Level "INFO"; $running = $false }
         default {
             Write-Log -Message "Opcao invalida: $option" -Level "WARN"

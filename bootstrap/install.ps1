@@ -22,18 +22,15 @@
 
 # Validacao de import
 $requiredFunctions = @(
-    "Invoke-QuickDiagnostic",
+    "New-AtlasSupportHtmlReport",
     "Show-CleanupMenu",
     "Show-NetworkMenu",
     "Show-OneDriveMenu",
     "Show-PrinterMenu",
     "Show-WindowsRepairMenu",
-    "New-AtlasSupportReport",
-    "Get-OutlookStatus",
-    "Get-TeamsStatus",
-    "Get-BrowserProfiles",
-    "Get-InstalledPrograms",
-    "Get-CriticalServices"
+    "Show-OutlookMenu",
+    "Show-TeamsMenu",
+    "Show-BrowserMenu"
 )
 
 foreach ($fn in $requiredFunctions) {
@@ -57,7 +54,7 @@ while ($running) {
     switch ($option) {
 
         "1" {
-            Invoke-QuickDiagnostic
+            New-AtlasSupportHtmlReport
             Wait-UserInput
         }
 
@@ -82,19 +79,14 @@ while ($running) {
         }
 
         "7" {
-            New-AtlasSupportHtmlReport
-            Wait-UserInput
-        }
-
-        "8" {
             Show-OutlookMenu
         }
 
-        "9" {
+        "8" {
             Show-TeamsMenu
         }
 
-        "10" {
+        "9" {
             Show-BrowserMenu
         }
 
@@ -105,7 +97,7 @@ while ($running) {
 
         default {
             Write-Log -Message "Opcao invalida selecionada: $option" -Level "WARN"
-            Write-Host "Opcao invalida. Escolha entre 0 e 10." -ForegroundColor Yellow
+            Write-Host "Opcao invalida. Escolha entre 0 e 9." -ForegroundColor Yellow
             Wait-UserInput
         }
     }

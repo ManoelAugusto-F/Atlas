@@ -335,12 +335,26 @@ function Show-CleanupMenu {
         Write-Host "==========================================" -ForegroundColor Cyan
         Write-Host ""
         Write-Host "[1]  Ver maiores pastas do perfil"
+        Write-Host "     Analisa D:\Users para encontrar pasta mais pesada"
+        Write-Host ""
         Write-Host "[2]  Ver maiores arquivos do perfil"
+        Write-Host "     Lista arquivos individuais acima de 50MB"
+        Write-Host ""
         Write-Host "[3]  Limpar temporarios do usuario"
+        Write-Host "     Remove %TEMP% e AppData\Local\Temp (seguro)"
+        Write-Host ""
         Write-Host "[4]  Limpar temporarios do Windows"
+        Write-Host "     Limpa C:\Windows\Temp sem afetar sistema"
+        Write-Host ""
         Write-Host "[5]  Limpar cache do Windows Update"
+        Write-Host "     Remove arquivos baixados ja instalados"
+        Write-Host ""
         Write-Host "[6]  Esvaziar lixeira"
+        Write-Host "     Permanentemente remove arquivos deletados"
+        Write-Host ""
         Write-Host "[7]  Limpeza segura completa"
+        Write-Host "     Executa 1-6 em sequencia (requer confirmacao)"
+        Write-Host ""
         Write-Host "[0]  Voltar"
         Write-Host ""
 
@@ -353,7 +367,26 @@ function Show-CleanupMenu {
             "4" { Clear-WindowsTemp;          Wait-UserInput }
             "5" { Clear-WindowsUpdateCache;   Wait-UserInput }
             "6" { Clear-RecycleBinSafe;       Wait-UserInput }
-            "7" { Invoke-SafeCleanup;         Wait-UserInput }
+            "7" {
+                Write-Host ""
+                Write-Host "AVISO: Limpeza Segura Completa" -ForegroundColor Yellow
+                Write-Host "Sera removido:" -ForegroundColor Yellow
+                Write-Host "  - Temporarios do usuario" -ForegroundColor Gray
+                Write-Host "  - Temporarios do Windows" -ForegroundColor Gray
+                Write-Host "  - Cache Windows Update" -ForegroundColor Gray
+                Write-Host "  - Lixeira" -ForegroundColor Gray
+                Write-Host "" -ForegroundColor Yellow
+                Write-Host "NAO sera removido:" -ForegroundColor Yellow
+                Write-Host "  - Documentos, Downloads, Fotos, Desktop" -ForegroundColor Gray
+                Write-Host "  - Arquivos pessoais ou programas" -ForegroundColor Gray
+                Write-Host "  - Senhas ou configuracoes" -ForegroundColor Gray
+                Write-Host "" -ForegroundColor Yellow
+                $confirm = Read-Host "Continuar? (s/N)"
+                if ($confirm -match '^[sS]$') {
+                    Invoke-SafeCleanup
+                }
+                Wait-UserInput
+            }
             "0" {
                 Write-Log -Message "Saindo do menu de limpeza" -Level "INFO"
                 $cleanRunning = $false

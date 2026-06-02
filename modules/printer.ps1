@@ -246,9 +246,125 @@ function Get-PrinterDrivers {
     }
 }
 
-# ------------------------------------------
+# ──────────────────────────────────────────
+# [6] Instalar impressora TCP/IP
+# ──────────────────────────────────────────
+
+function Add-TcpIpPrinterSafe {
+    Write-Log -Message "Iniciando adicao de impressora TCP/IP" -Level "INFO"
+
+    $isWindows = $IsWindows -or ($env:OS -like "*Windows*")
+    if (-not $isWindows) {
+        Write-Host "Esta opcao so esta disponivel no Windows." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Host ""
+    Write-Host "Instalar Impressora TCP/IP" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $printerIp = Read-Host "IP da impressora"
+    if (-not $printerIp) {
+        Write-Host "IP invalido." -ForegroundColor Yellow
+        return
+    }
+
+    $printerName = Read-Host "Nome da impressora (ex: HP-LaserJet-3)"
+    if (-not $printerName) {
+        Write-Host "Nome invalido." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Host ""
+    Write-Host "Confirmando criacao de porta TCP/IP para $printerIp..." -ForegroundColor Yellow
+    $confirm = Read-Host "Continuar? (s/N)"
+    if ($confirm -notmatch '^[sS]$') {
+        Write-Host "Cancelado." -ForegroundColor Yellow
+        return
+    }
+
+    try {
+        Write-Host "Criando porta TCP/IP..." -ForegroundColor Cyan
+        
+        # Criar porta (requer admin)
+        $portName = "IP_$($printerIp -replace '\.', '_')"
+        $port = @{
+            Name = $portName
+            PrinterHostAddress = $printerIp
+            Protocol = "LPR"
+            PortNumber = 9100
+        }
+        
+        Add-PrinterPort @port -ErrorAction Stop
+        Write-Host "Porta criada: $portName" -ForegroundColor Green
+        
+        # Adicionar impressora
+        Write-Host "Adicionando impressora $printerName..." -ForegroundColor Cyan
+        Add-Printer -Name $printerName -PortName $portName -DriverName "Generic / Text Only" -ErrorAction Stop
+        
+        Write-Host ""
+        Write-Host "Impressora adicionada com sucesso!" -ForegroundColor Green
+        Write-Host "Nome: $printerName" -ForegroundColor Gray
+        Write-Host "IP: $printerIp" -ForegroundColor Gray
+        Write-Log -Message "Impressora TCP/IP adicionada: $printerName ($printerIp)" -Level "INFO"
+        
+    } catch {
+        Write-Log -Message "Erro ao adicionar impressora TCP/IP: $_" -Level "ERROR"
+        Write-Host "Erro ao adicionar impressora: $_" -ForegroundColor Red
+    }
+}
+
+# ──────────────────────────────────────────
+# [7] Adicionar impressora compartilhada (UNC)
+# ──────────────────────────────────────────
+
+function Add-SharedPrinterSafe {
+    Write-Log -Message "Iniciando adicao de impressora compartilhada" -Level "INFO"
+
+    $isWindows = $IsWindows -or ($env:OS -like "*Windows*")
+    if (-not $isWindows) {
+        Write-Host "Esta opcao so esta disponivel no Windows." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Host ""
+    Write-Host "Adicionar Impressora Compartilhada" -ForegroundColor Cyan
+    Write-Host ""
+    
+    Write-Host "Caminho UNC (exemplo: \\servidor\impressora)" -ForegroundColor Gray
+    $uncPath = Read-Host "Caminho"
+    if (-not $uncPath) {
+        Write-Host "Caminho invalido." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Host ""
+    Write-Host "Confirmando adicao de impressora compartilhada..." -ForegroundColor Yellow
+    Write-Host "Caminho: $uncPath" -ForegroundColor Gray
+    $confirm = Read-Host "Continuar? (s/N)"
+    if ($confirm -notmatch '^[sS]$') {
+        Write-Host "Cancelado." -ForegroundColor Yellow
+        return
+    }
+
+    try {
+        Write-Host "Adicionando impressora compartilhada..." -ForegroundColor Cyan
+        Add-Printer -ConnectionName $uncPath -ErrorAction Stop
+        
+        Write-Host ""
+        Write-Host "Impressora compartilhada adicionada com sucesso!" -ForegroundColor Green
+        Write-Host "Caminho: $uncPath" -ForegroundColor Gray
+        Write-Log -Message "Impressora compartilhada adicionada: $uncPath" -Level "INFO"
+        
+    } catch {
+        Write-Log -Message "Erro ao adicionar impressora compartilhada: $_" -Level "ERROR"
+        Write-Host "Erro ao adicionar impressora: $_" -ForegroundColor Red
+    }
+}
+
+# ──────────────────────────────────────────
 # Menu de impressoras
-# ------------------------------------------
+# ──────────────────────────────────────────
 
 function Show-PrinterMenu {
     $printerRunning = $true
@@ -265,17 +381,21 @@ function Show-PrinterMenu {
         Write-Host "[3]  Reiniciar Spooler"
         Write-Host "[4]  Limpar fila de impressao"
         Write-Host "[5]  Ver drivers de impressora"
+        Write-Host "[6]  Instalar impressora TCP/IP"
+        Write-Host "[7]  Adicionar impressora compartilhada (UNC)"
         Write-Host "[0]  Voltar"
         Write-Host ""
 
         $opt = Read-Host "Escolha uma opcao"
 
         switch ($opt) {
-            "1" { Get-PrinterList;       Wait-UserInput }
-            "2" { Get-PrintQueueStatus;  Wait-UserInput }
-            "3" { Restart-SpoolerSafe;   Wait-UserInput }
-            "4" { Clear-PrintQueueSafe;  Wait-UserInput }
-            "5" { Get-PrinterDrivers;    Wait-UserInput }
+            "1" { Get-PrinterList;                Wait-UserInput }
+            "2" { Get-PrintQueueStatus;            Wait-UserInput }
+            "3" { Restart-SpoolerSafe;             Wait-UserInput }
+            "4" { Clear-PrintQueueSafe;            Wait-UserInput }
+            "5" { Get-PrinterDrivers;              Wait-UserInput }
+            "6" { Add-TcpIpPrinterSafe;             Wait-UserInput }
+            "7" { Add-SharedPrinterSafe;           Wait-UserInput }
             "0" {
                 Write-Log -Message "Saindo do menu de impressoras" -Level "INFO"
                 $printerRunning = $false
