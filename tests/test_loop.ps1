@@ -8,6 +8,11 @@
 . "$PSScriptRoot/../modules/windows-repair.ps1"
 . "$PSScriptRoot/../modules/support-report.ps1"
 . "$PSScriptRoot/../modules/quick-diagnostic.ps1"
+. "$PSScriptRoot/../modules/outlook.ps1"
+. "$PSScriptRoot/../modules/teams.ps1"
+. "$PSScriptRoot/../modules/browser.ps1"
+. "$PSScriptRoot/../modules/programs.ps1"
+. "$PSScriptRoot/../modules/services.ps1"
 
 # ── Validar funcoes do modulo cleanup ──────────────────────────────
 Write-Host ""
@@ -284,8 +289,163 @@ if (-not $allOk) {
 Write-Host ""
 Write-Host "Todas as funcoes de quick-diagnostic validadas." -ForegroundColor Green
 
+# ── Validar funcoes do modulo outlook ───────────────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes de outlook.ps1" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$outlookFunctions = @('Get-OutlookStatus')
+
+$allOk = $true
+foreach ($fn in $outlookFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes de outlook nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "[TESTE] Executando Get-OutlookStatus" -ForegroundColor Magenta
+Get-OutlookStatus
+
+Write-Host ""
+Write-Host "Todas as funcoes de outlook validadas." -ForegroundColor Green
+
+# ── Validar funcoes do modulo teams ──────────────────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes de teams.ps1" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$teamsFunctions = @('Get-TeamsStatus')
+
+$allOk = $true
+foreach ($fn in $teamsFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes de teams nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "[TESTE] Executando Get-TeamsStatus" -ForegroundColor Magenta
+Get-TeamsStatus
+
+Write-Host ""
+Write-Host "Todas as funcoes de teams validadas." -ForegroundColor Green
+
+# ── Validar funcoes do modulo browser ────────────────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes de browser.ps1" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$browserFunctions = @('Get-BrowserProfiles')
+
+$allOk = $true
+foreach ($fn in $browserFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes de browser nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "[TESTE] Executando Get-BrowserProfiles" -ForegroundColor Magenta
+Get-BrowserProfiles
+
+Write-Host ""
+Write-Host "Todas as funcoes de browser validadas." -ForegroundColor Green
+
+# ── Validar funcoes do modulo programs ───────────────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes de programs.ps1" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$programsFunctions = @('Get-InstalledPrograms')
+
+$allOk = $true
+foreach ($fn in $programsFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes de programs nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "[TESTE] Executando Get-InstalledPrograms" -ForegroundColor Magenta
+Get-InstalledPrograms
+
+Write-Host ""
+Write-Host "Todas as funcoes de programs validadas." -ForegroundColor Green
+
+# ── Validar funcoes do modulo services ───────────────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes de services.ps1" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$servicesFunctions = @('Get-CriticalServices')
+
+$allOk = $true
+foreach ($fn in $servicesFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes de services nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "[TESTE] Executando Get-CriticalServices" -ForegroundColor Magenta
+Get-CriticalServices
+
+Write-Host ""
+Write-Host "Todas as funcoes de services validadas." -ForegroundColor Green
+
 $running = $true
-$inputs  = @('1','2','3','4','5','6','7','99','0')
+$inputs  = @('1','2','3','4','5','6','7','8','9','10','11','12','99','0')
 $idx     = 0
 
 while ($running) {
@@ -303,6 +463,11 @@ while ($running) {
         '5'  { Write-Log -Message "Impressoras (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '6'  { Write-Log -Message "Reparos Windows (modulo validado acima, sem execucao de SFC/DISM)" -Level "INFO" }
         '7'  { New-AtlasSupportReport }
+        '8'  { Get-OutlookStatus }
+        '9'  { Get-TeamsStatus }
+        '10' { Get-BrowserProfiles }
+        '11' { Get-InstalledPrograms }
+        '12' { Get-CriticalServices }
         '0'  { Write-Log -Message "Atlas encerrado" -Level "INFO"; $running = $false }
         default {
             Write-Log -Message "Opcao invalida: $option" -Level "WARN"
