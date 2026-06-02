@@ -191,3 +191,206 @@ function Get-OutlookProfiles {
 
     return $profiles
 }
+
+function Restart-OutlookSafe {
+    <#
+    .SYNOPSIS
+        Reinicia o Outlook com confirmacao do usuario.
+    #>
+    [CmdletBinding()]
+    param()
+
+    Write-Host ""
+    Write-Host "Confirma o reinicio do Microsoft Outlook? (S/N): " -NoNewline
+    $ans = Read-Host
+    if ($ans -notmatch "^[sS]") {
+        Write-Log -Level "INFO" -Message "Reinicio do Outlook cancelado."
+        return
+    }
+
+    Restart-OutlookProcess -Force
+    Write-Host "Outlook foi reiniciado." -ForegroundColor Green
+    Write-Log -Level "INFO" -Message "Outlook reiniciado com sucesso."
+}
+
+function Open-OutlookDataFolder {
+    <#
+    .SYNOPSIS
+        Abre a pasta de dados do Outlook (PST/OST).
+    #>
+    [CmdletBinding()]
+    param()
+
+    if (-not ($IsWindows -or ($env:OS -like "*Windows*"))) {
+        Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Log -Level "INFO" -Message "Abrindo pasta de dados do Outlook..."
+    $dataPath = "$env:LocalAppData\Microsoft\Outlook"
+    
+    if (Test-Path $dataPath) {
+        Write-Host "Abrindo: $dataPath" -ForegroundColor Cyan
+        Invoke-Item $dataPath
+        Write-Log -Level "INFO" -Message "Pasta de dados aberta: $dataPath"
+    } else {
+        Write-Host "Pasta de dados nao encontrada: $dataPath" -ForegroundColor Yellow
+        Write-Log -Level "WARN" -Message "Pasta de dados do Outlook nao existe."
+    }
+}
+
+function Open-OutlookCacheFolder {
+    <#
+    .SYNOPSIS
+        Abre a pasta RoamCache do Outlook.
+    #>
+    [CmdletBinding()]
+    param()
+
+    if (-not ($IsWindows -or ($env:OS -like "*Windows*"))) {
+        Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Log -Level "INFO" -Message "Abrindo pasta RoamCache do Outlook..."
+    $cachePath = "$env:LocalAppData\Microsoft\Outlook\RoamCache"
+    
+    if (Test-Path $cachePath) {
+        Write-Host "Abrindo: $cachePath" -ForegroundColor Cyan
+        Invoke-Item $cachePath
+        Write-Log -Level "INFO" -Message "Pasta RoamCache aberta."
+    } else {
+        Write-Host "Pasta RoamCache nao encontrada. Pode ser criada na proxima sincronizacao." -ForegroundColor Yellow
+    }
+}
+
+function Clear-OutlookRoamCacheSafe {
+    <#
+    .SYNOPSIS
+        Limpa o cache RoamCache do Outlook com confirmacao.
+    #>
+    [CmdletBinding()]
+    param()
+
+    if (-not ($IsWindows -or ($env:OS -like "*Windows*"))) {
+        Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
+        return
+    }
+
+    $cachePath = "$env:LocalAppData\Microsoft\Outlook\RoamCache"
+    
+    if (-not (Test-Path $cachePath)) {
+        Write-Host "Pasta RoamCache nao encontrada. Nada para limpar." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Host ""
+    Write-Host "Deseja limpar o cache RoamCache do Outlook?" -ForegroundColor Yellow
+    Write-Host "Isso forcara o Outlook a resincronizar dados na proxima execucao." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Confirma? (S/N): " -NoNewline
+    $ans = Read-Host
+    if ($ans -notmatch "^[sS]") {
+        Write-Log -Level "INFO" -Message "Limpeza de RoamCache cancelada."
+        return
+    }
+
+    $status = Get-OutlookStatus
+    if ($status.ProcessRunning) {
+        Write-Host ""
+        Write-Host "Aviso: Outlook esta em execucao. Encerrando..." -ForegroundColor Yellow
+        try {
+            Stop-Process -Name "outlook" -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+        } catch {}
+    }
+
+    Write-Log -Level "INFO" -Message "Removendo cache RoamCache: $cachePath"
+    try {
+        Remove-Item -Path "$cachePath\*" -Recurse -Force -ErrorAction Stop
+        Write-Host "Cache RoamCache limpo com sucesso." -ForegroundColor Green
+        Write-Log -Level "INFO" -Message "Cache RoamCache limpo."
+    } catch {
+        Write-Host "Erro ao limpar cache: $_" -ForegroundColor Red
+        Write-Log -Level "ERROR" -Message "Erro ao limpar RoamCache: $_"
+    }
+}
+
+function Show-OutlookMenu {
+    <#
+    .SYNOPSIS
+        Exibe o menu do Outlook Toolkit.
+    #>
+    [CmdletBinding()]
+    param()
+
+    Write-Log -Level "INFO" -Message "Menu do Outlook aberto."
+    $running = $true
+
+    while ($running) {
+        Clear-Host
+        Write-Host ""
+        Write-Host "==========================================" -ForegroundColor Cyan
+        Write-Host "  Atlas - Outlook" -ForegroundColor Cyan
+        Write-Host "==========================================" -ForegroundColor Cyan
+        Write-Host ""
+
+        Write-Host "[1] Ver status do Outlook"
+        Write-Host "[2] Reiniciar Outlook"
+        Write-Host "[3] Abrir pasta de dados do Outlook"
+        Write-Host "[4] Abrir logs/pasta RoamCache"
+        Write-Host "[5] Limpar cache RoamCache"
+        Write-Host "[6] Ver perfis do Outlook"
+        Write-Host "[0] Voltar"
+        Write-Host ""
+
+        $option = Read-Host "Escolha uma opcao"
+
+        switch ($option) {
+            "1" {
+                Write-Host ""
+                $status = Get-OutlookStatus
+                Write-Host "Status: $(if ($status.ProcessRunning) { "Aberto" } else { "Fechado" })" -ForegroundColor Green
+                Write-Host "Instalado: $(if ($status.Installed) { "Sim" } else { "Nao" })" -ForegroundColor Gray
+                Write-Log -Level "INFO" -Message "Status do Outlook consultado."
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "2" {
+                Restart-OutlookSafe
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "3" {
+                Open-OutlookDataFolder
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "4" {
+                Open-OutlookCacheFolder
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "5" {
+                Clear-OutlookRoamCacheSafe
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "6" {
+                Write-Host ""
+                $profiles = Get-OutlookProfiles
+                if ($profiles.Count -eq 0) {
+                    Write-Host "Nenhum perfil encontrado." -ForegroundColor Yellow
+                } else {
+                    Write-Host "Perfis encontrados:" -ForegroundColor Green
+                    $profiles | ForEach-Object { Write-Host "  - $_" }
+                }
+                Write-Log -Level "INFO" -Message "Perfis do Outlook consultados."
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "0" {
+                Write-Log -Level "INFO" -Message "Menu do Outlook fechado."
+                $running = $false
+            }
+            default {
+                Write-Host "Opcao invalida." -ForegroundColor Yellow
+                Read-Host "`nPressione Enter para continuar"
+            }
+        }
+    }
+}

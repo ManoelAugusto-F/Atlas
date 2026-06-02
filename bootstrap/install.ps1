@@ -82,33 +82,20 @@ while ($running) {
         }
 
         "7" {
-            New-AtlasSupportReport
+            New-AtlasSupportHtmlReport
             Wait-UserInput
         }
 
         "8" {
-            Get-OutlookStatus
-            Wait-UserInput
+            Show-OutlookMenu
         }
 
         "9" {
-            Get-TeamsStatus
-            Wait-UserInput
+            Show-TeamsMenu
         }
 
         "10" {
-            Get-BrowserProfiles
-            Wait-UserInput
-        }
-
-        "11" {
-            Get-InstalledPrograms
-            Wait-UserInput
-        }
-
-        "12" {
-            Get-CriticalServices
-            Wait-UserInput
+            Show-BrowserMenu
         }
 
         "0" {
@@ -118,7 +105,7 @@ while ($running) {
 
         default {
             Write-Log -Message "Opcao invalida selecionada: $option" -Level "WARN"
-            Write-Host "Opcao invalida. Escolha entre 0 e 12." -ForegroundColor Yellow
+            Write-Host "Opcao invalida. Escolha entre 0 e 10." -ForegroundColor Yellow
             Wait-UserInput
         }
     }

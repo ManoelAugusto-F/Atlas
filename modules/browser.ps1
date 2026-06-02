@@ -193,3 +193,257 @@ function Clear-BrowserCache {
         return $false
     }
 }
+
+function Get-BrowserStatus {
+    <#
+    .SYNOPSIS
+        Retorna o status de navegadores instalados de forma legivel.
+    #>
+    [CmdletBinding()]
+    param()
+
+    Write-Log -Level "INFO" -Message "Verificando status dos navegadores..."
+    Write-Host ""
+    
+    $profiles = Get-BrowserProfiles
+    foreach ($browser in $profiles) {
+        $status = if ($browser.Installed) { "Instalado" } else { "Nao instalado" }
+        $statusColor = if ($browser.Installed) { "Green" } else { "Gray" }
+        Write-Host "$($browser.Browser): " -NoNewline
+        Write-Host $status -ForegroundColor $statusColor
+        if ($browser.Installed -and $browser.Profiles.Count -gt 0) {
+            Write-Host "  Perfis: $($browser.Profiles -join ', ')" -ForegroundColor Gray
+        }
+    }
+}
+
+function Open-BrowserProfileFolder {
+    <#
+    .SYNOPSIS
+        Abre a pasta de perfis de um navegador especifico.
+    .PARAMETER Browser
+        Nome do navegador: "Chrome", "Edge" ou "Firefox".
+    #>
+    [CmdletBinding()]
+    param(
+        [ValidateSet("Chrome", "Edge", "Firefox")]
+        [string]$Browser = "Chrome"
+    )
+
+    if (-not ($IsWindows -or ($env:OS -like "*Windows*"))) {
+        Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Log -Level "INFO" -Message "Abrindo pasta de perfil do $Browser..."
+
+    $paths = @{
+        "Chrome" = "$env:LocalAppData\Google\Chrome\User Data"
+        "Edge" = "$env:LocalAppData\Microsoft\Edge\User Data"
+        "Firefox" = "$env:AppData\Mozilla\Firefox\Profiles"
+    }
+
+    $path = $paths[$Browser]
+    if (Test-Path $path) {
+        Write-Host "Abrindo: $path" -ForegroundColor Cyan
+        Invoke-Item $path
+    } else {
+        Write-Host "Pasta de perfil nao encontrada: $path" -ForegroundColor Yellow
+    }
+}
+
+function Clear-ChromeCacheSafe {
+    <#
+    .SYNOPSIS
+        Limpa cache do Chrome com confirmacao.
+    #>
+    [CmdletBinding()]
+    param()
+
+    Write-Host ""
+    Write-Host "Deseja limpar o cache do Google Chrome?" -ForegroundColor Yellow
+    Write-Host "Isso encerrara o Chrome temporariamente." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Confirma? (S/N): " -NoNewline
+    $ans = Read-Host
+    if ($ans -notmatch "^[sS]") {
+        Write-Log -Level "INFO" -Message "Limpeza de cache do Chrome cancelada."
+        return
+    }
+
+    $result = Clear-BrowserCache -BrowserName "Chrome"
+    if ($result) {
+        Write-Host "Cache do Chrome limpo com sucesso." -ForegroundColor Green
+    } else {
+        Write-Host "Nenhum cache foi encontrado para limpar." -ForegroundColor Yellow
+    }
+}
+
+function Clear-EdgeCacheSafe {
+    <#
+    .SYNOPSIS
+        Limpa cache do Edge com confirmacao.
+    #>
+    [CmdletBinding()]
+    param()
+
+    Write-Host ""
+    Write-Host "Deseja limpar o cache do Microsoft Edge?" -ForegroundColor Yellow
+    Write-Host "Isso encerrara o Edge temporariamente." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Confirma? (S/N): " -NoNewline
+    $ans = Read-Host
+    if ($ans -notmatch "^[sS]") {
+        Write-Log -Level "INFO" -Message "Limpeza de cache do Edge cancelada."
+        return
+    }
+
+    $result = Clear-BrowserCache -BrowserName "Edge"
+    if ($result) {
+        Write-Host "Cache do Edge limpo com sucesso." -ForegroundColor Green
+    } else {
+        Write-Host "Nenhum cache foi encontrado para limpar." -ForegroundColor Yellow
+    }
+}
+
+function Clear-FirefoxCacheSafe {
+    <#
+    .SYNOPSIS
+        Limpa cache do Firefox com confirmacao.
+    #>
+    [CmdletBinding()]
+    param()
+
+    Write-Host ""
+    Write-Host "Deseja limpar o cache do Mozilla Firefox?" -ForegroundColor Yellow
+    Write-Host "Isso encerrara o Firefox temporariamente." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Confirma? (S/N): " -NoNewline
+    $ans = Read-Host
+    if ($ans -notmatch "^[sS]") {
+        Write-Log -Level "INFO" -Message "Limpeza de cache do Firefox cancelada."
+        return
+    }
+
+    $result = Clear-BrowserCache -BrowserName "Firefox"
+    if ($result) {
+        Write-Host "Cache do Firefox limpo com sucesso." -ForegroundColor Green
+    } else {
+        Write-Host "Nenhum cache foi encontrado para limpar." -ForegroundColor Yellow
+    }
+}
+
+function Clear-AllBrowserCachesSafe {
+    <#
+    .SYNOPSIS
+        Limpa cache de todos os navegadores com confirmacao.
+    #>
+    [CmdletBinding()]
+    param()
+
+    Write-Host ""
+    Write-Host "Deseja limpar o cache de TODOS os navegadores?" -ForegroundColor Red
+    Write-Host "Isso encerrara Chrome, Edge e Firefox temporariamente." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Confirma? (S/N): " -NoNewline
+    $ans = Read-Host
+    if ($ans -notmatch "^[sS]") {
+        Write-Log -Level "INFO" -Message "Limpeza de cache geral cancelada."
+        return
+    }
+
+    $result = Clear-BrowserCache -BrowserName "All"
+    if ($result) {
+        Write-Host "Caches de todos os navegadores foram limpos com sucesso." -ForegroundColor Green
+    } else {
+        Write-Host "Nenhum cache foi encontrado para limpar." -ForegroundColor Yellow
+    }
+}
+
+function Show-BrowserMenu {
+    <#
+    .SYNOPSIS
+        Exibe o menu do Browser Toolkit.
+    #>
+    [CmdletBinding()]
+    param()
+
+    Write-Log -Level "INFO" -Message "Menu de navegadores aberto."
+    $running = $true
+
+    while ($running) {
+        Clear-Host
+        Write-Host ""
+        Write-Host "==========================================" -ForegroundColor Cyan
+        Write-Host "  Atlas - Navegadores" -ForegroundColor Cyan
+        Write-Host "==========================================" -ForegroundColor Cyan
+        Write-Host ""
+
+        Write-Host "[1] Detectar navegadores instalados"
+        Write-Host "[2] Ver perfis dos navegadores"
+        Write-Host "[3] Abrir pasta de perfil"
+        Write-Host "[4] Limpar cache Chrome"
+        Write-Host "[5] Limpar cache Edge"
+        Write-Host "[6] Limpar cache Firefox"
+        Write-Host "[7] Limpar cache de todos"
+        Write-Host "[0] Voltar"
+        Write-Host ""
+
+        $option = Read-Host "Escolha uma opcao"
+
+        switch ($option) {
+            "1" {
+                Write-Host ""
+                $profiles = Get-BrowserProfiles
+                Write-Host "Navegadores instalados:" -ForegroundColor Cyan
+                foreach ($p in $profiles) {
+                    $status = if ($p.Installed) { "[OK]" } else { "[--]" }
+                    Write-Host "$status $($p.Browser)" -ForegroundColor Green
+                }
+                Write-Log -Level "INFO" -Message "Navegadores detectados."
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "2" {
+                Write-Host ""
+                Get-BrowserStatus
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "3" {
+                Write-Host ""
+                Write-Host "Qual navegador? [1=Chrome, 2=Edge, 3=Firefox]: " -NoNewline
+                $browserChoice = Read-Host
+                $browserMap = @{"1" = "Chrome"; "2" = "Edge"; "3" = "Firefox"}
+                if ($browserChoice -in "1", "2", "3") {
+                    Open-BrowserProfileFolder -Browser $browserMap[$browserChoice]
+                } else {
+                    Write-Host "Opcao invalida." -ForegroundColor Yellow
+                }
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "4" {
+                Clear-ChromeCacheSafe
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "5" {
+                Clear-EdgeCacheSafe
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "6" {
+                Clear-FirefoxCacheSafe
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "7" {
+                Clear-AllBrowserCachesSafe
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "0" {
+                Write-Log -Level "INFO" -Message "Menu de navegadores fechado."
+                $running = $false
+            }
+            default {
+                Write-Host "Opcao invalida." -ForegroundColor Yellow
+                Read-Host "`nPressione Enter para continuar"
+            }
+        }
+    }
+}

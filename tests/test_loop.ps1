@@ -444,8 +444,127 @@ Get-CriticalServices
 Write-Host ""
 Write-Host "Todas as funcoes de services validadas." -ForegroundColor Green
 
+# ── Validar funcoes do modulo outlook v0.2 toolkit ───────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes do Outlook Toolkit" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$outlookToolkitFunctions = @(
+    'Show-OutlookMenu',
+    'Restart-OutlookSafe',
+    'Open-OutlookDataFolder',
+    'Open-OutlookCacheFolder',
+    'Clear-OutlookRoamCacheSafe'
+)
+
+$allOk = $true
+foreach ($fn in $outlookToolkitFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes do Outlook Toolkit nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "Todas as funcoes do Outlook Toolkit validadas." -ForegroundColor Green
+
+# ── Validar funcoes do modulo teams v0.2 toolkit ────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes do Teams Toolkit" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$teamsToolkitFunctions = @(
+    'Show-TeamsMenu',
+    'Restart-TeamsSafe',
+    'Clear-TeamsCacheSafe',
+    'Open-TeamsCacheFolder',
+    'Get-TeamsPersonalStatus',
+    'Get-TeamsWorkSchoolStatus',
+    'Remove-TeamsPersonalSafe'
+)
+
+$allOk = $true
+foreach ($fn in $teamsToolkitFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes do Teams Toolkit nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "Todas as funcoes do Teams Toolkit validadas." -ForegroundColor Green
+
+# ── Validar funcoes do modulo browser v0.2 toolkit ─────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes do Browser Toolkit" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$browserToolkitFunctions = @(
+    'Show-BrowserMenu',
+    'Get-BrowserStatus',
+    'Open-BrowserProfileFolder',
+    'Clear-ChromeCacheSafe',
+    'Clear-EdgeCacheSafe',
+    'Clear-FirefoxCacheSafe',
+    'Clear-AllBrowserCachesSafe'
+)
+
+$allOk = $true
+foreach ($fn in $browserToolkitFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes do Browser Toolkit nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "Todas as funcoes do Browser Toolkit validadas." -ForegroundColor Green
+
+# ── Validar funcao New-AtlasSupportHtmlReport ────────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando New-AtlasSupportHtmlReport" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+if (Get-Command "New-AtlasSupportHtmlReport" -ErrorAction SilentlyContinue) {
+    Write-Host "  [OK] New-AtlasSupportHtmlReport" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] New-AtlasSupportHtmlReport nao encontrada" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "Validacao de relatorio HTML concluida." -ForegroundColor Green
+
 $running = $true
-$inputs  = @('1','2','3','4','5','6','7','8','9','10','11','12','99','0')
+$inputs  = @('1','2','3','4','5','6','7','8','9','10','99','0')
 $idx     = 0
 
 while ($running) {
@@ -462,12 +581,10 @@ while ($running) {
         '4'  { Write-Log -Message "OneDrive (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '5'  { Write-Log -Message "Impressoras (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
         '6'  { Write-Log -Message "Reparos Windows (modulo validado acima, sem execucao de SFC/DISM)" -Level "INFO" }
-        '7'  { New-AtlasSupportReport }
-        '8'  { Get-OutlookStatus }
-        '9'  { Get-TeamsStatus }
-        '10' { Get-BrowserProfiles }
-        '11' { Get-InstalledPrograms }
-        '12' { Get-CriticalServices }
+        '7'  { Write-Log -Message "Relatorio HTML (funcao validada acima, sem geracao de arquivo)" -Level "INFO" }
+        '8'  { Write-Log -Message "Submenu Outlook (funcao Show-OutlookMenu validada)" -Level "INFO" }
+        '9'  { Write-Log -Message "Submenu Teams (funcao Show-TeamsMenu validada)" -Level "INFO" }
+        '10' { Write-Log -Message "Submenu Navegadores (funcao Show-BrowserMenu validada)" -Level "INFO" }
         '0'  { Write-Log -Message "Atlas encerrado" -Level "INFO"; $running = $false }
         default {
             Write-Log -Message "Opcao invalida: $option" -Level "WARN"
