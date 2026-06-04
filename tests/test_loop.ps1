@@ -13,6 +13,7 @@
 . "$PSScriptRoot/../modules/browser.ps1"
 . "$PSScriptRoot/../modules/programs.ps1"
 . "$PSScriptRoot/../modules/services.ps1"
+. "$PSScriptRoot/../modules/software-install.ps1"
 
 # ── Validar funcoes do modulo cleanup ──────────────────────────────
 Write-Host ""
@@ -108,6 +109,9 @@ $onedriveFunctions = @(
     'Open-OneDriveFolder',
     'Open-OneDriveLogs',
     'Find-OneDriveExecutable',
+    'Uninstall-OneDriveSafe',
+    'Clear-OneDriveResidualFilesSafe',
+    'Open-OneDriveDownloadPage',
     'Show-OneDriveMenu'
 )
 
@@ -457,7 +461,10 @@ $outlookToolkitFunctions = @(
     'Restart-OutlookSafe',
     'Open-OutlookDataFolder',
     'Open-OutlookCacheFolder',
-    'Clear-OutlookRoamCacheSafe'
+    'Clear-OutlookRoamCacheSafe',
+    'Open-OfficeRepairPanel',
+    'Open-InstalledAppsForOffice',
+    'Open-OfficeDownloadPage'
 )
 
 $allOk = $true
@@ -565,8 +572,49 @@ if (Get-Command "New-AtlasSupportHtmlReport" -ErrorAction SilentlyContinue) {
 Write-Host ""
 Write-Host "Validacao de relatorio HTML concluida." -ForegroundColor Green
 
+# -- Validar modulo software-install --------------------------------
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando funcoes de software-install.ps1" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$softwareFunctions = @(
+    'Show-SoftwareInstallMenu',
+    'Test-WingetAvailable',
+    'Install-SoftwareByWingetSafe',
+    'Show-BrowserInstallMenu',
+    'Show-DevInstallMenu',
+    'Show-PdfInstallMenu',
+    'Show-UtilitiesInstallMenu',
+    'Install-RecommendedPackageSafe'
+)
+
+$allOk = $true
+foreach ($fn in $softwareFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: uma ou mais funcoes de software-install nao foram carregadas." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "[TESTE] Executando Test-WingetAvailable (somente leitura)" -ForegroundColor Magenta
+$wingetCheck = Test-WingetAvailable
+Write-Host "  $($wingetCheck.Message)" -ForegroundColor Gray
+
+Write-Host ""
+Write-Host "Todas as funcoes de software-install validadas." -ForegroundColor Green
+
 $running = $true
-$inputs  = @('1','2','3','4','5','6','7','8','9','99','0')
+$inputs  = @('1','2','3','4','5','6','7','8','9','10','99','0')
 $idx     = 0
 
 while ($running) {
@@ -586,6 +634,7 @@ while ($running) {
         '7'  { Write-Log -Message "Submenu Outlook (funcao Show-OutlookMenu validada)" -Level "INFO" }
         '8'  { Write-Log -Message "Submenu Teams (funcao Show-TeamsMenu validada)" -Level "INFO" }
         '9'  { Write-Log -Message "Submenu Navegadores (funcao Show-BrowserMenu validada)" -Level "INFO" }
+        '10' { Write-Log -Message "Submenu Instalacao de programas (Show-SoftwareInstallMenu validada)" -Level "INFO" }
         '0'  { Write-Log -Message "Atlas encerrado" -Level "INFO"; $running = $false }
         default {
             Write-Log -Message "Opcao invalida: $option" -Level "WARN"

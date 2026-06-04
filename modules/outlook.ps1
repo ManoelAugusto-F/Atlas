@@ -316,6 +316,67 @@ function Clear-OutlookRoamCacheSafe {
     }
 }
 
+function Open-OfficeRepairPanel {
+    if (-not ($IsWindows -or ($env:OS -like "*Windows*"))) {
+        Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Log -Level "INFO" -Message "Abrindo painel de reparo do Office..."
+    Write-Host ""
+    Write-Host "Orientacao:" -ForegroundColor Cyan
+    Write-Host "  Procure Microsoft Office ou Microsoft 365, clique em Alterar/Reparar." -ForegroundColor Gray
+    Write-Host ""
+
+    try {
+        Start-Process "appwiz.cpl"
+        Write-Host "Painel Programas e Recursos aberto." -ForegroundColor Green
+    } catch {
+        try {
+            Start-Process "ms-settings:appsfeatures"
+            Write-Host "Configuracoes de aplicativos abertas." -ForegroundColor Green
+        } catch {
+            Write-Host "Erro ao abrir painel: $_" -ForegroundColor Red
+            Write-Log -Level "ERROR" -Message "Erro ao abrir reparo Office: $_"
+        }
+    }
+}
+
+function Open-InstalledAppsForOffice {
+    if (-not ($IsWindows -or ($env:OS -like "*Windows*"))) {
+        Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Log -Level "INFO" -Message "Abrindo Apps instalados para Office/Outlook..."
+    Write-Host ""
+    Write-Host "Orientacao:" -ForegroundColor Cyan
+    Write-Host "  Busque Microsoft Office, Microsoft 365 ou Outlook para desinstalar ou modificar." -ForegroundColor Gray
+    Write-Host "  NAO removemos PST/OST automaticamente." -ForegroundColor Yellow
+    Write-Host ""
+
+    try {
+        Start-Process "ms-settings:appsfeatures"
+        Write-Host "Apps instalados aberto." -ForegroundColor Green
+    } catch {
+        Write-Host "Erro ao abrir configuracoes: $_" -ForegroundColor Red
+        Write-Log -Level "ERROR" -Message "Erro ao abrir appsfeatures: $_"
+    }
+}
+
+function Open-OfficeDownloadPage {
+    Write-Log -Level "INFO" -Message "Abrindo pagina oficial Microsoft 365/Office..."
+    $url = "https://www.microsoft.com/pt-br/microsoft-365"
+    try {
+        Start-Process $url
+        Write-Host ""
+        Write-Host "Pagina oficial aberta. Faca download manual se necessario." -ForegroundColor Green
+    } catch {
+        Write-Host "Erro ao abrir navegador: $_" -ForegroundColor Red
+        Write-Log -Level "ERROR" -Message "Erro ao abrir pagina Office: $_"
+    }
+}
+
 function Show-OutlookMenu {
     <#
     .SYNOPSIS
@@ -341,6 +402,9 @@ function Show-OutlookMenu {
         Write-Host "[4] Abrir logs/pasta RoamCache"
         Write-Host "[5] Limpar cache RoamCache"
         Write-Host "[6] Ver perfis do Outlook"
+        Write-Host "[7] Reparar Office/Outlook via Painel de Controle"
+        Write-Host "[8] Abrir Apps instalados para desinstalar Office/Outlook"
+        Write-Host "[9] Abrir pagina oficial do Microsoft 365/Office"
         Write-Host "[0] Voltar"
         Write-Host ""
 
@@ -381,6 +445,18 @@ function Show-OutlookMenu {
                     $profiles | ForEach-Object { Write-Host "  - $_" }
                 }
                 Write-Log -Level "INFO" -Message "Perfis do Outlook consultados."
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "7" {
+                Open-OfficeRepairPanel
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "8" {
+                Open-InstalledAppsForOffice
+                Read-Host "`nPressione Enter para continuar"
+            }
+            "9" {
+                Open-OfficeDownloadPage
                 Read-Host "`nPressione Enter para continuar"
             }
             "0" {

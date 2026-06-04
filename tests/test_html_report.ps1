@@ -13,7 +13,6 @@ Write-Host "[TESTE] Validando geracao de relatorio HTML" -ForegroundColor Magent
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Validar funcao existe
 Write-Host "Validando existencia da funcao New-AtlasSupportHtmlReport..." -ForegroundColor Gray
 if (-not (Get-Command "New-AtlasSupportHtmlReport" -ErrorAction SilentlyContinue)) {
     Write-Host "[FAIL] Funcao New-AtlasSupportHtmlReport nao encontrada" -ForegroundColor Red
@@ -21,56 +20,54 @@ if (-not (Get-Command "New-AtlasSupportHtmlReport" -ErrorAction SilentlyContinue
 }
 Write-Host "[OK] Funcao encontrada" -ForegroundColor Green
 
-# Executar geracao de relatorio
 Write-Host ""
 Write-Host "Gerando relatorio HTML..." -ForegroundColor Gray
-New-AtlasSupportHtmlReport
+$htmlPath = New-AtlasSupportHtmlReport
 
-# Validar arquivo foi criado
 Write-Host ""
 Write-Host "Validando arquivo gerado..." -ForegroundColor Gray
 
-$reportsRoot = Join-Path (Split-Path $PSScriptRoot -Parent) "reports"
-$latestReport = Get-ChildItem -Path $reportsRoot -Directory -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -like "atlas_support_*" } |
-    Sort-Object CreationTime -Descending |
-    Select-Object -First 1
-
-if (-not $latestReport) {
-    Write-Host "[FAIL] Nenhum diretorio de relatorio encontrado" -ForegroundColor Red
-    exit 1
+if (-not $htmlPath -or -not (Test-Path $htmlPath)) {
+    $reportsRoot = Join-Path (Split-Path $PSScriptRoot -Parent) "reports"
+    $latestReport = Get-ChildItem -Path $reportsRoot -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -like "atlas_support_*" } |
+        Sort-Object CreationTime -Descending |
+        Select-Object -First 1
+    if ($latestReport) {
+        $htmlPath = Join-Path $latestReport.FullName "report.html"
+    }
 }
 
-$htmlFile = Join-Path $latestReport.FullName "report.html"
-if (-not (Test-Path $htmlFile)) {
+if (-not $htmlPath -or -not (Test-Path $htmlPath)) {
     Write-Host "[FAIL] Arquivo report.html nao foi criado" -ForegroundColor Red
     exit 1
 }
 
 Write-Host "[OK] Arquivo report.html foi criado" -ForegroundColor Green
-Write-Host "     Local: $htmlFile" -ForegroundColor Gray
+Write-Host "     Local: $htmlPath" -ForegroundColor Gray
 
-# Validar conteudo HTML
 Write-Host ""
 Write-Host "Validando conteudo do HTML..." -ForegroundColor Gray
 
-$htmlContent = Get-Content -Path $htmlFile -Raw
+$htmlContent = Get-Content -Path $htmlPath -Raw
 
 $validations = @(
     @{ Pattern = "<!DOCTYPE html>"; Name = "DOCTYPE HTML" },
     @{ Pattern = "<html"; Name = "Tag HTML" },
     @{ Pattern = "Atlas"; Name = "Titulo Atlas" },
-    @{ Pattern = "Relatorio de Suporte da Maquina"; Name = "Titulo do Relatorio v0.2.1" },
+    @{ Pattern = "Relatorio de Suporte da Maquina"; Name = "Titulo do Relatorio" },
     @{ Pattern = "<style>"; Name = "CSS embutido" },
-    @{ Pattern = "section-title"; Name = "Classes CSS" },
-    @{ Pattern = "Resumo de Problemas Encontrados"; Name = "Secao Resumo de Problemas" },
-    @{ Pattern = "Lentidao e Travamentos"; Name = "Secao Lentidao e Travamentos" },
-    @{ Pattern = "Rede e RDP"; Name = "Secao Rede e RDP" },
-    @{ Pattern = "Inicializacao e Encerramento"; Name = "Secao Inicializacao e Encerramento" },
-    @{ Pattern = "Acoes Recomendadas"; Name = "Secao Acoes Recomendadas" },
-    @{ Pattern = "Informacoes do Sistema"; Name = "Secao Sistema" },
-    @{ Pattern = "Disco"; Name = "Secao Disco" },
-    @{ Pattern = "Rede"; Name = "Secao Rede" }
+    @{ Pattern = "Resumo executivo"; Name = "Secao Resumo executivo" },
+    @{ Pattern = "Problemas encontrados"; Name = "Secao Problemas encontrados" },
+    @{ Pattern = "Diagnostico de lentidao"; Name = "Secao Diagnostico de lentidao" },
+    @{ Pattern = "Rede e internet"; Name = "Secao Rede e internet" },
+    @{ Pattern = ">RDP<"; Name = "Secao RDP" },
+    @{ Pattern = ">OneDrive<"; Name = "Secao OneDrive" },
+    @{ Pattern = "Impressoras"; Name = "Secao Impressoras" },
+    @{ Pattern = ">Windows<"; Name = "Secao Windows" },
+    @{ Pattern = "Acoes recomendadas"; Name = "Secao Acoes recomendadas" },
+    @{ Pattern = "card-ok"; Name = "Classe CSS status OK" },
+    @{ Pattern = "badge-critico"; Name = "Classe CSS status CRITICO" }
 )
 
 $allValid = $true
@@ -88,7 +85,7 @@ if ($allValid) {
     Write-Host "[SUCESSO] Relatorio HTML validado com sucesso!" -ForegroundColor Green
     Write-Host ""
     Write-Host "Para visualizar o relatorio, abra:" -ForegroundColor Cyan
-    Write-Host "  $htmlFile" -ForegroundColor Yellow
+    Write-Host "  $htmlPath" -ForegroundColor Yellow
 } else {
     Write-Host "[FALHA] Algumas validacoes falharam" -ForegroundColor Red
     exit 1

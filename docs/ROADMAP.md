@@ -23,7 +23,17 @@ gantt
 
 ---
 
-### v0.2 — Toolkit Corporativo (Sprint Atual)
+### v0.2.2 — Suporte Real e Instalacao Basica (Concluido)
+* **Objetivo**: Melhorar o Atlas para uso real de suporte tecnico no dia a dia.
+* **Entregas**:
+  * Relatorio HTML profissional com cards de status, problemas, lentidao, rede, RDP, OneDrive, impressoras e Windows
+  * OneDrive: desinstalar, limpar residuos e reinstalar via pagina oficial
+  * Outlook: reparo e desinstalacao assistida via telas do Windows
+  * Instalacao de programas basicos via winget (menu opcao 10)
+
+---
+
+### v0.2 — Toolkit Corporativo (Concluido)
 * **Objetivo**: Desenvolver novos modulos isolados focados em software corporativo, navegadores de mercado, programas instalados no sistema e saude de servicos essenciais do Windows.
 * **Novas Modulos (Fase Alfa Isolada)**:
   * **Outlook Toolkit (`outlook.ps1`)**:

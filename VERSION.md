@@ -1,10 +1,18 @@
-# Versão Atual: Atlas v0.2.1
+# Versao Atual: Atlas v0.2.2
 
 ---
 
-## Histórico de Versões
+## Historico de Versoes
 
-### v0.2.1 - Melhorias de Usabilidade e Relatório (Sprint v0.2.1)
+### v0.2.2 - Relatorio aprimorado, manutencao OneDrive/Outlook e instalacao de programas
+- **Relatorio HTML profissional**: resumo executivo com cards, problemas encontrados, diagnostico de lentidao, rede, RDP, OneDrive, impressoras, Windows e acoes recomendadas
+- **OneDrive**: desinstalacao assistida, limpeza de residuos e link oficial para reinstalar
+- **Outlook**: reparo via Painel de Controle, Apps instalados e pagina oficial Microsoft 365
+- **Instalacao de programas**: novo modulo `software-install.ps1` com winget (menu opcao 10)
+- **Menu principal**: 10 opcoes (Navegadores em [9], Instalacao de programas em [10])
+- **Testes**: test_loop, test_html_report e test_software_install atualizados
+
+### v0.2.1 - Melhorias de Usabilidade e Relatorio (Sprint v0.2.1)
 - **Menu Principal**: Reorganizado de 10 opções para 9, eliminando "Diagnóstico Rápido" como opção separada
 - **Relatório HTML Aprimorado**:
   - Novo título: "Atlas - Relatório de Suporte da Máquina"

@@ -17,6 +17,7 @@ function Show-MainMenu {
     Write-Host "[7]  Outlook"
     Write-Host "[8]  Teams"
     Write-Host "[9]  Navegadores"
+    Write-Host "[10] Instalacao de programas"
     Write-Host "[0]  Sair"
     Write-Host ""
 }

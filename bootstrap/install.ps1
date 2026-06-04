@@ -19,6 +19,7 @@
 . "$PSScriptRoot/../modules/browser.ps1"
 . "$PSScriptRoot/../modules/programs.ps1"
 . "$PSScriptRoot/../modules/services.ps1"
+. "$PSScriptRoot/../modules/software-install.ps1"
 
 # Validacao de import
 $requiredFunctions = @(
@@ -30,7 +31,10 @@ $requiredFunctions = @(
     "Show-WindowsRepairMenu",
     "Show-OutlookMenu",
     "Show-TeamsMenu",
-    "Show-BrowserMenu"
+    "Show-BrowserMenu",
+    "Show-SoftwareInstallMenu",
+    "Test-WingetAvailable",
+    "Install-SoftwareByWingetSafe"
 )
 
 foreach ($fn in $requiredFunctions) {
@@ -90,6 +94,10 @@ while ($running) {
             Show-BrowserMenu
         }
 
+        "10" {
+            Show-SoftwareInstallMenu
+        }
+
         "0" {
             Write-Log -Message "Atlas encerrado pelo usuario" -Level "INFO"
             $running = $false
@@ -97,7 +105,7 @@ while ($running) {
 
         default {
             Write-Log -Message "Opcao invalida selecionada: $option" -Level "WARN"
-            Write-Host "Opcao invalida. Escolha entre 0 e 9." -ForegroundColor Yellow
+            Write-Host "Opcao invalida. Escolha entre 0 e 10." -ForegroundColor Yellow
             Wait-UserInput
         }
     }

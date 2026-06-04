@@ -266,6 +266,147 @@ function Open-OneDriveLogs {
 }
 
 # ------------------------------------------
+# [7] Desinstalar OneDrive
+# ------------------------------------------
+
+function Find-OneDriveSetupExecutable {
+    if (-not (script:Test-IsWindowsOneDrive)) { return $null }
+
+    $candidates = @(
+        (Join-Path $env:SystemRoot "SysWOW64\OneDriveSetup.exe"),
+        (Join-Path $env:SystemRoot "System32\OneDriveSetup.exe"),
+        "$env:LOCALAPPDATA\Microsoft\OneDrive\Update\OneDriveSetup.exe"
+    )
+
+    foreach ($path in $candidates) {
+        if (Test-Path $path) { return $path }
+    }
+    return $null
+}
+
+function Uninstall-OneDriveSafe {
+    Write-Log -Message "Solicitacao de desinstalacao do OneDrive" -Level "INFO"
+
+    if (-not (script:Test-IsWindowsOneDrive)) {
+        Write-Host ""
+        Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Host ""
+    Write-Host "ATENCAO: Esta acao remove o OneDrive deste computador." -ForegroundColor Red
+    Write-Host "Seus arquivos na nuvem NAO serao apagados, mas a sincronizacao local sera removida." -ForegroundColor Yellow
+    Write-Host ""
+    $resp = Read-Host "Digite S para confirmar a desinstalacao"
+    if ($resp -notmatch '^[sS]$') {
+        Write-Log -Message "Desinstalacao do OneDrive cancelada" -Level "INFO"
+        Write-Host "Operacao cancelada." -ForegroundColor Gray
+        return
+    }
+
+    try {
+        Write-Host "Encerrando processo OneDrive..." -ForegroundColor Gray
+        Get-Process -Name "OneDrive" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 2
+    } catch {
+        Write-Log -Message "Aviso ao encerrar OneDrive: $_" -Level "WARN"
+    }
+
+    $setup = Find-OneDriveSetupExecutable
+    if (-not $setup) {
+        Write-Log -Message "OneDriveSetup.exe nao encontrado" -Level "WARN"
+        Write-Host "OneDriveSetup.exe nao encontrado nos caminhos padrao." -ForegroundColor Red
+        Write-Host "Use a opcao 9 para baixar e reinstalar manualmente." -ForegroundColor Yellow
+        return
+    }
+
+    try {
+        Write-Host "Executando: $setup /uninstall" -ForegroundColor Cyan
+        Start-Process -FilePath $setup -ArgumentList "/uninstall" -Wait -ErrorAction Stop
+        Write-Log -Message "Desinstalacao do OneDrive executada via $setup" -Level "INFO"
+        Write-Host "Comando de desinstalacao executado. Verifique se o OneDrive foi removido." -ForegroundColor Green
+    } catch {
+        Write-Log -Message "Erro ao desinstalar OneDrive: $_" -Level "ERROR"
+        Write-Host "Erro ao desinstalar OneDrive: $_" -ForegroundColor Red
+    }
+}
+
+# ------------------------------------------
+# [8] Remover residuos do OneDrive
+# ------------------------------------------
+
+function Clear-OneDriveResidualFilesSafe {
+    Write-Log -Message "Solicitacao de limpeza de residuos do OneDrive" -Level "INFO"
+
+    if (-not (script:Test-IsWindowsOneDrive)) {
+        Write-Host ""
+        Write-Host "Funcao disponivel apenas no Windows." -ForegroundColor Yellow
+        return
+    }
+
+    $residualPaths = @(
+        "$env:LOCALAPPDATA\Microsoft\OneDrive",
+        "$env:PROGRAMDATA\Microsoft OneDrive",
+        "$env:LOCALAPPDATA\OneDrive"
+    )
+
+    $existing = @()
+    foreach ($p in $residualPaths) {
+        if (Test-Path $p) { $existing += $p }
+    }
+
+    if ($existing.Count -eq 0) {
+        Write-Host ""
+        Write-Host "Nenhuma pasta de residuo encontrada." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Host ""
+    Write-Host "ATENCAO: Remove caches e configuracoes locais do OneDrive." -ForegroundColor Red
+    Write-Host "NAO apaga documentos do usuario nem pastas sincronizadas (ex.: env:OneDrive)." -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Pastas que serao removidas:" -ForegroundColor Yellow
+    $existing | ForEach-Object { Write-Host "  - $_" }
+    Write-Host ""
+    $resp = Read-Host "Digite S para confirmar"
+    if ($resp -notmatch '^[sS]$') {
+        Write-Log -Message "Limpeza de residuos OneDrive cancelada" -Level "INFO"
+        Write-Host "Operacao cancelada." -ForegroundColor Gray
+        return
+    }
+
+    foreach ($p in $existing) {
+        try {
+            Write-Host "Removendo: $p ..." -ForegroundColor Gray
+            Remove-Item -Path $p -Recurse -Force -ErrorAction Stop
+            Write-Log -Message "Residuo removido: $p" -Level "INFO"
+            Write-Host "  [OK] $p" -ForegroundColor Green
+        } catch {
+            Write-Log -Message "Erro ao remover $p : $_" -Level "ERROR"
+            Write-Host "  [ERRO] $p : $_" -ForegroundColor Red
+        }
+    }
+}
+
+# ------------------------------------------
+# [9] Pagina oficial de download
+# ------------------------------------------
+
+function Open-OneDriveDownloadPage {
+    Write-Log -Message "Abrindo pagina oficial do OneDrive" -Level "INFO"
+    $url = "https://www.microsoft.com/pt-br/microsoft-365/onedrive/download"
+    try {
+        Start-Process $url
+        Write-Host ""
+        Write-Host "Pagina oficial aberta no navegador." -ForegroundColor Green
+        Write-Host "Baixe e instale o OneDrive manualmente." -ForegroundColor Gray
+    } catch {
+        Write-Log -Message "Erro ao abrir pagina OneDrive: $_" -Level "ERROR"
+        Write-Host "Erro ao abrir navegador: $_" -ForegroundColor Red
+    }
+}
+
+# ------------------------------------------
 # Menu OneDrive
 # ------------------------------------------
 
@@ -285,6 +426,9 @@ function Show-OneDriveMenu {
         Write-Host "[4]  Abrir pasta do OneDrive"
         Write-Host "[5]  Abrir logs do OneDrive"
         Write-Host "[6]  Localizar executavel do OneDrive"
+        Write-Host "[7]  Desinstalar OneDrive"
+        Write-Host "[8]  Remover residuos do OneDrive"
+        Write-Host "[9]  Abrir pagina oficial para reinstalar OneDrive"
         Write-Host "[0]  Voltar"
         Write-Host ""
 
@@ -308,6 +452,9 @@ function Show-OneDriveMenu {
                 }
                 Wait-UserInput
             }
+            "7" { Uninstall-OneDriveSafe;      Wait-UserInput }
+            "8" { Clear-OneDriveResidualFilesSafe; Wait-UserInput }
+            "9" { Open-OneDriveDownloadPage;   Wait-UserInput }
             "0" {
                 Write-Log -Message "Saindo do menu OneDrive" -Level "INFO"
                 $odRunning = $false
