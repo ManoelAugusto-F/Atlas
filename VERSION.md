@@ -1,8 +1,15 @@
-# Versao Atual: Atlas v0.2.3
+# Versao Atual: Atlas v0.2.4
 
 ---
 
 ## Historico de Versoes
+
+### v0.2.4 - Validacao de catalogo Winget e instalacao com progresso visual
+- **Instalacao**: saida nativa do winget com barra de progresso (sem --silent nem captura de output)
+- **Validacao**: `tests/test_winget_catalog.ps1` + relatorio `reports/winget_catalog_validation_*.html`
+- **Catalogo**: Bizagi Modeler removido (ID invalido no winget)
+- **Microsoft 365**: orientacao corporativa/escolar via `https://portal.office.com/account`
+- **Pre-install**: validacao `winget show` apos confirmacao unica; mensagem clara se pacote inexistente
 
 ### v0.2.3 - Catalogo de software organizado, instalacao rapida e log de sessao
 - **Log de sessao**: `Start-AtlasSessionLog`, `Write-AtlasSessionLog`, `Stop-AtlasSessionLog` em `logs/sessions/`

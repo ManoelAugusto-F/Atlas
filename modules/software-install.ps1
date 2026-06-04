@@ -95,10 +95,19 @@ function Test-WingetAvailable {
     return $result
 }
 
+function script:Test-IsSpecialCatalogId {
+    param([string]$PackageId)
+    return ($PackageId -like "SPECIAL:*")
+}
+
 function script:Test-WingetPackageExists {
     param([string]$PackageId)
 
-    $null = & winget show --id $PackageId --exact 2>&1
+    if (script:Test-IsSpecialCatalogId -PackageId $PackageId) {
+        return $true
+    }
+
+    & winget show --id $PackageId --exact
     return ($LASTEXITCODE -eq 0)
 }
 
@@ -135,12 +144,6 @@ function Install-SoftwareByWingetSafe {
         return $false
     }
 
-    if (-not (script:Test-WingetPackageExists -PackageId $PackageId)) {
-        Write-Host "Pacote nao encontrado no winget: $PackageId" -ForegroundColor Red
-        Write-AtlasSessionLog -Message "Pacote nao encontrado: $PackageId" -Level "ERROR"
-        return $false
-    }
-
     Write-Host ""
     Write-Host "Programa: $DisplayName"
     Write-Host "Categoria: $Category"
@@ -154,29 +157,37 @@ function Install-SoftwareByWingetSafe {
         return $false
     }
 
+    if (-not (script:Test-WingetPackageExists -PackageId $PackageId)) {
+        Write-Host ""
+        Write-Host "Pacote nao encontrado no winget. Execute o teste de catalogo." -ForegroundColor Red
+        Write-AtlasSessionLog -Message "Pacote nao encontrado: $PackageId" -Level "ERROR"
+        return $false
+    }
+
     Write-Host ""
     Write-Host "Instalando $DisplayName..." -ForegroundColor Cyan
     Write-AtlasSessionLog -Message "Executando winget install: $PackageId" -Level "ACTION"
 
     try {
-        $output = & winget install --id $PackageId --exact --silent --disable-interactivity `
-            --accept-source-agreements --accept-package-agreements 2>&1
-        $outputText = ($output | Out-String).Trim()
-        if ($outputText) {
-            Write-AtlasSessionLog -Message "winget output ($PackageId): $outputText" -Level "INFO"
-        }
+        & winget install --id $PackageId --exact `
+            --accept-source-agreements --accept-package-agreements
+        $exitCode = $LASTEXITCODE
+        Write-AtlasSessionLog -Message "winget install finalizado ($PackageId) codigo $exitCode" -Level "INFO"
 
-        if ($LASTEXITCODE -eq 0) {
+        if ($exitCode -eq 0) {
+            Write-Host ""
             Write-Host "Instalacao concluida." -ForegroundColor Green
             Write-AtlasSessionLog -Message "Instalacao concluida: $PackageId" -Level "ACTION"
             return $true
         }
 
+        Write-Host ""
         Write-Host "Instalacao falhou. Verifique logs." -ForegroundColor Red
-        Write-AtlasSessionLog -Message "Instalacao falhou (codigo $LASTEXITCODE): $PackageId" -Level "ERROR"
-        Write-Log -Message "winget install falhou para $PackageId codigo $LASTEXITCODE" -Level "ERROR"
+        Write-AtlasSessionLog -Message "Instalacao falhou (codigo $exitCode): $PackageId" -Level "ERROR"
+        Write-Log -Message "winget install falhou para $PackageId codigo $exitCode" -Level "ERROR"
         return $false
     } catch {
+        Write-Host ""
         Write-Host "Instalacao falhou. Verifique logs." -ForegroundColor Red
         Write-AtlasSessionLog -Message "Erro winget install $PackageId : $_" -Level "ERROR"
         Write-Log -Message "Erro ao instalar $PackageId : $_" -Level "ERROR"
@@ -261,35 +272,28 @@ function Install-RsatFullSafe {
 function Open-Microsoft365InstallPage {
     Write-AtlasSessionLog -Message "Microsoft 365: abrindo pagina oficial" -Level "ACTION"
 
+    $portalUrl = "https://portal.office.com/account"
+
     Write-Host ""
     Write-Host "Programa: Microsoft 365 Apps"
     Write-Host "Categoria: Microsoft"
+    Write-Host "Metodo: instalacao pela conta corporativa/escolar (nao usa winget)"
     Write-Host ""
     Write-Host "Orientacao:" -ForegroundColor Cyan
-    Write-Host "  Entre com sua conta e escolha Instalar aplicativos." -ForegroundColor Gray
+    Write-Host "  Entre com sua conta corporativa ou escolar." -ForegroundColor Gray
+    Write-Host "  Depois clique em Instalar aplicativos." -ForegroundColor Gray
+    Write-Host "  Use esta opcao quando o Office depende de licenciamento Microsoft 365." -ForegroundColor Gray
     Write-Host ""
 
-    $urls = @(
-        "https://portal.office.com/account",
-        "https://www.office.com"
-    )
-
     try {
-        Start-Process $urls[0]
-        Write-Host "Pagina aberta no navegador." -ForegroundColor Green
-        Write-AtlasSessionLog -Message "Pagina M365 aberta: $($urls[0])" -Level "INFO"
+        Start-Process $portalUrl
+        Write-Host "Pagina aberta: $portalUrl" -ForegroundColor Green
+        Write-AtlasSessionLog -Message "Pagina M365 aberta: $portalUrl" -Level "INFO"
         return $true
     } catch {
-        try {
-            Start-Process $urls[1]
-            Write-Host "Pagina aberta no navegador." -ForegroundColor Green
-            Write-AtlasSessionLog -Message "Pagina M365 aberta: $($urls[1])" -Level "INFO"
-            return $true
-        } catch {
-            Write-Host "Erro ao abrir navegador: $_" -ForegroundColor Red
-            Write-AtlasSessionLog -Message "Erro ao abrir M365: $_" -Level "ERROR"
-            return $false
-        }
+        Write-Host "Erro ao abrir navegador: $_" -ForegroundColor Red
+        Write-AtlasSessionLog -Message "Erro ao abrir M365: $_" -Level "ERROR"
+        return $false
     }
 }
 
@@ -322,12 +326,8 @@ function Update-InstalledSoftwareSafe {
     Write-Host "Atualizando programas..." -ForegroundColor Cyan
 
     try {
-        $output = & winget upgrade --all --silent --disable-interactivity `
-            --accept-source-agreements --accept-package-agreements 2>&1
-        $outputText = ($output | Out-String).Trim()
-        if ($outputText) {
-            Write-AtlasSessionLog -Message "winget upgrade output: $outputText" -Level "INFO"
-        }
+        & winget upgrade --all --accept-source-agreements --accept-package-agreements
+        Write-AtlasSessionLog -Message "winget upgrade finalizado codigo $LASTEXITCODE" -Level "INFO"
 
         if ($LASTEXITCODE -eq 0) {
             Write-Host "Atualizacao concluida." -ForegroundColor Green
@@ -391,6 +391,181 @@ function Export-SoftwareInventory {
         Write-Host "Falha ao exportar inventario. Verifique logs." -ForegroundColor Red
         Write-AtlasSessionLog -Message "Erro inventario: $_" -Level "ERROR"
         return $null
+    }
+}
+
+function script:Get-WingetCatalogEntries {
+    $catalog = Get-SoftwareCatalog
+    if (-not $catalog) { return @() }
+
+    $entries = @()
+    foreach ($cat in $catalog.categories) {
+        foreach ($item in $cat.items) {
+            if ($item.manager -eq "winget" -and -not (script:Test-IsSpecialCatalogId -PackageId $item.id)) {
+                $entries += [PSCustomObject]@{
+                    Name = $item.name
+                    Category = $cat.name
+                    Id = $item.id
+                }
+            }
+        }
+    }
+    return $entries
+}
+
+function Test-WingetCatalogItem {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PackageId,
+        [string]$DisplayName = $PackageId
+    )
+
+    if (script:Test-IsSpecialCatalogId -PackageId $PackageId) {
+        return [PSCustomObject]@{
+            Name = $DisplayName
+            Id = $PackageId
+            Status = "SKIP"
+            Ok = $true
+        }
+    }
+
+    if (-not (script:Test-IsWindowsSoftwareInstall)) {
+        return [PSCustomObject]@{
+            Name = $DisplayName
+            Id = $PackageId
+            Status = "SKIP"
+            Ok = $true
+        }
+    }
+
+    $wingetCheck = Test-WingetAvailable
+    if (-not $wingetCheck.Available) {
+        return [PSCustomObject]@{
+            Name = $DisplayName
+            Id = $PackageId
+            Status = "SKIP"
+            Ok = $true
+        }
+    }
+
+    & winget show --id $PackageId --exact
+    $ok = ($LASTEXITCODE -eq 0)
+
+    return [PSCustomObject]@{
+        Name = $DisplayName
+        Id = $PackageId
+        Status = $(if ($ok) { "OK" } else { "ERRO" })
+        Ok = $ok
+    }
+}
+
+function Export-WingetCatalogValidationHtml {
+    param(
+        [Parameter(Mandatory = $true)]
+        [array]$Results,
+        [string]$OutputPath
+    )
+
+    $total = $Results.Count
+    $okCount = @($Results | Where-Object { $_.Status -eq "OK" }).Count
+    $errCount = @($Results | Where-Object { $_.Status -eq "ERRO" }).Count
+    $skipCount = @($Results | Where-Object { $_.Status -eq "SKIP" }).Count
+
+    $rows = ""
+    foreach ($r in $Results) {
+        $statusClass = switch ($r.Status) {
+            "OK" { "ok" }
+            "ERRO" { "erro" }
+            default { "skip" }
+        }
+        $cat = if ($r.Category) { $r.Category } else { "N/A" }
+        $safeName = ($r.Name -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;')
+        $safeCat = ($cat -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;')
+        $safeId = ($r.Id -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;')
+        $rows += "<tr class=""$statusClass""><td>$safeName</td><td>$safeCat</td><td>$safeId</td><td>$($r.Status)</td></tr>`n"
+    }
+
+    $generated = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $html = @"
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Atlas - Validacao Catalogo Winget</title>
+    <style>
+        body { font-family: Segoe UI, Arial, sans-serif; margin: 24px; background: #f5f6f8; color: #222; }
+        .wrap { max-width: 960px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; }
+        h1 { color: #364fc7; }
+        .summary { display: flex; gap: 16px; margin: 20px 0; }
+        .card { flex: 1; padding: 14px; border-radius: 6px; background: #f1f3f5; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 10px; border-bottom: 1px solid #e9ecef; text-align: left; }
+        th { background: #f8f9fa; }
+        tr.ok td:last-child { color: #2b8a3e; font-weight: bold; }
+        tr.erro td:last-child { color: #c92a2a; font-weight: bold; }
+        tr.skip td:last-child { color: #868e96; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Atlas - Validacao do Catalogo Winget</h1>
+    <p>Gerado em: $generated</p>
+    <div class="summary">
+        <div class="card"><strong>Total</strong><br/>$total</div>
+        <div class="card"><strong>OK</strong><br/>$okCount</div>
+        <div class="card"><strong>Erro</strong><br/>$errCount</div>
+        <div class="card"><strong>Ignorados</strong><br/>$skipCount</div>
+    </div>
+    <table>
+        <thead><tr><th>Nome</th><th>Categoria</th><th>ID Winget</th><th>Status</th></tr></thead>
+        <tbody>
+        $rows
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
+"@
+
+    if (-not $OutputPath) {
+        $repoRoot = Split-Path $PSScriptRoot -Parent
+        $reportsDir = Join-Path $repoRoot "reports"
+        if (-not (Test-Path $reportsDir)) {
+            New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null
+        }
+        $ts = Get-Date -Format "yyyyMMdd_HHmmss"
+        $OutputPath = Join-Path $reportsDir "winget_catalog_validation_$ts.html"
+    }
+
+    Set-Content -Path $OutputPath -Value $html -Encoding UTF8
+    return $OutputPath
+}
+
+function Invoke-WingetCatalogValidation {
+    $entries = script:Get-WingetCatalogEntries
+    $results = @()
+
+    foreach ($entry in $entries) {
+        $test = Test-WingetCatalogItem -PackageId $entry.Id -DisplayName $entry.Name
+        $results += [PSCustomObject]@{
+            Name = $entry.Name
+            Category = $entry.Category
+            Id = $entry.Id
+            Status = $test.Status
+            Ok = $test.Ok
+        }
+    }
+
+    $reportPath = Export-WingetCatalogValidationHtml -Results $results
+    $hasErrors = @($results | Where-Object { $_.Status -eq "ERRO" }).Count -gt 0
+
+    return [PSCustomObject]@{
+        Results = $results
+        ReportPath = $reportPath
+        HasErrors = $hasErrors
+        Total = $results.Count
+        OkCount = @($results | Where-Object { $_.Status -eq "OK" }).Count
+        ErrorCount = @($results | Where-Object { $_.Status -eq "ERRO" }).Count
     }
 }
 

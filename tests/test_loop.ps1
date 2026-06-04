@@ -589,7 +589,10 @@ $softwareFunctions = @(
     'Install-RsatFullSafe',
     'Open-Microsoft365InstallPage',
     'Update-InstalledSoftwareSafe',
-    'Export-SoftwareInventory'
+    'Export-SoftwareInventory',
+    'Test-WingetCatalogItem',
+    'Invoke-WingetCatalogValidation',
+    'Export-WingetCatalogValidationHtml'
 )
 
 $allOk = $true
