@@ -1,8 +1,8 @@
-# Atlas - Assistente de Manutencao Windows v0.2.2
+# Atlas - Assistente de Manutencao Windows v0.2.3
 
 O **Atlas** e um assistente interativo e modular desenvolvido em PowerShell, focado no diagnostico preventivo, triagem rapida e correcao de estacoes de trabalho. Desenvolvido sob rigorosos criterios de compatibilidade, o Atlas e 100% compativel com o **Windows PowerShell 5.1** e **PowerShell Core 7+** (cross-platform, com simulacoes seguras em ambiente nao-Windows).
 
-**Versao Atual**: v0.2.2 — Relatorio HTML profissional para suporte, manutencao assistida OneDrive/Outlook, instalacao de programas basicos via winget (menu opcao 10).
+**Versao Atual**: v0.2.3 — Catalogo de software em JSON, instalacao rapida com confirmacao unica, log de sessao persistente e categorias expandidas (infra, banco, Microsoft).
 
 ---
 
@@ -10,6 +10,8 @@ O **Atlas** e um assistente interativo e modular desenvolvido em PowerShell, foc
 
 * [bootstrap/install.ps1](bootstrap/install.ps1) — Script principal de carregamento (bootstrapper) que carrega os modulos e gerencia a interatividade.
 * [config/apps.json](config/apps.json) — Arquivo de configuracao estruturado para aplicacoes e atalhos.
+* [config/software-catalog.json](config/software-catalog.json) — Catalogo de programas por categoria (winget e acoes especiais).
+* [logs/sessions/](logs/sessions/) — Log persistente por sessao do Atlas (`session_yyyyMMdd_HHmmss.log`).
 * [docs/](docs/) — Pasta com documentacoes oficiais de arquitetura, escopo, roadmap e testes.
   * [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Documentacao da arquitetura modular e diretrizes tecnicas.
   * [docs/PRODUCT_SCOPE.md](docs/PRODUCT_SCOPE.md) — Escopo do produto, restricoes de negocio e publico-alvo.

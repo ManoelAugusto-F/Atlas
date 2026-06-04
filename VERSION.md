@@ -1,8 +1,16 @@
-# Versao Atual: Atlas v0.2.2
+# Versao Atual: Atlas v0.2.3
 
 ---
 
 ## Historico de Versoes
+
+### v0.2.3 - Catalogo de software organizado, instalacao rapida e log de sessao
+- **Log de sessao**: `Start-AtlasSessionLog`, `Write-AtlasSessionLog`, `Stop-AtlasSessionLog` em `logs/sessions/`
+- **Instalacao rapida**: uma confirmacao por app; saida terminal simplificada; detalhes no log de sessao
+- **Catalogo JSON**: `config/software-catalog.json` com 7 categorias e 40+ programas
+- **Especiais**: RSAT via `Install-RsatFullSafe`; Microsoft 365 via `Open-Microsoft365InstallPage`
+- **Extras**: `Update-InstalledSoftwareSafe`, `Export-SoftwareInventory`
+- **Removido**: pacote recomendado e instalacao em lote nesta sprint
 
 ### v0.2.2 - Relatorio aprimorado, manutencao OneDrive/Outlook e instalacao de programas
 - **Relatorio HTML profissional**: resumo executivo com cards, problemas encontrados, diagnostico de lentidao, rede, RDP, OneDrive, impressoras, Windows e acoes recomendadas

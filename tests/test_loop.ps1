@@ -582,11 +582,14 @@ $softwareFunctions = @(
     'Show-SoftwareInstallMenu',
     'Test-WingetAvailable',
     'Install-SoftwareByWingetSafe',
-    'Show-BrowserInstallMenu',
-    'Show-DevInstallMenu',
-    'Show-PdfInstallMenu',
-    'Show-UtilitiesInstallMenu',
-    'Install-RecommendedPackageSafe'
+    'Get-SoftwareCatalog',
+    'Get-SoftwareCategory',
+    'Get-SoftwareItem',
+    'Show-SoftwareCategoryMenu',
+    'Install-RsatFullSafe',
+    'Open-Microsoft365InstallPage',
+    'Update-InstalledSoftwareSafe',
+    'Export-SoftwareInventory'
 )
 
 $allOk = $true
@@ -609,6 +612,16 @@ Write-Host ""
 Write-Host "[TESTE] Executando Test-WingetAvailable (somente leitura)" -ForegroundColor Magenta
 $wingetCheck = Test-WingetAvailable
 Write-Host "  $($wingetCheck.Message)" -ForegroundColor Gray
+
+Write-Host ""
+Write-Host "[TESTE] Executando Get-SoftwareCatalog (somente leitura)" -ForegroundColor Magenta
+$catalog = Get-SoftwareCatalog
+if ($catalog) {
+    Write-Host "  Categorias: $(@($catalog.categories).Count)" -ForegroundColor Gray
+} else {
+    Write-Host "  [FAIL] Catalogo nao carregado" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host ""
 Write-Host "Todas as funcoes de software-install validadas." -ForegroundColor Green

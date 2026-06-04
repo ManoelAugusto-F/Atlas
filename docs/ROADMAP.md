@@ -23,6 +23,17 @@ gantt
 
 ---
 
+### v0.2.3 — Catalogo e Log de Sessao (Concluido)
+* **Objetivo**: Instalacao de programas rapida, organizada e auditavel.
+* **Entregas**:
+  * Catalogo em `config/software-catalog.json` (Navegadores, PDF, Dev, Infra, DB, Microsoft, Utilitarios)
+  * Confirmacao unica por instalacao; winget silent com validacao `winget show`
+  * Log persistente por sessao em `logs/sessions/`
+  * RSAT e Microsoft 365 como fluxos especiais
+  * Atualizar todos (winget upgrade) e inventario (winget list)
+
+---
+
 ### v0.2.2 — Suporte Real e Instalacao Basica (Concluido)
 * **Objetivo**: Melhorar o Atlas para uso real de suporte tecnico no dia a dia.
 * **Entregas**:
