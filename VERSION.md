@@ -1,8 +1,13 @@
-# Versao Atual: Atlas v0.2.4
+# Versao Atual: Atlas v0.2.5
 
 ---
 
 ## Historico de Versoes
+
+### v0.2.5 - Catalogo Winget corrigido e atualizacao com previa
+- **Catalogo**: removidos Python 3, RustDesk, AnyDesk, DBeaver Community e Azure Data Studio (IDs invalidos no winget)
+- **Menu**: removida opcao Inventario de software (funcao `Export-SoftwareInventory` mantida)
+- **Atualizacao**: `Get-WingetAvailableUpgrades` lista atualizacoes antes de confirmar `winget upgrade --all`
 
 ### v0.2.4 - Validacao de catalogo Winget e instalacao com progresso visual
 - **Instalacao**: saida nativa do winget com barra de progresso (sem --silent nem captura de output)

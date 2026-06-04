@@ -588,6 +588,7 @@ $softwareFunctions = @(
     'Show-SoftwareCategoryMenu',
     'Install-RsatFullSafe',
     'Open-Microsoft365InstallPage',
+    'Get-WingetAvailableUpgrades',
     'Update-InstalledSoftwareSafe',
     'Export-SoftwareInventory',
     'Test-WingetCatalogItem',

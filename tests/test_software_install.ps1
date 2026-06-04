@@ -8,7 +8,7 @@
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "[TESTE] software-install.ps1 v0.2.4" -ForegroundColor Magenta
+Write-Host "[TESTE] software-install.ps1 v0.2.5" -ForegroundColor Magenta
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -22,6 +22,7 @@ $functions = @(
     'Show-SoftwareCategoryMenu',
     'Install-RsatFullSafe',
     'Open-Microsoft365InstallPage',
+    'Get-WingetAvailableUpgrades',
     'Update-InstalledSoftwareSafe',
     'Export-SoftwareInventory',
     'Test-WingetCatalogItem',

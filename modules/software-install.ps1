@@ -297,6 +297,38 @@ function Open-Microsoft365InstallPage {
     }
 }
 
+function Get-WingetAvailableUpgrades {
+    Write-AtlasSessionLog -Message "Consulta winget upgrade (previa)" -Level "ACTION"
+
+    if (-not (script:Test-IsWindowsSoftwareInstall)) {
+        Write-Host "Atualizacao via winget disponivel apenas no Windows." -ForegroundColor Yellow
+        return $null
+    }
+
+    $wingetCheck = Test-WingetAvailable
+    if (-not $wingetCheck.Available) {
+        Write-Host $wingetCheck.Message -ForegroundColor Red
+        return $null
+    }
+
+    Write-Host ""
+    Write-Host "Verificando atualizacoes disponiveis..." -ForegroundColor Cyan
+    Write-Host ""
+
+    try {
+        & winget upgrade
+        $exitCode = $LASTEXITCODE
+        Write-AtlasSessionLog -Message "winget upgrade (previa) codigo $exitCode" -Level "INFO"
+        return [PSCustomObject]@{
+            ExitCode = $exitCode
+        }
+    } catch {
+        Write-Host "Falha ao verificar atualizacoes. Verifique logs." -ForegroundColor Red
+        Write-AtlasSessionLog -Message "Erro winget upgrade previa: $_" -Level "ERROR"
+        return $null
+    }
+}
+
 function Update-InstalledSoftwareSafe {
     Write-AtlasSessionLog -Message "Atualizacao winget --all solicitada" -Level "ACTION"
 
@@ -311,36 +343,43 @@ function Update-InstalledSoftwareSafe {
         return $false
     }
 
+    $preview = Get-WingetAvailableUpgrades
+    if (-not $preview) {
+        return $false
+    }
+
     Write-Host ""
-    Write-Host "Esta opcao atualiza programas gerenciados pelo winget." -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Continuar? [S/N]: " -NoNewline
+    Write-Host "Deseja atualizar todos os programas listados? [S/N]: " -NoNewline
     $resp = Read-Host
     if ($resp -notmatch '^[sS]$') {
         Write-Host "Operacao cancelada." -ForegroundColor Gray
-        Write-AtlasSessionLog -Message "Atualizacao winget cancelada" -Level "INFO"
+        Write-AtlasSessionLog -Message "Atualizacao winget cancelada pelo usuario" -Level "INFO"
         return $false
     }
 
     Write-Host ""
     Write-Host "Atualizando programas..." -ForegroundColor Cyan
+    Write-AtlasSessionLog -Message "Executando winget upgrade --all" -Level "ACTION"
 
     try {
         & winget upgrade --all --accept-source-agreements --accept-package-agreements
-        Write-AtlasSessionLog -Message "winget upgrade finalizado codigo $LASTEXITCODE" -Level "INFO"
+        $exitCode = $LASTEXITCODE
+        Write-AtlasSessionLog -Message "winget upgrade --all finalizado codigo $exitCode" -Level "INFO"
 
-        if ($LASTEXITCODE -eq 0) {
+        Write-Host ""
+        if ($exitCode -eq 0) {
             Write-Host "Atualizacao concluida." -ForegroundColor Green
             Write-AtlasSessionLog -Message "Atualizacao winget concluida" -Level "ACTION"
             return $true
         }
 
         Write-Host "Atualizacao falhou ou parcial. Verifique logs." -ForegroundColor Yellow
-        Write-AtlasSessionLog -Message "winget upgrade codigo $LASTEXITCODE" -Level "WARN"
+        Write-AtlasSessionLog -Message "winget upgrade --all codigo $exitCode" -Level "WARN"
         return $false
     } catch {
+        Write-Host ""
         Write-Host "Atualizacao falhou. Verifique logs." -ForegroundColor Red
-        Write-AtlasSessionLog -Message "Erro winget upgrade: $_" -Level "ERROR"
+        Write-AtlasSessionLog -Message "Erro winget upgrade --all: $_" -Level "ERROR"
         return $false
     }
 }
@@ -676,7 +715,6 @@ function Show-SoftwareInstallMenu {
         Write-Host "[6]  Microsoft"
         Write-Host "[7]  Utilitarios"
         Write-Host "[8]  Atualizar programas instalados"
-        Write-Host "[9]  Inventario de software"
         Write-Host "[0]  Voltar"
         Write-Host ""
 
@@ -692,10 +730,6 @@ function Show-SoftwareInstallMenu {
             }
             "8" {
                 [void](Update-InstalledSoftwareSafe)
-                Wait-UserInput
-            }
-            "9" {
-                [void](Export-SoftwareInventory)
                 Wait-UserInput
             }
             "0" {

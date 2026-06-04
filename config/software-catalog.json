@@ -23,7 +23,6 @@
       "items": [
         { "name": "Visual Studio Code", "id": "Microsoft.VisualStudioCode", "manager": "winget" },
         { "name": "Git", "id": "Git.Git", "manager": "winget" },
-        { "name": "Python 3", "id": "Python.Python.3", "manager": "winget" },
         { "name": "PowerShell 7", "id": "Microsoft.PowerShell", "manager": "winget" },
         { "name": "Notepad++", "id": "Notepad++.Notepad++", "manager": "winget" },
         { "name": "WSL", "id": "Microsoft.WSL", "manager": "winget" },
@@ -38,8 +37,6 @@
         { "name": "MobaXterm", "id": "Mobatek.MobaXterm", "manager": "winget" },
         { "name": "Wireshark", "id": "WiresharkFoundation.Wireshark", "manager": "winget" },
         { "name": "Nmap", "id": "Insecure.Nmap", "manager": "winget" },
-        { "name": "RustDesk", "id": "RustDesk.RustDesk", "manager": "winget" },
-        { "name": "AnyDesk", "id": "AnyDeskSoftwareGmbH.AnyDesk", "manager": "winget" },
         { "name": "Remote Desktop Manager", "id": "Devolutions.RemoteDesktopManager", "manager": "winget" },
         { "name": "OpenVPN Community", "id": "OpenVPNTechnologies.OpenVPN", "manager": "winget" },
         { "name": "OpenVPN Connect", "id": "OpenVPNTechnologies.OpenVPNConnect", "manager": "winget" },
@@ -49,9 +46,7 @@
     {
       "name": "Banco de Dados",
       "items": [
-        { "name": "DBeaver Community", "id": "dbeaver.dbeaver", "manager": "winget" },
-        { "name": "SQL Server Management Studio 22", "id": "Microsoft.SQLServerManagementStudio.22", "manager": "winget" },
-        { "name": "Azure Data Studio", "id": "Microsoft.AzureDataStudio", "manager": "winget" }
+        { "name": "SQL Server Management Studio 22", "id": "Microsoft.SQLServerManagementStudio.22", "manager": "winget" }
       ]
     },
     {
