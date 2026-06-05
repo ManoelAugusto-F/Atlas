@@ -672,153 +672,629 @@ function script:Collect-WindowsReportData {
     return $data
 }
 
-function script:Build-ProblemsFromAlerts {
+
+function script:Get-EventInterpretation {
+    param(
+        [int]$EventId,
+        [string]$Provider
+    )
+
+    $key = "$EventId"
+    $rules = @(
+        @{ Match = { $EventId -eq 41 -and $Provider -like "*Kernel-Power*" }; Description = "Desligamento inesperado detectado."; Impact = "Medio"; Action = "Verificar energia ou desligamentos forcados."; Status = "ATENCAO" }
+        @{ Match = { $EventId -eq 6008 }; Description = "Sistema desligado incorretamente."; Impact = "Medio"; Action = "Verificar quedas de energia ou reinicios forcados."; Status = "ATENCAO" }
+        @{ Match = { $EventId -eq 20 -and $Provider -like "*WindowsUpdateClient*" }; Description = "Falha recente em atualizacao do Windows."; Impact = "Medio"; Action = "Executar reparo do Windows Update (menu Reparos Windows)." ; Status = "ATENCAO" }
+        @{ Match = { $EventId -eq 8198 -and $Provider -like "*Security-SPP*" }; Description = "Possivel problema de licenciamento Microsoft."; Impact = "Baixo"; Action = "Verificar ativacao do Windows/Office com o suporte."; Status = "ATENCAO" }
+        @{ Match = { $EventId -eq 1040 -and $Provider -like "*TPM-WMI*" }; Description = "Erro relacionado ao TPM."; Impact = "Baixo"; Action = "Verificar firmware/BIOS e drivers do TPM."; Status = "ATENCAO" }
+    )
+
+    foreach ($r in $rules) {
+        if (& $r.Match) {
+            return [PSCustomObject]@{
+                Description = $r.Description
+                Impact = $r.Impact
+                Action = $r.Action
+                Status = $r.Status
+            }
+        }
+    }
+
+    return [PSCustomObject]@{
+        Description = "Evento critico/erro do sistema ($Provider ID $EventId)."
+        Impact = "Medio"
+        Action = "Investigar no Visualizador de Eventos do Windows."
+        Status = "ATENCAO"
+    }
+}
+
+function script:Format-BytesHuman {
+    param([long]$Bytes)
+    if ($Bytes -ge 1GB) { return "{0:N2} GB" -f ($Bytes / 1GB) }
+    if ($Bytes -ge 1MB) { return "{0:N2} MB" -f ($Bytes / 1MB) }
+    if ($Bytes -ge 1KB) { return "{0:N2} KB" -f ($Bytes / 1KB) }
+    return "$Bytes B"
+}
+
+function script:Collect-HardwareReportData {
+    $data = @{
+        Manufacturer = "N/A"
+        Model = "N/A"
+        Serial = "N/A"
+        CPU = "N/A"
+        Cores = "N/A"
+        RamGB = "N/A"
+        DiskTotalGB = "N/A"
+        Windows = "N/A"
+        Build = "N/A"
+        Summary = "N/A"
+    }
+
+    if (script:Test-IsWindowsSupportReport) {
+        try {
+            $cs = Get-CimInstance Win32_ComputerSystem -ErrorAction Stop
+            $data.Manufacturer = if ($cs.Manufacturer) { $cs.Manufacturer } else { "N/A" }
+            $data.Model = if ($cs.Model) { $cs.Model } else { "N/A" }
+            $data.RamGB = [math]::Round($cs.TotalPhysicalMemory / 1GB, 1)
+        } catch { }
+
+        try {
+            $bios = Get-CimInstance Win32_BIOS -ErrorAction Stop
+            $data.Serial = if ($bios.SerialNumber) { $bios.SerialNumber } else { "N/A" }
+        } catch { }
+
+        try {
+            $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1
+            $data.CPU = $cpu.Name.Trim()
+            $data.Cores = $cpu.NumberOfLogicalProcessors
+        } catch { }
+
+        try {
+            $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+            $data.Windows = $os.Caption
+            $data.Build = $os.BuildNumber
+        } catch { }
+
+        try {
+            $disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'" -ErrorAction Stop
+            $data.DiskTotalGB = [math]::Round($disk.Size / 1GB, 1)
+        } catch { }
+    } else {
+        $data.CPU = "N/A (ambiente nao-Windows)"
+        $data.Cores = [System.Environment]::ProcessorCount
+        try {
+            if (Test-Path /proc/meminfo) {
+                $raw = (Get-Content /proc/meminfo | Where-Object { $_ -match '^MemTotal:' }) -replace '[^\d]', ''
+                $data.RamGB = [math]::Round([long]$raw / 1MB, 1)
+            }
+        } catch { }
+        $data.Windows = [System.Environment]::OSVersion.VersionString
+    }
+
+    $parts = @()
+    if ($data.Manufacturer -ne "N/A" -or $data.Model -ne "N/A") {
+        $parts += "$($data.Manufacturer) $($data.Model)".Trim()
+    }
+    if ($data.CPU -ne "N/A") { $parts += $data.CPU }
+    if ($data.RamGB -ne "N/A") { $parts += "$($data.RamGB) GB RAM" }
+    if ($data.DiskTotalGB -ne "N/A") { $parts += "Disco $($data.DiskTotalGB) GB" }
+    if ($data.Windows -ne "N/A") { $parts += $data.Windows }
+    if ($parts.Count -gt 0) { $data.Summary = $parts -join " | " }
+
+    return $data
+}
+
+function script:Collect-MemoryReportData {
+    $data = @{
+        InstalledGB = "N/A"
+        FreeGB = "N/A"
+        UsedPct = "N/A"
+        Status = "NA"
+        Diagnosis = "N/A"
+        Recommendation = "N/A"
+    }
+
+    if (script:Test-IsWindowsSupportReport) {
+        try {
+            $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+            $total = $os.TotalVisibleMemorySize / 1MB
+            $free = $os.FreePhysicalMemory / 1MB
+            $usedPct = [math]::Round(($total - $free) / $total * 100, 0)
+            $data.InstalledGB = [math]::Round($total, 1)
+            $data.FreeGB = [math]::Round($free, 1)
+            $data.UsedPct = $usedPct
+
+            if ($total -lt 6) {
+                $data.Status = "ATENCAO"
+                $data.Diagnosis = "ATENCAO - A maquina possui apenas $([math]::Round($total,0)) GB de RAM. Windows pode apresentar lentidao."
+                $data.Recommendation = "Expandir para 8 GB ou mais."
+            } elseif ($usedPct -gt 90) {
+                $data.Status = "CRITICO"
+                $data.Diagnosis = "CRITICO - Memoria quase esgotada ($usedPct% em uso)."
+                $data.Recommendation = "Fechar programas pesados ou reiniciar a maquina."
+            } elseif ($usedPct -gt 80) {
+                $data.Status = "ATENCAO"
+                $data.Diagnosis = "ATENCAO - Uso de memoria elevado ($usedPct%)."
+                $data.Recommendation = "Monitorar processos pesados e considerar mais RAM."
+            } else {
+                $data.Status = "OK"
+                $data.Diagnosis = "OK - Memoria dentro do esperado ($usedPct% em uso)."
+                $data.Recommendation = "Nenhuma acao necessaria."
+            }
+        } catch {
+            $data.Diagnosis = "N/A - Erro ao coletar memoria."
+        }
+    } else {
+        $data.Diagnosis = "N/A neste sistema operacional."
+    }
+
+    return $data
+}
+
+function script:Collect-DiskReportData {
+    $data = @{
+        TotalGB = "N/A"
+        FreeGB = "N/A"
+        UsedGB = "N/A"
+        UsedPct = "N/A"
+        Status = "NA"
+        TopFolders = @()
+        Recommendation = "N/A"
+    }
+
+    if (script:Test-IsWindowsSupportReport) {
+        try {
+            $drive = Get-PSDrive -Name C -PSProvider FileSystem -ErrorAction Stop
+            $total = $drive.Used + $drive.Free
+            if ($total -gt 0) {
+                $data.TotalGB = [math]::Round($total / 1GB, 1)
+                $data.FreeGB = [math]::Round($drive.Free / 1GB, 1)
+                $data.UsedGB = [math]::Round($drive.Used / 1GB, 1)
+                $data.UsedPct = [math]::Round($drive.Used / $total * 100, 0)
+                $pctFree = 100 - $data.UsedPct
+                if ($pctFree -lt 10) {
+                    $data.Status = "CRITICO"
+                    $data.Recommendation = "Disco quase cheio. Execute Limpeza segura (menu opcao 2) urgentemente."
+                } elseif ($pctFree -lt 15) {
+                    $data.Status = "ATENCAO"
+                    $data.Recommendation = "Pouco espaco livre. Execute Limpeza segura para liberar espaco."
+                } else {
+                    $data.Status = "OK"
+                    $data.Recommendation = "Espaco em disco adequado."
+                }
+            }
+        } catch { }
+
+        $profile = $env:USERPROFILE
+        $folderNames = @("Downloads", "Desktop", "Documents", "OneDrive")
+        foreach ($name in $folderNames) {
+            $path = Join-Path $profile $name
+            if ($name -eq "OneDrive" -and $env:OneDrive) { $path = $env:OneDrive }
+            if (Test-Path $path) {
+                try {
+                    $size = (Get-ChildItem -Path $path -Recurse -File -ErrorAction SilentlyContinue |
+                        Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
+                    if (-not $size) { $size = 0 }
+                    $data.TopFolders += [PSCustomObject]@{
+                        Name = $name
+                        Path = $path
+                        Size = script:Format-BytesHuman $size
+                        SizeBytes = $size
+                    }
+                } catch { }
+            }
+        }
+        $data.TopFolders = $data.TopFolders | Sort-Object SizeBytes -Descending | Select-Object -First 10
+    } else {
+        $data.Recommendation = "N/A neste sistema operacional."
+    }
+
+    return $data
+}
+
+function script:Collect-CriticalEventsData {
+    $events = @()
+    if (-not (script:Test-IsWindowsSupportReport)) {
+        return @{ Events = $events; Status = "NA" }
+    }
+
+    $startTime = (Get-Date).AddDays(-7)
+    try {
+        $raw = Get-WinEvent -FilterHashtable @{
+            LogName = @("System", "Application")
+            Level = 1, 2
+            StartTime = $startTime
+        } -MaxEvents 50 -ErrorAction Stop
+
+        foreach ($ev in $raw) {
+            $interp = script:Get-EventInterpretation -EventId $ev.Id -Provider $ev.ProviderName
+            $events += [PSCustomObject]@{
+                Date = $ev.TimeCreated.ToString("yyyy-MM-dd HH:mm")
+                Event = "$($ev.ProviderName) ID $($ev.Id)"
+                Description = $interp.Description
+                Impact = $interp.Impact
+                Action = $interp.Action
+                Status = $interp.Status
+            }
+        }
+    } catch { }
+
+    $events = $events | Select-Object -First 10
+    $status = if ($events.Count -eq 0) { "OK" } else { "ATENCAO" }
+    return @{ Events = $events; Status = $status; Count = $events.Count }
+}
+
+function script:Collect-StartupProgramsData {
+    $programs = @()
+    if (-not (script:Test-IsWindowsSupportReport)) {
+        return @{ Programs = $programs; Status = "NA"; Diagnosis = "N/A" }
+    }
+
+    try {
+        $items = Get-CimInstance Win32_StartupCommand -ErrorAction Stop
+        foreach ($item in $items) {
+            $programs += [PSCustomObject]@{
+                Name = $item.Name
+                Status = "Ativo"
+                Manufacturer = if ($item.Location) { $item.Location } else { "N/A" }
+            }
+        }
+    } catch {
+        try {
+            $runKeys = @(
+                "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run",
+                "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run"
+            )
+            foreach ($key in $runKeys) {
+                if (Test-Path $key) {
+                    $props = Get-ItemProperty -Path $key -ErrorAction SilentlyContinue
+                    $props.PSObject.Properties | Where-Object { $_.Name -notlike "PS*" } | ForEach-Object {
+                        $programs += [PSCustomObject]@{
+                            Name = $_.Name
+                            Status = "Ativo"
+                            Manufacturer = $key
+                        }
+                    }
+                }
+            }
+        } catch { }
+    }
+
+    $count = $programs.Count
+    $diag = if ($count -le 5) { "Poucos programas ($count)" }
+            elseif ($count -le 12) { "Moderado ($count programas)" }
+            else { "Muitos programas ($count) - pode aumentar tempo de boot" }
+
+    $status = if ($count -le 12) { "OK" } else { "ATENCAO" }
+    return @{ Programs = $programs; Status = $status; Diagnosis = $diag; Count = $count }
+}
+
+function script:Collect-DefenderReportData {
+    $data = @{
+        Active = "N/A"
+        LastUpdate = "N/A"
+        Signatures = "N/A"
+        RealTime = "N/A"
+        Status = "NA"
+    }
+
+    if (-not (script:Test-IsWindowsSupportReport)) {
+        return $data
+    }
+
+    try {
+        $mp = Get-MpComputerStatus -ErrorAction Stop
+        $data.Active = if ($mp.AMServiceEnabled) { "Ativo" } else { "Inativo" }
+        $data.LastUpdate = if ($mp.AntivirusSignatureLastUpdated) { $mp.AntivirusSignatureLastUpdated.ToString("yyyy-MM-dd HH:mm") } else { "N/A" }
+        $data.Signatures = if ($mp.AntivirusSignatureVersion) { $mp.AntivirusSignatureVersion } else { "N/A" }
+        $data.RealTime = if ($mp.RealTimeProtectionEnabled) { "Sim" } else { "Nao" }
+
+        if (-not $mp.AMServiceEnabled -or -not $mp.RealTimeProtectionEnabled) {
+            $data.Status = "CRITICO"
+        } elseif ($mp.AntivirusSignatureLastUpdated -lt (Get-Date).AddDays(-7)) {
+            $data.Status = "ATENCAO"
+        } else {
+            $data.Status = "OK"
+        }
+    } catch {
+        $data.Active = "N/A (nao disponivel)"
+        $data.Status = "NA"
+    }
+
+    return $data
+}
+
+function script:Get-HealthScoreLabel {
+    param([int]$Score)
+    if ($Score -ge 95) { return "EXCELENTE" }
+    if ($Score -ge 80) { return "BOM" }
+    if ($Score -ge 60) { return "ATENCAO" }
+    return "CRITICO"
+}
+
+function script:Get-HealthScoreClass {
+    param([int]$Score)
+    if ($Score -ge 80) { return "ok" }
+    if ($Score -ge 60) { return "atencao" }
+    return "critico"
+}
+
+function script:StatusToScorePenalty {
+    param([string]$Status, [int]$Critico = 20, [int]$Atencao = 10)
+    switch ($Status) {
+        "CRITICO" { return $Critico }
+        "ATENCAO" { return $Atencao }
+        default { return 0 }
+    }
+}
+
+function script:Calculate-HealthScore {
+    param([hashtable]$Metrics)
+
+    $score = 100
+    $areas = @()
+
+    $components = @(
+        @{ Label = "Disco"; Status = $Metrics.Disk.Status; PenCrit = 18; PenAt = 8 }
+        @{ Label = "Memoria"; Status = $Metrics.Memory.Status; PenCrit = 18; PenAt = 8 }
+        @{ Label = "Internet"; Status = $Metrics.Network.Status; PenCrit = 15; PenAt = 8 }
+        @{ Label = "Windows Update"; Status = $Metrics.WinUpdate.Status; PenCrit = 10; PenAt = 6 }
+        @{ Label = "Eventos Criticos"; Status = $Metrics.Events.Status; PenCrit = 12; PenAt = 6 }
+        @{ Label = "RDP"; Status = $Metrics.Rdp.Status; PenCrit = 5; PenAt = 3 }
+        @{ Label = "OneDrive"; Status = $Metrics.OneDrive.Status; PenCrit = 5; PenAt = 3 }
+        @{ Label = "Impressoras"; Status = $Metrics.Printers.Status; PenCrit = 5; PenAt = 3 }
+        @{ Label = "Defender"; Status = $Metrics.Defender.Status; PenCrit = 15; PenAt = 8 }
+    )
+
+    foreach ($c in $components) {
+        $pen = script:StatusToScorePenalty -Status $c.Status -Critico $c.PenCrit -Atencao $c.PenAt
+        $score -= $pen
+        $areas += [PSCustomObject]@{
+            Label = $c.Label
+            Status = if ($c.Status) { $c.Status } else { "NA" }
+            Penalty = $pen
+        }
+    }
+
+    if ($score -lt 0) { $score = 0 }
+    if ($score -gt 100) { $score = 100 }
+
+    return @{
+        Score = $score
+        Label = script:Get-HealthScoreLabel -Score $score
+        Class = script:Get-HealthScoreClass -Score $score
+        Areas = $areas
+    }
+}
+
+function script:Build-ProblemsFromData {
     param(
         [array]$Alerts,
-        [hashtable]$RdpData
+        [hashtable]$RdpData,
+        [hashtable]$EventsData,
+        [hashtable]$MemoryData,
+        [hashtable]$DiskData,
+        [hashtable]$DefenderData
     )
+
     $problems = @()
+    $seen = @{}
+
     foreach ($a in $Alerts) {
         if ($a.Status -eq "OK" -or $a.Status -eq "NA") { continue }
-        $impact = switch ($a.Status) {
-            "CRITICO" { "Alto - pode impedir uso normal do computador" }
-            default   { "Medio - pode causar lentidao ou falhas pontuais" }
-        }
-        $action = if ($a.Suggestion) { $a.Suggestion } else { "Verifique o menu correspondente no Atlas." }
         $problems += [PSCustomObject]@{
             Status = $a.Status
             Description = $a.Message
-            Impact = $impact
-            Action = $action
+            Impact = if ($a.Status -eq "CRITICO") { "Alto" } else { "Medio" }
+            Action = if ($a.Suggestion) { $a.Suggestion } else { "Verifique no menu Atlas." }
         }
     }
+
+    foreach ($ev in $EventsData.Events) {
+        $key = $ev.Event
+        if ($seen.ContainsKey($key)) { continue }
+        $seen[$key] = $true
+        $problems += [PSCustomObject]@{
+            Status = $ev.Status
+            Description = $ev.Description
+            Impact = $ev.Impact
+            Action = $ev.Action
+        }
+    }
+
+    if ($MemoryData.Status -in @("ATENCAO", "CRITICO")) {
+        $problems += [PSCustomObject]@{
+            Status = $MemoryData.Status
+            Description = $MemoryData.Diagnosis
+            Impact = if ($MemoryData.Status -eq "CRITICO") { "Alto" } else { "Medio" }
+            Action = $MemoryData.Recommendation
+        }
+    }
+
+    if ($DiskData.Status -in @("ATENCAO", "CRITICO")) {
+        $problems += [PSCustomObject]@{
+            Status = $DiskData.Status
+            Description = "Disco C: $($DiskData.UsedPct)% usado - $($DiskData.FreeGB) GB livres"
+            Impact = if ($DiskData.Status -eq "CRITICO") { "Alto" } else { "Medio" }
+            Action = $DiskData.Recommendation
+        }
+    }
+
+    if ($DefenderData.Status -in @("ATENCAO", "CRITICO")) {
+        $problems += [PSCustomObject]@{
+            Status = $DefenderData.Status
+            Description = "Windows Defender: $($DefenderData.Active) | Tempo real: $($DefenderData.RealTime)"
+            Impact = if ($DefenderData.Status -eq "CRITICO") { "Alto" } else { "Medio" }
+            Action = "Verificar protecao antivirus e atualizar assinaturas."
+        }
+    }
+
     if ($RdpData.Status -eq "ATENCAO") {
         $problems += [PSCustomObject]@{
             Status = "ATENCAO"
             Description = "RDP: $($RdpData.Detail)"
-            Impact = "Medio - acesso remoto pode falhar"
-            Action = "Verifique TermService e firewall RDP (porta 3389)."
+            Impact = "Medio"
+            Action = "Verificar TermService e firewall (porta 3389)."
         }
     }
+
     if ($problems.Count -eq 0) {
         $problems += [PSCustomObject]@{
             Status = "OK"
-            Description = "Nenhum problema critico ou de atencao detectado nos checks automaticos."
+            Description = "Nenhum problema relevante detectado nos checks automaticos."
             Impact = "Baixo"
-            Action = "Manter monitoramento periodico com este relatorio."
+            Action = "Manter monitoramento periodico."
         }
     }
+
     return $problems
 }
 
-function script:Build-RecommendationsList {
-    param([array]$Alerts, [hashtable]$Slowness, [hashtable]$RdpData)
+function script:Build-SmartRecommendations {
+    param(
+        [array]$Alerts,
+        [hashtable]$MemoryData,
+        [hashtable]$DiskData,
+        [hashtable]$EventsData,
+        [hashtable]$StartupData,
+        [hashtable]$DefenderData,
+        [hashtable]$Slowness,
+        [hashtable]$RdpData
+    )
+
     $recs = [System.Collections.ArrayList]@()
+
+    if ($MemoryData.InstalledGB -ne "N/A" -and [double]$MemoryData.InstalledGB -lt 6) {
+        [void]$recs.Add("Memoria insuficiente ($($MemoryData.InstalledGB) GB). Adicionar RAM para melhor desempenho.")
+    } elseif ($MemoryData.Status -in @("ATENCAO", "CRITICO")) {
+        [void]$recs.Add($MemoryData.Recommendation)
+    }
+
+    if ($DiskData.Status -in @("ATENCAO", "CRITICO")) {
+        [void]$recs.Add($DiskData.Recommendation)
+    }
+
+    $hasPowerEvent = $false
+    $hasWuEvent = $false
+    foreach ($ev in $EventsData.Events) {
+        if ($ev.Event -like "*Kernel-Power*41*" -or $ev.Description -like "*Desligamento inesperado*") {
+            $hasPowerEvent = $true
+        }
+        if ($ev.Event -like "*WindowsUpdateClient*20*" -or $ev.Description -like "*atualizacao*") {
+            $hasWuEvent = $true
+        }
+    }
+    if ($hasPowerEvent) {
+        [void]$recs.Add("Foram detectados desligamentos inesperados. Verificar energia e hardware.")
+    }
+    if ($hasWuEvent) {
+        [void]$recs.Add("Atualizacoes falharam recentemente. Executar reparo do Windows Update.")
+    }
+
+    if ($StartupData.Count -gt 12) {
+        [void]$recs.Add("Muitos programas na inicializacao ($($StartupData.Count)). Desative itens desnecessarios.")
+    }
+
+    if ($DefenderData.Status -in @("ATENCAO", "CRITICO")) {
+        [void]$recs.Add("Verificar Windows Defender e atualizar assinaturas de virus.")
+    }
+
     foreach ($a in $Alerts) {
         if ($a.Suggestion) { [void]$recs.Add($a.Suggestion) }
     }
-    if ($Slowness.Recommendation -and $Slowness.Recommendation -ne "Nenhuma recomendacao automatica.") {
-        [void]$recs.Add($Slowness.Recommendation)
-    }
+
     if ($RdpData.Status -eq "ATENCAO") {
-        [void]$recs.Add("RDP indisponivel: verifique TermService e regras de firewall para porta 3389.")
+        [void]$recs.Add("RDP indisponivel: verificar TermService e firewall.")
     }
+
     $unique = $recs | Select-Object -Unique
     if ($unique.Count -eq 0) {
-        return @("Sistema dentro dos parametros esperados. Gere novo relatorio apos qualquer alteracao.")
+        return @("Sistema saudavel. Gere novo relatorio apos alteracoes significativas.")
     }
     return @($unique)
-}
-
-function script:Render-HtmlTableRows {
-    param([array]$Rows, [string[]]$Columns)
-    $html = ""
-    foreach ($row in $Rows) {
-        $html += "<tr>"
-        foreach ($col in $Columns) {
-            $val = $row.$col
-            if ($null -eq $val) { $val = "" }
-            $html += "<td>" + (script:Escape-HtmlText ([string]$val)) + "</td>"
-        }
-        $html += "</tr>`n"
-    }
-    return $html
 }
 
 function script:Render-AtlasSupportHtml {
     param([hashtable]$Report)
 
     $h = $Report.Header
-    $cards = $Report.Cards
+    $health = $Report.Health
     $problems = $Report.Problems
-    $slow = $Report.Slowness
+    $recs = $Report.Recommendations
+    $hw = $Report.Hardware
+    $mem = $Report.Memory
+    $disk = $Report.Disk
     $net = $Report.Network
     $rdp = $Report.Rdp
     $od = $Report.OneDrive
     $pr = $Report.Printers
     $win = $Report.Windows
-    $recs = $Report.Recommendations
+    $events = $Report.Events
+    $startup = $Report.Startup
+    $defender = $Report.Defender
+    $slow = $Report.Slowness
 
-    $cardHtml = ""
-    foreach ($c in $cards) {
-        $suffix = script:Get-StatusCssSuffix $c.Status
-        $cardHtml += @"
-        <div class="card card-$suffix">
-            <div class="card-label">$(script:Escape-HtmlText $c.Label)</div>
-            <div class="card-status">$(script:Escape-HtmlText $c.Status)</div>
-            <div class="card-detail">$(script:Escape-HtmlText $c.Detail)</div>
-        </div>
-"@
+    $iconOk = "&#10004;"
+    $iconWarn = "&#9888;"
+    $iconCrit = "&#10006;"
+
+    $healthIcon = switch ($health.Class) {
+        "ok" { $iconOk }
+        "atencao" { $iconWarn }
+        default { $iconCrit }
+    }
+
+    $areaCards = ""
+    foreach ($a in $health.Areas) {
+        $suffix = script:Get-StatusCssSuffix $a.Status
+        $areaCards += "<div class=`"score-area card-$suffix`"><span class=`"area-label`">$(script:Escape-HtmlText $a.Label)</span><span class=`"area-status`">$(script:Escape-HtmlText $a.Status)</span></div>`n"
     }
 
     $problemRows = ""
     foreach ($p in $problems) {
         $suffix = script:Get-StatusCssSuffix $p.Status
-        $problemRows += @"
-        <tr class="row-$suffix">
-            <td><span class="badge badge-$suffix">$(script:Escape-HtmlText $p.Status)</span></td>
-            <td>$(script:Escape-HtmlText $p.Description)</td>
-            <td>$(script:Escape-HtmlText $p.Impact)</td>
-            <td>$(script:Escape-HtmlText $p.Action)</td>
-        </tr>
-"@
+        $problemRows += "<tr class=`"row-$suffix`"><td><span class=`"badge badge-$suffix`">$(script:Escape-HtmlText $p.Status)</span></td><td>$(script:Escape-HtmlText $p.Description)</td><td>$(script:Escape-HtmlText $p.Impact)</td><td>$(script:Escape-HtmlText $p.Action)</td></tr>`n"
     }
+
+    $recBlocks = ""
+    $ri = 1
+    foreach ($r in $recs) {
+        $recBlocks += "<div class=`"reco-card`"><div class=`"reco-title`">Recomendacao $ri</div><p>$(script:Escape-HtmlText $r)</p></div>`n"
+        $ri++
+    }
+
+    $folderRows = ""
+    foreach ($f in $disk.TopFolders) {
+        $folderRows += "<tr><td>$(script:Escape-HtmlText $f.Name)</td><td>$(script:Escape-HtmlText $f.Size)</td><td>$(script:Escape-HtmlText $f.Path)</td></tr>`n"
+    }
+    if (-not $folderRows) { $folderRows = "<tr><td colspan=`"3`">N/A</td></tr>" }
+
+    $eventRows = ""
+    foreach ($ev in $events.Events) {
+        $suffix = script:Get-StatusCssSuffix $ev.Status
+        $eventRows += "<tr class=`"row-$suffix`"><td>$(script:Escape-HtmlText $ev.Date)</td><td>$(script:Escape-HtmlText $ev.Event)</td><td>$(script:Escape-HtmlText $ev.Description)</td><td>$(script:Escape-HtmlText $ev.Impact)</td></tr>`n"
+    }
+    if (-not $eventRows) { $eventRows = "<tr><td colspan=`"4`">Nenhum evento critico relevante nos ultimos 7 dias</td></tr>" }
+
+    $startupRows = ""
+    foreach ($sp in $startup.Programs) {
+        $startupRows += "<tr><td>$(script:Escape-HtmlText $sp.Name)</td><td>$(script:Escape-HtmlText $sp.Status)</td><td>$(script:Escape-HtmlText $sp.Manufacturer)</td></tr>`n"
+    }
+    if (-not $startupRows) { $startupRows = "<tr><td colspan=`"3`">Nenhum item encontrado</td></tr>" }
 
     $topMemRows = ""
     foreach ($proc in $slow.TopMem) {
         $topMemRows += "<tr><td>$(script:Escape-HtmlText $proc.Name)</td><td>$($proc.MemMB) MB</td></tr>`n"
     }
-    if (-not $topMemRows) { $topMemRows = "<tr><td colspan='2'>N/A</td></tr>" }
-
-    $topCpuRows = ""
-    foreach ($proc in $slow.TopCpu) {
-        $topCpuRows += "<tr><td>$(script:Escape-HtmlText $proc.Name)</td><td>$($proc.CPUs)</td></tr>`n"
-    }
-    if (-not $topCpuRows) { $topCpuRows = "<tr><td colspan='2'>N/A (indisponivel)</td></tr>" }
-
-    $netLines = ($net.Lines | ForEach-Object { script:Escape-HtmlText $_ }) -join "<br/>"
-
-    $recList = ""
-    $i = 1
-    foreach ($r in $recs) {
-        $recList += "<li><strong>$i.</strong> $(script:Escape-HtmlText $r)</li>`n"
-        $i++
-    }
-
-    $sysEv = ($win.SystemEvents | ForEach-Object { "<li>$(script:Escape-HtmlText $_)</li>" }) -join "`n"
-    if (-not $sysEv) { $sysEv = "<li>Nenhum evento ou N/A</li>" }
-    $appEv = ($win.AppEvents | ForEach-Object { "<li>$(script:Escape-HtmlText $_)</li>" }) -join "`n"
-    if (-not $appEv) { $appEv = "<li>Nenhum evento ou N/A</li>" }
+    if (-not $topMemRows) { $topMemRows = "<tr><td colspan=`"2`">N/A</td></tr>" }
 
     $printerRows = ""
     foreach ($row in $pr.PrinterRows) {
         $def = if ($row.Default) { "Sim" } else { "Nao" }
-        $printerRows += "<tr><td>$(script:Escape-HtmlText $row.Name)</td><td>$def</td><td>$(script:Escape-HtmlText ([string]$row.Status))</td><td>$(script:Escape-HtmlText ([string]$row.Shared))</td></tr>`n"
+        $printerRows += "<tr><td>$(script:Escape-HtmlText $row.Name)</td><td>$def</td><td>$(script:Escape-HtmlText ([string]$row.Status))</td></tr>`n"
     }
-    if (-not $printerRows) { $printerRows = "<tr><td colspan='4'>N/A</td></tr>" }
+    if (-not $printerRows) { $printerRows = "<tr><td colspan=`"3`">N/A</td></tr>" }
 
-    $odLines = ($od.Lines | ForEach-Object { script:Escape-HtmlText $_ }) -join "<br/>"
-    $rdpLines = ($rdp.Lines | ForEach-Object { script:Escape-HtmlText $_ }) -join "<br/>"
+    $netLines = ($net.Lines | ForEach-Object { script:Escape-HtmlText $_ }) -join "<br/>"
 
     return @"
 <!DOCTYPE html>
@@ -830,39 +1306,50 @@ function script:Render-AtlasSupportHtml {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Segoe UI, Tahoma, Arial, sans-serif; background: #eef1f5; color: #2c3e50; line-height: 1.6; }
-        .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px 40px; }
-        .header { background: linear-gradient(135deg, #3b5bdb 0%, #364fc7 100%); color: #fff; padding: 28px 32px; border-radius: 10px; margin-bottom: 28px; box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
-        .header h1 { font-size: 26px; margin-bottom: 12px; font-weight: 600; }
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
+        .header { background: linear-gradient(135deg, #1c3faa 0%, #364fc7 100%); color: #fff; padding: 28px 32px; border-radius: 12px; margin-bottom: 24px; }
+        .header h1 { font-size: 26px; margin-bottom: 10px; }
         .meta { font-size: 14px; opacity: 0.95; line-height: 1.8; }
-        .section { background: #fff; padding: 24px 28px; margin-bottom: 24px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .section h2 { font-size: 18px; color: #364fc7; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #e7ebf3; }
-        .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-        .card { padding: 14px 16px; border-radius: 8px; border-left: 4px solid #adb5bd; background: #f8f9fa; }
-        .card-ok { border-left-color: #2f9e44; background: #ebfbee; }
-        .card-atencao { border-left-color: #f08c00; background: #fff9db; }
-        .card-critico { border-left-color: #e03131; background: #fff5f5; }
-        .card-na { border-left-color: #868e96; background: #f1f3f5; }
-        .card-label { font-size: 12px; text-transform: uppercase; color: #495057; letter-spacing: 0.04em; }
-        .card-status { font-size: 20px; font-weight: 700; margin: 6px 0; }
-        .card-detail { font-size: 13px; color: #495057; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
-        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e9ecef; }
-        th { background: #f1f3f5; font-weight: 600; color: #495057; }
+        .section { background: #fff; padding: 28px 32px; margin-bottom: 24px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .section h2 { font-size: 20px; color: #1c3faa; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #e7ebf3; }
+        .health-box { text-align: center; padding: 32px 24px; border-radius: 12px; margin-bottom: 24px; }
+        .health-ok { background: linear-gradient(135deg, #d3f9d8, #b2f2bb); border: 2px solid #2f9e44; }
+        .health-atencao { background: linear-gradient(135deg, #fff9db, #ffec99); border: 2px solid #f08c00; }
+        .health-critico { background: linear-gradient(135deg, #ffe3e3, #ffc9c9); border: 2px solid #e03131; }
+        .health-title { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: #495057; margin-bottom: 8px; }
+        .health-score { font-size: 56px; font-weight: 800; line-height: 1; }
+        .health-label { font-size: 22px; font-weight: 700; margin-top: 8px; }
+        .health-icon { font-size: 28px; margin-bottom: 8px; }
+        .score-areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 20px; }
+        .score-area { padding: 12px 14px; border-radius: 8px; text-align: center; }
+        .area-label { display: block; font-size: 11px; text-transform: uppercase; color: #495057; }
+        .area-status { display: block; font-size: 16px; font-weight: 700; margin-top: 4px; }
+        .card-ok { background: #ebfbee; border-left: 4px solid #2f9e44; }
+        .card-atencao { background: #fff9db; border-left: 4px solid #f08c00; }
+        .card-critico { background: #fff5f5; border-left: 4px solid #e03131; }
+        .card-na { background: #f1f3f5; border-left: 4px solid #868e96; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
+        th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #e9ecef; }
+        th { background: #f1f3f5; font-weight: 600; }
         tr:hover td { background: #f8f9fa; }
-        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; }
         .badge-ok { background: #d3f9d8; color: #2b8a3e; }
         .badge-atencao { background: #ffec99; color: #e67700; }
         .badge-critico { background: #ffc9c9; color: #c92a2a; }
-        .badge-na { background: #e9ecef; color: #495057; }
-        .detail-block { font-size: 14px; margin-bottom: 14px; }
-        .detail-block strong { display: block; margin-bottom: 4px; color: #364fc7; }
-        ul { margin: 8px 0 8px 20px; font-size: 13px; }
-        ul li { margin-bottom: 6px; }
-        .reco-list { list-style: none; margin: 0; padding: 0; }
-        .reco-list li { padding: 10px 14px; margin-bottom: 8px; background: #e7f5ff; border-left: 3px solid #1c7ed6; border-radius: 4px; }
-        .footer { text-align: center; font-size: 12px; color: #868e96; margin-top: 20px; padding-top: 16px; }
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+        .detail-item { padding: 14px 16px; background: #f8f9fa; border-radius: 8px; }
+        .detail-item strong { display: block; font-size: 12px; color: #868e96; text-transform: uppercase; margin-bottom: 4px; }
+        .detail-item span { font-size: 15px; font-weight: 600; }
+        .diag-box { padding: 16px 20px; border-radius: 8px; margin: 12px 0; }
+        .diag-ok { background: #ebfbee; border-left: 4px solid #2f9e44; }
+        .diag-atencao { background: #fff9db; border-left: 4px solid #f08c00; }
+        .diag-critico { background: #fff5f5; border-left: 4px solid #e03131; }
+        .reco-card { padding: 16px 20px; margin-bottom: 12px; background: #e7f5ff; border-left: 4px solid #1c7ed6; border-radius: 6px; }
+        .reco-title { font-weight: 700; color: #1c3faa; margin-bottom: 6px; }
+        .summary-line { font-size: 16px; padding: 12px 16px; background: #f1f3f5; border-radius: 8px; margin-bottom: 16px; }
+        .footer { text-align: center; font-size: 12px; color: #868e96; margin-top: 24px; }
         .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } .cards { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -877,83 +1364,141 @@ function script:Render-AtlasSupportHtml {
     </div>
 
     <div class="section">
-        <h2>Resumo executivo</h2>
-        <div class="cards">$cardHtml</div>
+        <h2>Saude Geral da Maquina</h2>
+        <div class="health-box health-$(script:Escape-HtmlText $health.Class)">
+            <div class="health-icon">$healthIcon</div>
+            <div class="health-title">Score de Saude</div>
+            <div class="health-score">$($health.Score) / 100</div>
+            <div class="health-label">$(script:Escape-HtmlText $health.Label)</div>
+        </div>
+        <div class="score-areas">$areaCards</div>
     </div>
 
     <div class="section">
-        <h2>Problemas encontrados</h2>
+        <h2>Resumo Executivo</h2>
+        <p class="summary-line">$(script:Escape-HtmlText $Report.ExecutiveSummary)</p>
+        <p><strong>Suporte precisa agir?</strong> $(script:Escape-HtmlText $Report.SupportAction)</p>
+    </div>
+
+    <div class="section">
+        <h2>Problemas Detectados</h2>
         <table>
-            <thead><tr><th>Status</th><th>Descricao</th><th>Impacto</th><th>Acao recomendada</th></tr></thead>
+            <thead><tr><th>Status</th><th>Descricao</th><th>Impacto</th><th>Acao</th></tr></thead>
             <tbody>$problemRows</tbody>
         </table>
     </div>
 
     <div class="section">
-        <h2>Diagnostico de lentidao</h2>
-        <div class="detail-block"><strong>Uso de memoria</strong> $(script:Escape-HtmlText $slow.MemText)</div>
-        <div class="detail-block"><strong>Disco livre</strong> $(script:Escape-HtmlText $slow.DiskText)</div>
-        <div class="detail-block"><strong>Uptime</strong> $(script:Escape-HtmlText $slow.UptimeText)</div>
-        <div class="detail-block"><strong>Recomendacao automatica</strong> $(script:Escape-HtmlText $slow.Recommendation)</div>
-        <div class="two-col">
-            <div>
-                <strong>Top 10 processos por memoria</strong>
-                <table><thead><tr><th>Processo</th><th>Memoria</th></tr></thead><tbody>$topMemRows</tbody></table>
-            </div>
-            <div>
-                <strong>Top 10 processos por CPU (quando disponivel)</strong>
-                <table><thead><tr><th>Processo</th><th>CPU (s)</th></tr></thead><tbody>$topCpuRows</tbody></table>
-            </div>
+        <h2>Recomendacoes</h2>
+        $recBlocks
+    </div>
+
+    <div class="section">
+        <h2>Hardware</h2>
+        <p class="summary-line">$(script:Escape-HtmlText $hw.Summary)</p>
+        <div class="detail-grid">
+            <div class="detail-item"><strong>Fabricante</strong><span>$(script:Escape-HtmlText $hw.Manufacturer)</span></div>
+            <div class="detail-item"><strong>Modelo</strong><span>$(script:Escape-HtmlText $hw.Model)</span></div>
+            <div class="detail-item"><strong>Serial</strong><span>$(script:Escape-HtmlText $hw.Serial)</span></div>
+            <div class="detail-item"><strong>CPU</strong><span>$(script:Escape-HtmlText $hw.CPU)</span></div>
+            <div class="detail-item"><strong>Nucleos</strong><span>$(script:Escape-HtmlText ([string]$hw.Cores))</span></div>
+            <div class="detail-item"><strong>RAM</strong><span>$(script:Escape-HtmlText ([string]$hw.RamGB)) GB</span></div>
+            <div class="detail-item"><strong>Disco Total</strong><span>$(script:Escape-HtmlText ([string]$hw.DiskTotalGB)) GB</span></div>
+            <div class="detail-item"><strong>Windows</strong><span>$(script:Escape-HtmlText $hw.Windows)</span></div>
+            <div class="detail-item"><strong>Build</strong><span>$(script:Escape-HtmlText ([string]$hw.Build))</span></div>
         </div>
     </div>
 
     <div class="section">
-        <h2>Rede e internet</h2>
-        <div class="detail-block"><strong>IP principal</strong> $(script:Escape-HtmlText $net.PrimaryIp)</div>
-        <div class="detail-block"><strong>Gateway</strong> $(script:Escape-HtmlText $net.Gateway)</div>
-        <div class="detail-block"><strong>DNS configurado</strong> $(script:Escape-HtmlText $net.DnsConfig)</div>
-        <div class="detail-block"><strong>Testes</strong><br/>$netLines</div>
+        <h2>Memoria</h2>
+        <div class="detail-grid">
+            <div class="detail-item"><strong>Instalada</strong><span>$(script:Escape-HtmlText ([string]$mem.InstalledGB)) GB</span></div>
+            <div class="detail-item"><strong>Livre</strong><span>$(script:Escape-HtmlText ([string]$mem.FreeGB)) GB</span></div>
+            <div class="detail-item"><strong>Uso</strong><span>$(script:Escape-HtmlText ([string]$mem.UsedPct))%</span></div>
+        </div>
+        <div class="diag-box diag-$(script:Get-StatusCssSuffix $mem.Status)">
+            <strong>Diagnostico:</strong> $(script:Escape-HtmlText $mem.Diagnosis)<br/>
+            <strong>Recomendacao:</strong> $(script:Escape-HtmlText $mem.Recommendation)
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Disco</h2>
+        <div class="detail-grid">
+            <div class="detail-item"><strong>Total</strong><span>$(script:Escape-HtmlText ([string]$disk.TotalGB)) GB</span></div>
+            <div class="detail-item"><strong>Livre</strong><span>$(script:Escape-HtmlText ([string]$disk.FreeGB)) GB</span></div>
+            <div class="detail-item"><strong>Usado</strong><span>$(script:Escape-HtmlText ([string]$disk.UsedGB)) GB ($($disk.UsedPct)%)</span></div>
+        </div>
+        <p style="margin-top:16px;"><strong>Maiores pastas do perfil</strong></p>
+        <table><thead><tr><th>Pasta</th><th>Tamanho</th><th>Caminho</th></tr></thead><tbody>$folderRows</tbody></table>
+        <div class="diag-box diag-$(script:Get-StatusCssSuffix $disk.Status)">$(script:Escape-HtmlText $disk.Recommendation)</div>
+    </div>
+
+    <div class="section">
+        <h2>Rede e Internet</h2>
+        <div class="detail-grid">
+            <div class="detail-item"><strong>IP</strong><span>$(script:Escape-HtmlText $net.PrimaryIp)</span></div>
+            <div class="detail-item"><strong>Gateway</strong><span>$(script:Escape-HtmlText $net.Gateway)</span></div>
+            <div class="detail-item"><strong>DNS</strong><span>$(script:Escape-HtmlText $net.DnsConfig)</span></div>
+        </div>
+        <p style="margin-top:12px;">$netLines</p>
     </div>
 
     <div class="section">
         <h2>RDP</h2>
-        <div class="detail-block"><strong>Status final</strong> <span class="badge badge-$(script:Get-StatusCssSuffix $rdp.Status)">$(script:Escape-HtmlText $rdp.Status)</span></div>
-        <div class="detail-block">$rdpLines</div>
+        <p><span class="badge badge-$(script:Get-StatusCssSuffix $rdp.Status)">$(script:Escape-HtmlText $rdp.Status)</span> $(script:Escape-HtmlText $rdp.Detail)</p>
     </div>
 
     <div class="section">
         <h2>OneDrive</h2>
-        <div class="detail-block"><strong>Status final</strong> <span class="badge badge-$(script:Get-StatusCssSuffix $od.Status)">$(script:Escape-HtmlText $od.Status)</span></div>
-        <div class="detail-block">$odLines</div>
+        <p><span class="badge badge-$(script:Get-StatusCssSuffix $od.Status)">$(script:Escape-HtmlText $od.Status)</span> Processo: $(script:Escape-HtmlText $od.ProcessRunning)</p>
     </div>
 
     <div class="section">
         <h2>Impressoras</h2>
-        <div class="detail-block"><strong>Spooler</strong> $(script:Escape-HtmlText $pr.SpoolerStatus) | <strong>Padrao</strong> $(script:Escape-HtmlText $pr.DefaultPrinter) | <strong>Fila</strong> $(script:Escape-HtmlText $pr.QueueInfo)</div>
-        <table>
-            <thead><tr><th>Nome</th><th>Padrao</th><th>Status</th><th>Compartilhada</th></tr></thead>
-            <tbody>$printerRows</tbody>
-        </table>
+        <p>Spooler: $(script:Escape-HtmlText $pr.SpoolerStatus) | Padrao: $(script:Escape-HtmlText $pr.DefaultPrinter)</p>
+        <table><thead><tr><th>Nome</th><th>Padrao</th><th>Status</th></tr></thead><tbody>$printerRows</tbody></table>
     </div>
 
     <div class="section">
         <h2>Windows</h2>
-        <div class="detail-block"><strong>Reboot pendente</strong> $(script:Escape-HtmlText $win.RebootPending)</div>
-        <div class="detail-block"><strong>Windows Update (hotfix)</strong> $(script:Escape-HtmlText $win.WindowsUpdate)</div>
-        <div class="two-col">
-            <div><strong>System - ultimos 10 erros/criticos (2 dias)</strong><ul>$sysEv</ul></div>
-            <div><strong>Application - ultimos 10 erros/criticos (2 dias)</strong><ul>$appEv</ul></div>
-        </div>
+        <p><strong>Reboot pendente:</strong> $(script:Escape-HtmlText $win.RebootPending)</p>
+        <p><strong>Windows Update:</strong> $(script:Escape-HtmlText $win.WindowsUpdate)</p>
     </div>
 
     <div class="section">
-        <h2>Acoes recomendadas</h2>
-        <ul class="reco-list">$recList</ul>
+        <h2>Eventos Criticos</h2>
+        <table>
+            <thead><tr><th>Data</th><th>Evento</th><th>Descricao</th><th>Impacto</th></tr></thead>
+            <tbody>$eventRows</tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Programas de Inicializacao</h2>
+        <p><strong>Diagnostico:</strong> $(script:Escape-HtmlText $startup.Diagnosis)</p>
+        <table><thead><tr><th>Nome</th><th>Status</th><th>Origem</th></tr></thead><tbody>$startupRows</tbody></table>
+    </div>
+
+    <div class="section">
+        <h2>Windows Defender</h2>
+        <div class="detail-grid">
+            <div class="detail-item"><strong>Status</strong><span>$(script:Escape-HtmlText $defender.Active)</span></div>
+            <div class="detail-item"><strong>Ultima atualizacao</strong><span>$(script:Escape-HtmlText $defender.LastUpdate)</span></div>
+            <div class="detail-item"><strong>Assinaturas</strong><span>$(script:Escape-HtmlText $defender.Signatures)</span></div>
+            <div class="detail-item"><strong>Tempo real</strong><span>$(script:Escape-HtmlText $defender.RealTime)</span></div>
+        </div>
+        <p style="margin-top:12px;"><span class="badge badge-$(script:Get-StatusCssSuffix $defender.Status)">$(script:Escape-HtmlText $defender.Status)</span></p>
+    </div>
+
+    <div class="section">
+        <h2>Processos Pesados</h2>
+        <table><thead><tr><th>Processo</th><th>Memoria</th></tr></thead><tbody>$topMemRows</tbody></table>
     </div>
 
     <div class="footer">
-        <p>Atlas v0.2.2 - Assistente de Manutencao Windows</p>
-        <p>Relatorio gerado automaticamente em $(script:Escape-HtmlText $h.DateTime)</p>
+        <p>Atlas - Assistente de Manutencao Windows</p>
+        <p>Relatorio gerado em $(script:Escape-HtmlText $h.DateTime)</p>
     </div>
 </div>
 </body>
@@ -962,7 +1507,7 @@ function script:Render-AtlasSupportHtml {
 }
 
 function New-AtlasSupportHtmlReport {
-    Write-Log -Message "Iniciando geracao de relatorio HTML" -Level "INFO"
+    Write-Log -Message "Iniciando geracao de relatorio HTML profissional" -Level "INFO"
 
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $desktopPath = [Environment]::GetFolderPath("Desktop")
@@ -1000,48 +1545,71 @@ function New-AtlasSupportHtmlReport {
         if ($a) { $alerts += $a }
     }
 
+    $hardware = script:Collect-HardwareReportData
+    $memory = script:Collect-MemoryReportData
+    $disk = script:Collect-DiskReportData
     $rdpData = script:Collect-RdpReportData
     $netData = script:Collect-NetworkReportData
     $slowData = script:Collect-SlownessReportData
     $odData = script:Collect-OneDriveReportData
     $prData = script:Collect-PrinterReportData
     $winData = script:Collect-WindowsReportData
+    $eventsData = script:Collect-CriticalEventsData
+    $startupData = script:Collect-StartupProgramsData
+    $defenderData = script:Collect-DefenderReportData
 
-    $overall = script:Get-OverallStatusFromAlerts $alerts
-    $diskAlert = $alerts | Where-Object { $_.Label -like "Disco*" } | Select-Object -First 1
-    $memAlert = $alerts | Where-Object { $_.Label -eq "Memoria" } | Select-Object -First 1
-    $netAlert = $alerts | Where-Object { $_.Label -eq "Internet" } | Select-Object -First 1
-    $odAlert = $alerts | Where-Object { $_.Label -eq "OneDrive" } | Select-Object -First 1
-    $spAlert = $alerts | Where-Object { $_.Label -eq "Spooler" } | Select-Object -First 1
-    $rbAlert = $alerts | Where-Object { $_.Label -eq "Reboot Pendente" } | Select-Object -First 1
+    $wuStatus = "OK"
+    if ($eventsData.Events | Where-Object { $_.Event -like "*WindowsUpdateClient*20*" }) {
+        $wuStatus = "ATENCAO"
+    }
 
-    $printerCardStatus = if ($prData.Status -ne "NA") { $prData.Status } elseif ($spAlert) { $spAlert.Status } else { "NA" }
+    $health = script:Calculate-HealthScore -Metrics @{
+        Disk = $disk
+        Memory = $memory
+        Network = $netData
+        WinUpdate = @{ Status = $wuStatus }
+        Events = $eventsData
+        Rdp = $rdpData
+        OneDrive = $odData
+        Printers = $prData
+        Defender = $defenderData
+    }
 
-    $cards = @(
-        @{ Label = "Status geral"; Status = $overall; Detail = "Consolidado dos diagnosticos" }
-        @{ Label = "Disco"; Status = $(if ($diskAlert) { $diskAlert.Status } else { "NA" }); Detail = $(if ($diskAlert) { $diskAlert.Message } else { "N/A" }) }
-        @{ Label = "Memoria"; Status = $(if ($memAlert) { $memAlert.Status } else { "NA" }); Detail = $(if ($memAlert) { $memAlert.Message } else { "N/A" }) }
-        @{ Label = "Internet/DNS"; Status = $netData.Status; Detail = $(if ($netAlert) { $netAlert.Message } else { "Testes de conectividade" }) }
-        @{ Label = "OneDrive"; Status = $(if ($odData.Status -ne "NA") { $odData.Status } elseif ($odAlert) { $odAlert.Status } else { "NA" }); Detail = $(if ($odAlert) { $odAlert.Message } else { $odData.ProcessRunning }) }
-        @{ Label = "Impressoras"; Status = $printerCardStatus; Detail = "Spooler: $($prData.SpoolerStatus)" }
-        @{ Label = "Reboot pendente"; Status = $(if ($rbAlert) { $rbAlert.Status } else { "NA" }); Detail = $(if ($rbAlert) { $rbAlert.Message } else { "N/A" }) }
-        @{ Label = "RDP"; Status = $rdpData.Status; Detail = $rdpData.Detail }
-    )
+    $problems = script:Build-ProblemsFromData -Alerts $alerts -RdpData $rdpData -EventsData $eventsData -MemoryData $memory -DiskData $disk -DefenderData $defenderData
+    $recommendations = script:Build-SmartRecommendations -Alerts $alerts -MemoryData $memory -DiskData $disk -EventsData $eventsData -StartupData $startupData -DefenderData $defenderData -Slowness $slowData -RdpData $rdpData
 
-    $problems = script:Build-ProblemsFromAlerts -Alerts $alerts -RdpData $rdpData
-    $recommendations = script:Build-RecommendationsList -Alerts $alerts -Slowness $slowData -RdpData $rdpData
+    $criticalCount = @($problems | Where-Object { $_.Status -eq "CRITICO" }).Count
+    $atencaoCount = @($problems | Where-Object { $_.Status -eq "ATENCAO" }).Count
+
+    $executiveSummary = if ($health.Score -ge 80) {
+        "Maquina em bom estado geral (score $($health.Score)). $($criticalCount) problema(s) critico(s), $($atencaoCount) atencao(oes)."
+    } elseif ($health.Score -ge 60) {
+        "Maquina requer atencao (score $($health.Score)). Verifique problemas e recomendacoes abaixo."
+    } else {
+        "Maquina em estado critico (score $($health.Score)). Suporte deve agir com prioridade."
+    }
+
+    $supportAction = if ($criticalCount -gt 0 -or $health.Score -lt 60) { "SIM - acao recomendada" } elseif ($atencaoCount -gt 0) { "AVALIAR - problemas de atencao detectados" } else { "NAO - monitoramento de rotina" }
 
     $report = @{
         Header = $header
-        Cards = $cards
+        Health = $health
+        ExecutiveSummary = $executiveSummary
+        SupportAction = $supportAction
         Problems = $problems
-        Slowness = $slowData
+        Recommendations = $recommendations
+        Hardware = $hardware
+        Memory = $memory
+        Disk = $disk
         Network = $netData
         Rdp = $rdpData
         OneDrive = $odData
         Printers = $prData
         Windows = $winData
-        Recommendations = $recommendations
+        Events = $eventsData
+        Startup = $startupData
+        Defender = $defenderData
+        Slowness = $slowData
     }
 
     try {
