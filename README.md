@@ -1,141 +1,166 @@
 # Atlas
 
-**Assistente de manutencao e suporte Windows em PowerShell.**
+**Assistente de manutenção e suporte para Windows.**
 
-Atlas e uma ferramenta PowerShell para tecnicos de suporte, analistas de infraestrutura e usuarios avancados que precisam executar correcoes e manutencoes comuns no Windows de forma rapida, organizada e segura.
+Atlas é uma ferramenta criada para centralizar tarefas comuns de suporte, manutenção e correção de problemas em estações Windows.
 
-**Status:** MVP v0.2.6
+Seu objetivo é reduzir o tempo gasto com atividades repetitivas e disponibilizar correções comuns em uma interface simples e organizada.
 
 ---
 
-## Uso
+## O que o Atlas resolve
 
-O fluxo principal do Atlas sera execucao online via PowerShell — sem necessidade de clonar o repositorio ou instalar o projeto manualmente.
-
-```powershell
-irm https://sua-url-curta/atlas | iex
-```
-
-> A URL acima e um placeholder. O bootstrap online ainda nao esta publicado.
-
-**Como funcionara:**
-
-- O bootstrap online baixara a versao estavel do Atlas a partir das releases do GitHub.
-- A execucao sera temporaria — o objetivo e rodar a ferramenta sem instalacao local do projeto.
-- O repositorio GitHub permanece como fonte de codigo, versionamento e releases oficiais.
-- O usuario final nao precisa de `git clone`, dependencias manuais ou configuracao de ambiente de desenvolvimento.
+- ✓ Lentidão
+- ✓ Problemas de rede
+- ✓ OneDrive
+- ✓ Outlook
+- ✓ Teams
+- ✓ Impressoras
+- ✓ Windows Update
+- ✓ Arquivos temporários
+- ✓ Cache
+- ✓ Instalação de programas
+- ✓ Correções comuns do Windows
 
 ---
 
 ## Funcionalidades
 
-| Modulo | Recursos |
-|--------|----------|
-| Limpeza segura | Temporarios, lixeira, cache Windows Update |
-| Rede e internet | DNS, IP, Winsock, TCP/IP |
-| OneDrive | Status, reset, remocao assistida, reinstalacao |
-| Impressoras | Spooler, fila, TCP/IP, impressora compartilhada |
-| Reparos Windows | SFC, DISM, Windows Update |
-| Outlook | Status, cache, reparo Office |
-| Teams | Cache, Teams pessoal/corporativo |
-| Navegadores | Chrome, Edge, Firefox, cache |
-| Instalacao de programas | Catalogo Winget por categorias |
+### Limpeza Segura
 
-O menu principal oferece 9 acoes operacionais acessiveis por numeracao simples, com confirmacao antes de qualquer acao destrutiva.
+- Limpeza de temporários
+- Limpeza de DNS
+- Limpeza de cache Windows Update
+- Limpeza de lixeira
+- Identificação de pastas grandes
+
+### Rede e Internet
+
+- Diagnóstico de conectividade
+- Renovação de IP
+- Reset Winsock
+- Reset TCP/IP
+- Diagnóstico DNS
+
+### OneDrive
+
+- Reiniciar
+- Resetar
+- Remover
+- Limpar resíduos
+- Reinstalar
+
+### Impressoras
+
+- Reiniciar spooler
+- Limpar fila
+- Diagnosticar problemas
+- Corrigir falhas comuns
+
+### Reparos Windows
+
+- SFC
+- DISM
+- Reset Windows Update
+- Verificações de integridade
+
+### Outlook
+
+- Diagnóstico
+- Limpeza
+- Reparo
+- Verificação de instalação
+
+### Teams
+
+- Limpeza de cache
+- Correções comuns
+- Remoção de componentes pessoais
+
+### Navegadores
+
+- Chrome
+- Edge
+- Firefox
+
+Limpeza de cache e correções básicas.
+
+### Instalação de Programas
+
+Catálogo organizado por categorias, com confirmação antes de cada instalação.
 
 ---
 
-## Catalogo de software
+## Catálogo de software
 
-Programas organizados por categoria em `config/software-catalog.json`, instalados via Winget com confirmacao unica por item:
+### Navegadores
 
-- Navegadores
-- PDF e Documentos
-- Desenvolvimento
-- Infraestrutura e Redes
-- Banco de Dados
-- Microsoft
-- Utilitarios
+Google Chrome · Microsoft Edge · Mozilla Firefox · Brave
 
-Fluxos especiais incluem RSAT e Microsoft 365 Apps, com validacao de pacotes antes da instalacao.
+### PDF e Documentos
+
+Adobe Acrobat Reader · PDF24 Creator · LibreOffice · Draw.io
+
+### Desenvolvimento
+
+Visual Studio Code · Git · PowerShell 7 · Notepad++ · Docker Desktop · WSL
+
+### Infraestrutura e Redes
+
+PuTTY · WinSCP · MobaXterm · Wireshark · Nmap · Remote Desktop Manager · OpenVPN Community · OpenVPN Connect · RSAT
+
+### Banco de Dados
+
+SQL Server Management Studio
+
+### Microsoft
+
+Microsoft 365 · Teams · OneDrive · PowerToys · Windows Terminal · Power BI Desktop · Remote Desktop
+
+### Utilitários
+
+7-Zip · Everything · ShareX · Greenshot
 
 ---
 
-## Seguranca operacional
+## Segurança
 
-Atlas foi projetado para uso em ambiente corporativo e de suporte tecnico:
-
-- **Confirmacao obrigatoria** antes de acoes destrutivas (limpeza, reset, remocao).
-- **Confirmacao obrigatoria** antes de cada instalacao de programa.
-- **Sem ativadores** de software ou licencas.
-- **Sem scripts de terceiros** — apenas modulos proprios do Atlas.
-- **Recursos nativos do Windows** (SFC, DISM, WMI, Registry, Spooler) e **Winget** para instalacao.
-- **Compativel com Windows PowerShell 5.1** — padrao em estacoes corporativas.
-
-Cada sessao gera log persistente em `logs/sessions/` para auditoria e rastreabilidade.
+- Atlas não utiliza ativadores.
+- Atlas não modifica configurações sem confirmação.
+- Atlas utiliza recursos nativos do Windows.
+- Atlas utiliza Winget para instalação de softwares.
+- Operações destrutivas exigem confirmação explícita.
 
 ---
 
 ## Compatibilidade
 
-| Requisito | Suporte |
-|-----------|---------|
+| Plataforma | Suporte |
+|------------|---------|
 | Windows 10 | Sim |
 | Windows 11 | Sim |
-| Windows PowerShell 5.1 | Sim (recomendado) |
+| Windows PowerShell 5.1 | Sim |
 | PowerShell 7+ | Sim |
-| Winget | Necessario para instalacao de programas |
-
-Funcionalidades nativas do Windows retornam mensagens informativas em ambientes nao-Windows (util para desenvolvimento e testes).
+| Winget | Necessário para instalação de programas |
 
 ---
 
 ## Roadmap
 
-| Versao | Entrega |
-|--------|---------|
-| **v0.2.6** | MVP estavel — manutencao, correcao e suporte operacional |
-| **v0.3** | Bootstrap online via `irm \| iex` |
-| **v0.4** | Execucao temporaria com limpeza automatica |
-| **v0.5** | Pagina publica e documentacao para usuario final |
-| **Futuro** | Interface grafica |
+**Versão atual:** Atlas v0.2.6 — MVP estável
 
-Detalhes tecnicos em [docs/ROADMAP.md](docs/ROADMAP.md).
+**Próximas versões:**
 
----
-
-## Estrutura do projeto
-
-```
-bootstrap/     # Bootstrap e menu principal
-modules/       # Modulos de manutencao e toolkit corporativo
-config/        # Catalogo de software e configuracoes
-tests/         # Suite de testes automatizados
-docs/          # Arquitetura, escopo, roadmap e releases
-logs/          # Logs de sessao e operacao
-```
-
-Documentacao complementar: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/PRODUCT_SCOPE.md](docs/PRODUCT_SCOPE.md)
+| Entrega | Descrição |
+|---------|-----------|
+| Bootstrap online | Execução direta via PowerShell, sem instalação manual |
+| Execução temporária | Sessão isolada com limpeza automática ao encerrar |
+| Atualizações simplificadas | Obtenção da versão estável sem intervenção do usuário |
+| Documentação pública | Guias e referência para uso em campo |
+| Interface gráfica | Experiência visual além do menu em terminal |
 
 ---
 
-## Desenvolvimento
+## Objetivo do projeto
 
-Esta secao e destinada a contribuidores e mantenedores do projeto — nao ao usuario final.
-
-```powershell
-powershell.exe -ExecutionPolicy Bypass -File .\tests\test_loop.ps1
-powershell.exe -ExecutionPolicy Bypass -File .\tests\test_software_install.ps1
-```
-
-Para execucao local durante o desenvolvimento:
-
-```powershell
-powershell.exe -ExecutionPolicy Bypass -File .\bootstrap\install.ps1
-```
-
----
-
-## Licenca
-
-A definir.
+Centralizar tarefas comuns de manutenção e suporte em uma única ferramenta simples, portátil e fácil de utilizar.
