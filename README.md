@@ -135,13 +135,19 @@ Microsoft 365 · Teams · OneDrive · PowerToys · Windows Terminal · Power BI 
 
 ## Compatibilidade
 
-| Plataforma | Suporte |
-|------------|---------|
-| Windows 10 | Sim |
-| Windows 11 | Sim |
-| Windows PowerShell 5.1 | Sim |
-| PowerShell 7+ | Sim |
-| Winget | Necessário para instalação de programas |
+### Plataformas oficialmente suportadas
+
+- Windows 11
+- Windows PowerShell 5.1
+- PowerShell 7+
+
+### Requisitos
+
+- Winget (para instalação e atualização de softwares)
+
+### Observação
+
+Versões anteriores do Windows podem funcionar parcialmente, mas não fazem parte da matriz oficial de testes do projeto.
 
 ---
 
