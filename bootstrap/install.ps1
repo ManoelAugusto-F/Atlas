@@ -13,7 +13,6 @@
 . "$PSScriptRoot/../modules/onedrive.ps1"
 . "$PSScriptRoot/../modules/printer.ps1"
 . "$PSScriptRoot/../modules/windows-repair.ps1"
-. "$PSScriptRoot/../modules/support-report.ps1"
 . "$PSScriptRoot/../modules/outlook.ps1"
 . "$PSScriptRoot/../modules/teams.ps1"
 . "$PSScriptRoot/../modules/browser.ps1"
@@ -23,7 +22,6 @@
 
 # Validacao de import
 $requiredFunctions = @(
-    "New-AtlasSupportHtmlReport",
     "Show-CleanupMenu",
     "Show-NetworkMenu",
     "Show-OneDriveMenu",
@@ -65,52 +63,46 @@ try {
         switch ($option) {
 
             "1" {
-                Write-AtlasSessionLog -Message "Acao: Relatorio de suporte" -Level "ACTION"
-                New-AtlasSupportHtmlReport
-                Wait-UserInput
-            }
-
-            "2" {
                 Write-AtlasSessionLog -Message "Acao: Limpeza segura" -Level "ACTION"
                 Show-CleanupMenu
             }
 
-            "3" {
+            "2" {
                 Write-AtlasSessionLog -Message "Acao: Rede e internet" -Level "ACTION"
                 Show-NetworkMenu
             }
 
-            "4" {
+            "3" {
                 Write-AtlasSessionLog -Message "Acao: OneDrive" -Level "ACTION"
                 Show-OneDriveMenu
             }
 
-            "5" {
+            "4" {
                 Write-AtlasSessionLog -Message "Acao: Impressoras" -Level "ACTION"
                 Show-PrinterMenu
             }
 
-            "6" {
+            "5" {
                 Write-AtlasSessionLog -Message "Acao: Reparos Windows" -Level "ACTION"
                 Show-WindowsRepairMenu
             }
 
-            "7" {
+            "6" {
                 Write-AtlasSessionLog -Message "Acao: Outlook" -Level "ACTION"
                 Show-OutlookMenu
             }
 
-            "8" {
+            "7" {
                 Write-AtlasSessionLog -Message "Acao: Teams" -Level "ACTION"
                 Show-TeamsMenu
             }
 
-            "9" {
+            "8" {
                 Write-AtlasSessionLog -Message "Acao: Navegadores" -Level "ACTION"
                 Show-BrowserMenu
             }
 
-            "10" {
+            "9" {
                 Write-AtlasSessionLog -Message "Acao: Instalacao de programas" -Level "ACTION"
                 Show-SoftwareInstallMenu
             }
@@ -124,7 +116,7 @@ try {
             default {
                 Write-Log -Message "Opcao invalida selecionada: $option" -Level "WARN"
                 Write-AtlasSessionLog -Message "Opcao invalida: $option" -Level "WARN"
-                Write-Host "Opcao invalida. Escolha entre 0 e 10." -ForegroundColor Yellow
+                Write-Host "Opcao invalida. Escolha entre 0 e 9." -ForegroundColor Yellow
                 Wait-UserInput
             }
         }

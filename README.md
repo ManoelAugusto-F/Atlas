@@ -1,8 +1,8 @@
-# Atlas - Assistente de Manutencao Windows v0.2.5
+# Atlas - Assistente de Manutencao Windows v0.2.6
 
 O **Atlas** e um assistente interativo e modular desenvolvido em PowerShell, focado no diagnostico preventivo, triagem rapida e correcao de estacoes de trabalho. Desenvolvido sob rigorosos criterios de compatibilidade, o Atlas e 100% compativel com o **Windows PowerShell 5.1** e **PowerShell Core 7+** (cross-platform, com simulacoes seguras em ambiente nao-Windows).
 
-**Versao Atual**: v0.2.5 — Catalogo winget validado no Windows (5 IDs invalidos removidos), atualizacao com previa `winget upgrade` e menu simplificado.
+**Versao Atual**: v0.2.6 — Modulo de relatorio removido; Atlas focado em manutencao, correcao e suporte operacional.
 
 ---
 
@@ -21,7 +21,7 @@ O **Atlas** e um assistente interativo e modular desenvolvido em PowerShell, foc
   * [docs/ISSUES.md](docs/ISSUES.md) — Registro de demandas tecnicas e status das atividades (Sprint v0.2).
 * [modules/](modules/) — Modulos e bibliotecas tecnicas isoladas do sistema:
   * **Core**: [modules/logger.ps1](modules/logger.ps1) (sistema de logs), [modules/core.ps1](modules/core.ps1) (helpers de confirmacao e UX), [modules/menu.ps1](modules/menu.ps1) (gerador de console e menus).
-  * **Manutencao e Diagnostico v0.1**: [modules/quick-diagnostic.ps1](modules/quick-diagnostic.ps1), [modules/cleanup.ps1](modules/cleanup.ps1), [modules/network-tools.ps1](modules/network-tools.ps1), [modules/onedrive.ps1](modules/onedrive.ps1), [modules/printer.ps1](modules/printer.ps1), [modules/windows-repair.ps1](modules/windows-repair.ps1), [modules/support-report.ps1](modules/support-report.ps1).
+  * **Manutencao e Diagnostico v0.1**: [modules/quick-diagnostic.ps1](modules/quick-diagnostic.ps1), [modules/cleanup.ps1](modules/cleanup.ps1), [modules/network-tools.ps1](modules/network-tools.ps1), [modules/onedrive.ps1](modules/onedrive.ps1), [modules/printer.ps1](modules/printer.ps1), [modules/windows-repair.ps1](modules/windows-repair.ps1).
   * **Toolkit Corporativo v0.2 (Fase Alfa)**: [modules/outlook.ps1](modules/outlook.ps1), [modules/teams.ps1](modules/teams.ps1), [modules/browser.ps1](modules/browser.ps1), [modules/programs.ps1](modules/programs.ps1), [modules/services.ps1](modules/services.ps1), [modules/software-install.ps1](modules/software-install.ps1).
 * [tests/](tests/) — Testes unitarios, loops de simulacao e seguranca sintatica.
   * [tests/test_parser.ps1](tests/test_parser.ps1) — Validador estatico de sintaxe.
@@ -55,7 +55,6 @@ pwsh -File tests/test_imports.ps1
 # Testes v0.2
 pwsh -File tests/test_v02_modules.ps1
 pwsh -File tests/test_loop.ps1
-pwsh -File tests/test_html_report.ps1
 pwsh -File tests/test_software_install.ps1
 pwsh -File tests/test_winget_catalog.ps1
 ```

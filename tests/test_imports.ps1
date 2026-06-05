@@ -15,7 +15,12 @@ $bootstrapDir = Join-Path $PSScriptRoot "../bootstrap"
 . "$bootstrapDir/../modules/onedrive.ps1"
 . "$bootstrapDir/../modules/printer.ps1"
 . "$bootstrapDir/../modules/windows-repair.ps1"
-. "$bootstrapDir/../modules/support-report.ps1"
+. "$bootstrapDir/../modules/outlook.ps1"
+. "$bootstrapDir/../modules/teams.ps1"
+. "$bootstrapDir/../modules/browser.ps1"
+. "$bootstrapDir/../modules/programs.ps1"
+. "$bootstrapDir/../modules/services.ps1"
+. "$bootstrapDir/../modules/software-install.ps1"
 
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "  Atlas - Teste de Importacao de Modulos" -ForegroundColor Cyan
@@ -29,18 +34,25 @@ $requiredFunctions = @(
     "Show-OneDriveMenu",
     "Show-PrinterMenu",
     "Show-WindowsRepairMenu",
-    "New-AtlasSupportReport",
-    
+    "Show-OutlookMenu",
+    "Show-TeamsMenu",
+    "Show-BrowserMenu",
+    "Show-SoftwareInstallMenu",
+    "Test-WingetAvailable",
+    "Get-SoftwareCatalog",
+    "Start-AtlasSessionLog",
+    "Stop-AtlasSessionLog",
+
     "Test-SfcVerifyOnly",
     "Invoke-SfcScannowSafe",
     "Test-DismCheckHealth",
     "Invoke-DismScanHealthSafe",
     "Invoke-DismRestoreHealthSafe",
     "Reset-WindowsUpdateSafe",
-    
+
     "Get-OneDriveStatus",
     "Find-OneDriveExecutable",
-    
+
     "Get-PrinterList",
     "Get-PrintQueueStatus"
 )

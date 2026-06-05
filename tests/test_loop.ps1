@@ -6,7 +6,6 @@
 . "$PSScriptRoot/../modules/onedrive.ps1"
 . "$PSScriptRoot/../modules/printer.ps1"
 . "$PSScriptRoot/../modules/windows-repair.ps1"
-. "$PSScriptRoot/../modules/support-report.ps1"
 . "$PSScriptRoot/../modules/quick-diagnostic.ps1"
 . "$PSScriptRoot/../modules/outlook.ps1"
 . "$PSScriptRoot/../modules/teams.ps1"
@@ -231,33 +230,6 @@ if (-not $allOk) {
 
 Write-Host ""
 Write-Host "Todas as funcoes de windows-repair validadas (sem execucao de SFC/DISM)." -ForegroundColor Green
-
-# ── Validar funcoes do modulo support-report ───────────────────────
-Write-Host ""
-Write-Host "========================================" -ForegroundColor DarkCyan
-Write-Host "[TESTE] Validando funcoes de support-report.ps1" -ForegroundColor Magenta
-Write-Host "========================================" -ForegroundColor DarkCyan
-
-$supportFunctions = @('New-AtlasSupportReport')
-
-$allOk = $true
-foreach ($fn in $supportFunctions) {
-    if (Get-Command $fn -ErrorAction SilentlyContinue) {
-        Write-Host "  [OK] $fn" -ForegroundColor Green
-    } else {
-        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
-        $allOk = $false
-    }
-}
-
-if (-not $allOk) {
-    Write-Host ""
-    Write-Host "FALHA: uma ou mais funcoes de support-report nao foram carregadas." -ForegroundColor Red
-    exit 1
-}
-
-Write-Host ""
-Write-Host "Todas as funcoes de support-report validadas." -ForegroundColor Green
 
 # ── Validar funcoes do modulo quick-diagnostic ──────────────────────
 Write-Host ""
@@ -556,22 +528,6 @@ if (-not $allOk) {
 Write-Host ""
 Write-Host "Todas as funcoes do Browser Toolkit validadas." -ForegroundColor Green
 
-# ── Validar funcao New-AtlasSupportHtmlReport ────────────────────────
-Write-Host ""
-Write-Host "========================================" -ForegroundColor DarkCyan
-Write-Host "[TESTE] Validando New-AtlasSupportHtmlReport" -ForegroundColor Magenta
-Write-Host "========================================" -ForegroundColor DarkCyan
-
-if (Get-Command "New-AtlasSupportHtmlReport" -ErrorAction SilentlyContinue) {
-    Write-Host "  [OK] New-AtlasSupportHtmlReport" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] New-AtlasSupportHtmlReport nao encontrada" -ForegroundColor Red
-    exit 1
-}
-
-Write-Host ""
-Write-Host "Validacao de relatorio HTML concluida." -ForegroundColor Green
-
 # -- Validar modulo software-install --------------------------------
 Write-Host ""
 Write-Host "========================================" -ForegroundColor DarkCyan
@@ -636,7 +592,7 @@ Write-Host ""
 Write-Host "Todas as funcoes de software-install validadas." -ForegroundColor Green
 
 $running = $true
-$inputs  = @('1','2','3','4','5','6','7','8','9','10','99','0')
+$inputs  = @('1','2','3','4','5','6','7','8','9','99','0')
 $idx     = 0
 
 while ($running) {
@@ -647,16 +603,15 @@ while ($running) {
     Write-Host "========================================" -ForegroundColor DarkCyan
 
     switch ($option) {
-        '1'  { Write-Log -Message "Relatorio HTML (funcao New-AtlasSupportHtmlReport validada, sem geracao de arquivo)" -Level "INFO" }
-        '2'  { Write-Log -Message "Limpeza segura (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
-        '3'  { Write-Log -Message "Rede e internet (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
-        '4'  { Write-Log -Message "OneDrive (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
-        '5'  { Write-Log -Message "Impressoras (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
-        '6'  { Write-Log -Message "Reparos Windows (modulo validado acima, sem execucao de SFC/DISM)" -Level "INFO" }
-        '7'  { Write-Log -Message "Submenu Outlook (funcao Show-OutlookMenu validada)" -Level "INFO" }
-        '8'  { Write-Log -Message "Submenu Teams (funcao Show-TeamsMenu validada)" -Level "INFO" }
-        '9'  { Write-Log -Message "Submenu Navegadores (funcao Show-BrowserMenu validada)" -Level "INFO" }
-        '10' { Write-Log -Message "Submenu Instalacao de programas (Show-SoftwareInstallMenu validada)" -Level "INFO" }
+        '1'  { Write-Log -Message "Limpeza segura (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
+        '2'  { Write-Log -Message "Rede e internet (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
+        '3'  { Write-Log -Message "OneDrive (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
+        '4'  { Write-Log -Message "Impressoras (modulo validado acima, sem execucao destrutiva)" -Level "INFO" }
+        '5'  { Write-Log -Message "Reparos Windows (modulo validado acima, sem execucao de SFC/DISM)" -Level "INFO" }
+        '6'  { Write-Log -Message "Submenu Outlook (funcao Show-OutlookMenu validada)" -Level "INFO" }
+        '7'  { Write-Log -Message "Submenu Teams (funcao Show-TeamsMenu validada)" -Level "INFO" }
+        '8'  { Write-Log -Message "Submenu Navegadores (funcao Show-BrowserMenu validada)" -Level "INFO" }
+        '9'  { Write-Log -Message "Submenu Instalacao de programas (Show-SoftwareInstallMenu validada)" -Level "INFO" }
         '0'  { Write-Log -Message "Atlas encerrado" -Level "INFO"; $running = $false }
         default {
             Write-Log -Message "Opcao invalida: $option" -Level "WARN"

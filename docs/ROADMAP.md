@@ -37,10 +37,9 @@ gantt
 ### v0.2.2 — Suporte Real e Instalacao Basica (Concluido)
 * **Objetivo**: Melhorar o Atlas para uso real de suporte tecnico no dia a dia.
 * **Entregas**:
-  * Relatorio HTML profissional com cards de status, problemas, lentidao, rede, RDP, OneDrive, impressoras e Windows
   * OneDrive: desinstalar, limpar residuos e reinstalar via pagina oficial
   * Outlook: reparo e desinstalacao assistida via telas do Windows
-  * Instalacao de programas basicos via winget (menu opcao 10)
+  * Instalacao de programas basicos via winget (menu opcao 9)
 
 ---
 
@@ -67,12 +66,19 @@ gantt
 
 ---
 
-### v0.3 — Reports Dinamicos (Planejado)
-* **Objetivo**: Fornecer facilidades de visualizacao para administradores de TI que gerenciam mais de um computador.
+### v0.2.6 — Foco Operacional (Concluido)
+* **Objetivo**: Simplificar o MVP removendo o modulo de relatorio de suporte.
 * **Entregas**:
-  * Exportador HTML5 dinamico com folhas de estilo (CSS) elegantes para relatorios locais.
-  * Painel/Dashboard simples em HTML gerado localmente na estacao.
-  * Mecanismo de historico de execucoes no computador com logs consolidados e comparativos de saude da estacao.
+  * Menu principal com 9 opcoes de manutencao e correcao
+  * Remocao de `support-report.ps1` e testes associados
+  * Atlas focado em acoes operacionais no dia a dia
+
+### v0.3 — Melhorias de Operacao (Planejado)
+* **Objetivo**: Refinar fluxos de manutencao e ampliar cobertura de diagnostico operacional.
+* **Entregas**:
+  * Historico consolidado de sessoes em `logs/sessions/`
+  * Melhorias de UX nos submenus existentes
+  * Automacoes adicionais para suporte de campo
 
 ---
 

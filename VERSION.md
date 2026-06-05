@@ -1,8 +1,13 @@
-# Versao Atual: Atlas v0.2.5
+# Versao Atual: Atlas v0.2.6
 
 ---
 
 ## Historico de Versoes
+
+### v0.2.6 - Remocao do modulo de relatorio
+- **Removido**: `modules/support-report.ps1`, `tests/test_html_report.ps1` e exemplos `reports/atlas_support_*`
+- **Menu**: 9 opcoes operacionais (sem Relatorio de suporte)
+- **Foco**: manutencao, correcao e suporte operacional
 
 ### v0.2.5 - Catalogo Winget corrigido e atualizacao com previa
 - **Catalogo**: removidos Python 3, RustDesk, AnyDesk, DBeaver Community e Azure Data Studio (IDs invalidos no winget)
