@@ -3,6 +3,7 @@
 # ==========================================
 
 $script:SoftwareCatalogPath = $null
+$script:Microsoft365WingetId = "Microsoft.Office"
 
 function script:Get-SoftwareCatalogFilePath {
     if (-not $script:SoftwareCatalogPath) {
@@ -269,15 +270,180 @@ function Install-RsatFullSafe {
     }
 }
 
+function Test-Microsoft365WingetAvailable {
+    if (-not (script:Test-IsWindowsSoftwareInstall)) {
+        return $false
+    }
+
+    $wingetCheck = Test-WingetAvailable
+    if (-not $wingetCheck.Available) {
+        return $false
+    }
+
+    & winget show --id $script:Microsoft365WingetId --exact
+    return ($LASTEXITCODE -eq 0)
+}
+
+function Test-Microsoft365Installed {
+    Write-AtlasSessionLog -Message "Verificando Microsoft 365 instalado" -Level "ACTION"
+
+    if (-not (script:Test-IsWindowsSoftwareInstall)) {
+        Write-Host "Verificacao disponivel apenas no Windows." -ForegroundColor Yellow
+        return $false
+    }
+
+    $installed = $false
+    $detail = "Nao detectado"
+
+    $regPaths = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\winword.exe",
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\excel.exe"
+    )
+
+    foreach ($regPath in $regPaths) {
+        if (Test-Path $regPath) {
+            $installed = $true
+            try {
+                $val = Get-ItemProperty -Path $regPath -Name "(Default)" -ErrorAction Stop
+                $detail = $val."(Default)"
+            } catch {
+                $detail = "Registro encontrado"
+            }
+            break
+        }
+    }
+
+    if (-not $installed) {
+        $officePaths = @(
+            "$env:ProgramFiles\Microsoft Office\root\Office16\WINWORD.EXE",
+            "${env:ProgramFiles(x86)}\Microsoft Office\root\Office16\WINWORD.EXE"
+        )
+        foreach ($p in $officePaths) {
+            if (Test-Path $p) {
+                $installed = $true
+                $detail = $p
+                break
+            }
+        }
+    }
+
+    Write-Host ""
+    if ($installed) {
+        Write-Host "Microsoft 365 / Office: INSTALADO" -ForegroundColor Green
+        Write-Host "  Caminho: $detail" -ForegroundColor Gray
+        Write-AtlasSessionLog -Message "M365 instalado: $detail" -Level "INFO"
+    } else {
+        Write-Host "Microsoft 365 / Office: NAO INSTALADO" -ForegroundColor Yellow
+        Write-AtlasSessionLog -Message "M365 nao instalado" -Level "INFO"
+    }
+
+    return $installed
+}
+
+function Install-Microsoft365AppsSafe {
+    Write-AtlasSessionLog -Message "Instalacao Microsoft 365 Apps solicitada" -Level "ACTION"
+
+    if (-not (script:Test-IsWindowsSoftwareInstall)) {
+        Write-Host "Instalacao disponivel apenas no Windows." -ForegroundColor Yellow
+        return $false
+    }
+
+    if (Test-Microsoft365WingetAvailable) {
+        Write-Host ""
+        Write-Host "Microsoft 365 Apps sera instalado via winget." -ForegroundColor Cyan
+        Write-Host "ID Winget: $($script:Microsoft365WingetId)" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "A conta corporativa ou escolar sera adicionada depois," -ForegroundColor Yellow
+        Write-Host "ao abrir Word, Excel, Outlook ou outro aplicativo Office." -ForegroundColor Yellow
+        Write-Host ""
+
+        [void](Install-SoftwareByWingetSafe `
+            -PackageId $script:Microsoft365WingetId `
+            -DisplayName "Microsoft 365 Apps" `
+            -Category "Microsoft")
+        return $true
+    }
+
+    Write-Host ""
+    Write-Host "A instalacao automatizada pelo winget nao foi confirmada neste ambiente." -ForegroundColor Yellow
+    Write-Host "Use o portal oficial como fallback." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Abrir portal Microsoft 365 agora? [S/N]: " -NoNewline
+    $resp = Read-Host
+    if ($resp -match '^[sS]$') {
+        [void](Open-Microsoft365InstallPage)
+    } else {
+        Write-Host "Operacao cancelada." -ForegroundColor Gray
+    }
+    return $false
+}
+
+function Repair-Microsoft365Safe {
+    Write-AtlasSessionLog -Message "Reparo Microsoft 365 solicitado" -Level "ACTION"
+
+    if (-not (script:Test-IsWindowsSoftwareInstall)) {
+        Write-Host "Reparo disponivel apenas no Windows." -ForegroundColor Yellow
+        return $false
+    }
+
+    if (-not (Test-Microsoft365Installed)) {
+        Write-Host ""
+        Write-Host "Microsoft 365 nao parece instalado. Instale antes de reparar." -ForegroundColor Yellow
+        return $false
+    }
+
+    Write-Host ""
+    Write-Host "Reparar Microsoft 365 Apps?" -ForegroundColor Yellow
+    Write-Host "Isso pode levar alguns minutos." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Continuar? [S/N]: " -NoNewline
+    $resp = Read-Host
+    if ($resp -notmatch '^[sS]$') {
+        Write-Host "Operacao cancelada." -ForegroundColor Gray
+        return $false
+    }
+
+    $c2rPaths = @(
+        "$env:ProgramFiles\Common Files\Microsoft Shared\ClickToRun\OfficeClickToRun.exe",
+        "${env:ProgramFiles(x86)}\Common Files\Microsoft Shared\ClickToRun\OfficeClickToRun.exe"
+    )
+
+    $c2r = $c2rPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+    if ($c2r) {
+        Write-Host ""
+        Write-Host "Executando reparo online do Office..." -ForegroundColor Cyan
+        Write-AtlasSessionLog -Message "OfficeClickToRun repair: $c2r" -Level "ACTION"
+        try {
+            Start-Process -FilePath $c2r -ArgumentList "/repair", "displaylevel=False" -Wait
+            Write-Host "Reparo concluido. Reinicie os aplicativos Office se necessario." -ForegroundColor Green
+            Write-AtlasSessionLog -Message "Reparo M365 concluido" -Level "INFO"
+            return $true
+        } catch {
+            Write-Host "Erro ao executar reparo: $_" -ForegroundColor Red
+            Write-AtlasSessionLog -Message "Erro reparo M365: $_" -Level "ERROR"
+        }
+    }
+
+    Write-Host ""
+    Write-Host "OfficeClickToRun nao encontrado. Abrindo Programas e Recursos..." -ForegroundColor Yellow
+    Write-Host "Procure Microsoft 365 ou Office e clique em Alterar > Reparar Online." -ForegroundColor Gray
+    try {
+        Start-Process "appwiz.cpl"
+        return $true
+    } catch {
+        Write-Host "Erro ao abrir painel: $_" -ForegroundColor Red
+        return $false
+    }
+}
+
 function Open-Microsoft365InstallPage {
-    Write-AtlasSessionLog -Message "Microsoft 365: abrindo pagina oficial" -Level "ACTION"
+    Write-AtlasSessionLog -Message "Microsoft 365: abrindo portal oficial" -Level "ACTION"
 
     $portalUrl = "https://portal.office.com/account"
 
     Write-Host ""
-    Write-Host "Programa: Microsoft 365 Apps"
-    Write-Host "Categoria: Microsoft"
-    Write-Host "Metodo: instalacao pela conta corporativa/escolar (nao usa winget)"
+    Write-Host "Portal Microsoft 365" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Orientacao:" -ForegroundColor Cyan
     Write-Host "  Entre com sua conta corporativa ou escolar." -ForegroundColor Gray
@@ -288,12 +454,49 @@ function Open-Microsoft365InstallPage {
     try {
         Start-Process $portalUrl
         Write-Host "Pagina aberta: $portalUrl" -ForegroundColor Green
-        Write-AtlasSessionLog -Message "Pagina M365 aberta: $portalUrl" -Level "INFO"
+        Write-AtlasSessionLog -Message "Portal M365 aberto: $portalUrl" -Level "INFO"
         return $true
     } catch {
         Write-Host "Erro ao abrir navegador: $_" -ForegroundColor Red
-        Write-AtlasSessionLog -Message "Erro ao abrir M365: $_" -Level "ERROR"
+        Write-AtlasSessionLog -Message "Erro ao abrir portal M365: $_" -Level "ERROR"
         return $false
+    }
+}
+
+function Show-Microsoft365Menu {
+    $running = $true
+
+    while ($running) {
+        Clear-Host
+        Write-Host ""
+        Write-Host "==========================================" -ForegroundColor Cyan
+        Write-Host "  Atlas - Microsoft 365" -ForegroundColor Cyan
+        Write-Host "==========================================" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "[1]  Instalar Microsoft 365 Apps"
+        Write-Host "[2]  Reparar Microsoft 365"
+        Write-Host "[3]  Verificar Microsoft 365 instalado"
+        Write-Host "[4]  Abrir Portal Microsoft 365"
+        Write-Host "[0]  Voltar"
+        Write-Host ""
+
+        Write-AtlasSessionLog -Message "Submenu Microsoft 365 exibido" -Level "MENU"
+        $opt = Read-Host "Escolha uma opcao"
+
+        switch ($opt) {
+            "1" { [void](Install-Microsoft365AppsSafe); Wait-UserInput }
+            "2" { [void](Repair-Microsoft365Safe); Wait-UserInput }
+            "3" { [void](Test-Microsoft365Installed); Wait-UserInput }
+            "4" { [void](Open-Microsoft365InstallPage); Wait-UserInput }
+            "0" {
+                Write-AtlasSessionLog -Message "Saindo submenu Microsoft 365" -Level "MENU"
+                $running = $false
+            }
+            default {
+                Write-Host "Opcao invalida." -ForegroundColor Yellow
+                Wait-UserInput
+            }
+        }
     }
 }
 
@@ -621,8 +824,8 @@ function script:Invoke-SoftwareCatalogItem {
         return
     }
 
-    if ($Item.id -eq "SPECIAL:MICROSOFT_365") {
-        [void](Open-Microsoft365InstallPage)
+    if ($Item.id -eq "SPECIAL:MICROSOFT_365" -or $Item.id -eq $script:Microsoft365WingetId) {
+        Show-Microsoft365Menu
         return
     }
 

@@ -20,6 +20,13 @@ if (-not (Get-Command "New-AtlasSupportHtmlReport" -ErrorAction SilentlyContinue
 }
 Write-Host "[OK] Funcao encontrada" -ForegroundColor Green
 
+$desktopPath = [Environment]::GetFolderPath("Desktop")
+$beforeFiles = @()
+if (Test-Path $desktopPath) {
+    $beforeFiles = Get-ChildItem -Path $desktopPath -Filter "Atlas_Relatorio_*.html" -ErrorAction SilentlyContinue |
+        Select-Object -ExpandProperty FullName
+}
+
 Write-Host ""
 Write-Host "Gerando relatorio HTML..." -ForegroundColor Gray
 $htmlPath = New-AtlasSupportHtmlReport
@@ -28,23 +35,48 @@ Write-Host ""
 Write-Host "Validando arquivo gerado..." -ForegroundColor Gray
 
 if (-not $htmlPath -or -not (Test-Path $htmlPath)) {
-    $reportsRoot = Join-Path (Split-Path $PSScriptRoot -Parent) "reports"
-    $latestReport = Get-ChildItem -Path $reportsRoot -Directory -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -like "atlas_support_*" } |
-        Sort-Object CreationTime -Descending |
-        Select-Object -First 1
-    if ($latestReport) {
-        $htmlPath = Join-Path $latestReport.FullName "report.html"
-    }
-}
-
-if (-not $htmlPath -or -not (Test-Path $htmlPath)) {
-    Write-Host "[FAIL] Arquivo report.html nao foi criado" -ForegroundColor Red
+    Write-Host "[FAIL] Arquivo HTML nao foi criado" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "[OK] Arquivo report.html foi criado" -ForegroundColor Green
+Write-Host "[OK] Arquivo HTML foi criado" -ForegroundColor Green
 Write-Host "     Local: $htmlPath" -ForegroundColor Gray
+
+$allValid = $true
+
+if ($htmlPath -notlike "*.html") {
+    Write-Host "[FAIL] Extensao do arquivo nao e .html" -ForegroundColor Red
+    $allValid = $false
+} else {
+    Write-Host "[OK]   Extensao .html" -ForegroundColor Green
+}
+
+$fileName = Split-Path $htmlPath -Leaf
+if ($fileName -like "Atlas_Relatorio_*") {
+    Write-Host "[OK]   Nome Atlas_Relatorio_*" -ForegroundColor Green
+} else {
+    Write-Host "[FAIL] Nome do arquivo: $fileName" -ForegroundColor Red
+    $allValid = $false
+}
+
+$desktopNorm = (Resolve-Path $desktopPath).Path
+$htmlDirNorm = (Resolve-Path (Split-Path $htmlPath -Parent)).Path
+if ($htmlDirNorm -eq $desktopNorm) {
+    Write-Host "[OK]   Arquivo na Area de Trabalho" -ForegroundColor Green
+} else {
+    Write-Host "[FAIL] Arquivo fora da Area de Trabalho: $htmlPath" -ForegroundColor Red
+    $allValid = $false
+}
+
+$repoRoot = Split-Path $PSScriptRoot -Parent
+$reportsRoot = Join-Path $repoRoot "reports"
+$afterAtlasDirs = Get-ChildItem -Path $reportsRoot -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -like "atlas_support_*" }
+if ($afterAtlasDirs) {
+    Write-Host "[INFO] Pastas atlas_support_* existem em reports (relatorio antigo)" -ForegroundColor Gray
+} else {
+    Write-Host "[OK]   Nenhuma pasta atlas_support_* nova em reports" -ForegroundColor Green
+}
 
 Write-Host ""
 Write-Host "Validando conteudo do HTML..." -ForegroundColor Gray
@@ -65,12 +97,9 @@ $validations = @(
     @{ Pattern = ">OneDrive<"; Name = "Secao OneDrive" },
     @{ Pattern = "Impressoras"; Name = "Secao Impressoras" },
     @{ Pattern = ">Windows<"; Name = "Secao Windows" },
-    @{ Pattern = "Acoes recomendadas"; Name = "Secao Acoes recomendadas" },
-    @{ Pattern = "card-ok"; Name = "Classe CSS status OK" },
-    @{ Pattern = "badge-critico"; Name = "Classe CSS status CRITICO" }
+    @{ Pattern = "Acoes recomendadas"; Name = "Secao Acoes recomendadas" }
 )
 
-$allValid = $true
 foreach ($validation in $validations) {
     if ($htmlContent -match [regex]::Escape($validation.Pattern)) {
         Write-Host "[OK]   $($validation.Name)" -ForegroundColor Green

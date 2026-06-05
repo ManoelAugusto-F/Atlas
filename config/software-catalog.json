@@ -58,7 +58,7 @@
         { "name": "Windows Terminal", "id": "Microsoft.WindowsTerminal", "manager": "winget" },
         { "name": "Power BI Desktop", "id": "Microsoft.PowerBI", "manager": "winget" },
         { "name": "Microsoft Remote Desktop", "id": "Microsoft.RemoteDesktopClient", "manager": "winget" },
-        { "name": "Microsoft 365 Apps - instalar pela conta corporativa/escolar", "id": "SPECIAL:MICROSOFT_365", "manager": "special" }
+        { "name": "Microsoft 365 Apps", "id": "Microsoft.Office", "manager": "winget" }
       ]
     },
     {

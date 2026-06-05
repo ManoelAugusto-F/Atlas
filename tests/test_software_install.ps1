@@ -8,7 +8,7 @@
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "[TESTE] software-install.ps1 v0.2.5" -ForegroundColor Magenta
+Write-Host "[TESTE] software-install.ps1 MVP" -ForegroundColor Magenta
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -21,7 +21,12 @@ $functions = @(
     'Get-SoftwareItem',
     'Show-SoftwareCategoryMenu',
     'Install-RsatFullSafe',
+    'Test-Microsoft365WingetAvailable',
+    'Test-Microsoft365Installed',
+    'Install-Microsoft365AppsSafe',
+    'Repair-Microsoft365Safe',
     'Open-Microsoft365InstallPage',
+    'Show-Microsoft365Menu',
     'Get-WingetAvailableUpgrades',
     'Update-InstalledSoftwareSafe',
     'Export-SoftwareInventory',
@@ -84,6 +89,25 @@ foreach ($name in $expectedCategories) {
         Write-Host "  [FAIL] Categoria ausente: $name" -ForegroundColor Red
         $allOk = $false
     }
+}
+
+Write-Host ""
+Write-Host "[TESTE] Microsoft 365 no catalogo" -ForegroundColor Magenta
+$m365 = Get-SoftwareItem -CategoryName "Microsoft" -ItemName "Microsoft 365 Apps"
+if ($m365 -and $m365.id -eq "Microsoft.Office") {
+    Write-Host "  [OK] Microsoft 365 Apps -> Microsoft.Office (winget)" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Entrada Microsoft 365 Apps invalida" -ForegroundColor Red
+    $allOk = $false
+}
+
+Write-Host ""
+Write-Host "[TESTE] Test-Microsoft365WingetAvailable (sem instalacao)" -ForegroundColor Magenta
+$m365Winget = Test-Microsoft365WingetAvailable
+if ($IsWindows -or $env:OS -eq 'Windows_NT') {
+    Write-Host "  Winget M365 disponivel: $m365Winget" -ForegroundColor Gray
+} else {
+    Write-Host "  [SKIP] Validacao winget M365 requer Windows" -ForegroundColor DarkGray
 }
 
 Write-Host ""

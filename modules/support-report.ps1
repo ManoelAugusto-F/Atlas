@@ -962,19 +962,15 @@ function script:Render-AtlasSupportHtml {
 }
 
 function New-AtlasSupportHtmlReport {
-    Write-Log -Message "Iniciando geracao de relatorio HTML v0.2.2" -Level "INFO"
+    Write-Log -Message "Iniciando geracao de relatorio HTML" -Level "INFO"
 
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    $repoRoot = Split-Path $script:_SupportModuleDir -Parent
-    $reportsRoot = Join-Path $repoRoot "reports"
-    $reportDir = Join-Path $reportsRoot "atlas_support_$timestamp"
-    $htmlFile = Join-Path $reportDir "report.html"
+    $desktopPath = [Environment]::GetFolderPath("Desktop")
+    $htmlFile = Join-Path $desktopPath "Atlas_Relatorio_$timestamp.html"
 
-    try {
-        New-Item -ItemType Directory -Path $reportDir -Force | Out-Null
-    } catch {
-        Write-Log -Message "Erro ao criar pasta do relatorio: $_" -Level "ERROR"
-        Write-Host "Erro ao criar pasta: $_" -ForegroundColor Red
+    if (-not (Test-Path $desktopPath)) {
+        Write-Log -Message "Area de trabalho nao encontrada: $desktopPath" -Level "ERROR"
+        Write-Host "Erro: Area de trabalho nao encontrada." -ForegroundColor Red
         return $null
     }
 
@@ -1050,8 +1046,12 @@ function New-AtlasSupportHtmlReport {
 
     try {
         $html = script:Render-AtlasSupportHtml -Report $report
-        Set-Content -Path $htmlFile -Value $html -Encoding UTF8
-        Write-Log -Message "Relatorio HTML v0.2.2 gerado: $htmlFile" -Level "INFO"
+        Set-Content -Path $htmlFile -Value $html -Encoding UTF8 -ErrorAction Stop
+        if (-not (Test-Path $htmlFile)) {
+            throw "Arquivo HTML nao foi criado em $htmlFile"
+        }
+        Write-Log -Message "Relatorio HTML gerado na Area de Trabalho: $htmlFile" -Level "INFO"
+        Write-AtlasSessionLog -Message "Relatorio HTML: $htmlFile" -Level "ACTION"
         Write-Host ""
         Write-Host "Relatorio de suporte gerado com sucesso!" -ForegroundColor Green
         Write-Host "Arquivo: $htmlFile" -ForegroundColor Cyan
