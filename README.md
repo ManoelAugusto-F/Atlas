@@ -1,60 +1,141 @@
-# Atlas - Assistente de Manutencao Windows v0.2.6
+# Atlas
 
-O **Atlas** e um assistente interativo e modular desenvolvido em PowerShell, focado no diagnostico preventivo, triagem rapida e correcao de estacoes de trabalho. Desenvolvido sob rigorosos criterios de compatibilidade, o Atlas e 100% compativel com o **Windows PowerShell 5.1** e **PowerShell Core 7+** (cross-platform, com simulacoes seguras em ambiente nao-Windows).
+**Assistente de manutencao e suporte Windows em PowerShell.**
 
-**Versao Atual**: v0.2.6 — Modulo de relatorio removido; Atlas focado em manutencao, correcao e suporte operacional.
+Atlas e uma ferramenta PowerShell para tecnicos de suporte, analistas de infraestrutura e usuarios avancados que precisam executar correcoes e manutencoes comuns no Windows de forma rapida, organizada e segura.
 
----
-
-## Estrutura do Workspace
-
-* [bootstrap/install.ps1](bootstrap/install.ps1) — Script principal de carregamento (bootstrapper) que carrega os modulos e gerencia a interatividade.
-* [config/apps.json](config/apps.json) — Arquivo de configuracao estruturado para aplicacoes e atalhos.
-* [config/software-catalog.json](config/software-catalog.json) — Catalogo de programas por categoria (winget e acoes especiais).
-* [logs/sessions/](logs/sessions/) — Log persistente por sessao do Atlas (`session_yyyyMMdd_HHmmss.log`).
-* [docs/](docs/) — Pasta com documentacoes oficiais de arquitetura, escopo, roadmap e testes.
-  * [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Documentacao da arquitetura modular e diretrizes tecnicas.
-  * [docs/PRODUCT_SCOPE.md](docs/PRODUCT_SCOPE.md) — Escopo do produto, restricoes de negocio e publico-alvo.
-  * [docs/RELEASE_v0.1.md](docs/RELEASE_v0.1.md) — Notas de lancamento oficiais da versao v0.1.0.
-  * [docs/ROADMAP.md](docs/ROADMAP.md) — Defricao do ciclo de vida, sprints (v0.1, v0.2, v0.3, v1.0) e gantt de marcos.
-  * [docs/WINDOWS_TESTS.md](docs/WINDOWS_TESTS.md) — Matriz de testes de conformidade e validacoes no Windows.
-  * [docs/ISSUES.md](docs/ISSUES.md) — Registro de demandas tecnicas e status das atividades (Sprint v0.2).
-* [modules/](modules/) — Modulos e bibliotecas tecnicas isoladas do sistema:
-  * **Core**: [modules/logger.ps1](modules/logger.ps1) (sistema de logs), [modules/core.ps1](modules/core.ps1) (helpers de confirmacao e UX), [modules/menu.ps1](modules/menu.ps1) (gerador de console e menus).
-  * **Manutencao e Diagnostico v0.1**: [modules/quick-diagnostic.ps1](modules/quick-diagnostic.ps1), [modules/cleanup.ps1](modules/cleanup.ps1), [modules/network-tools.ps1](modules/network-tools.ps1), [modules/onedrive.ps1](modules/onedrive.ps1), [modules/printer.ps1](modules/printer.ps1), [modules/windows-repair.ps1](modules/windows-repair.ps1).
-  * **Toolkit Corporativo v0.2 (Fase Alfa)**: [modules/outlook.ps1](modules/outlook.ps1), [modules/teams.ps1](modules/teams.ps1), [modules/browser.ps1](modules/browser.ps1), [modules/programs.ps1](modules/programs.ps1), [modules/services.ps1](modules/services.ps1), [modules/software-install.ps1](modules/software-install.ps1).
-* [tests/](tests/) — Testes unitarios, loops de simulacao e seguranca sintatica.
-  * [tests/test_parser.ps1](tests/test_parser.ps1) — Validador estatico de sintaxe.
-  * [tests/test_imports.ps1](tests/test_imports.ps1) — Validador de escopos e carregamento das funcoes publicas.
-  * [tests/test_v02_modules.ps1](tests/test_v02_modules.ps1) — Suite de testes de importacao e sintaxe para a Sprint v0.2.
-  * [tests/test_loop.ps1](tests/test_loop.ps1) — Simulador de loop interativo para evitar deadlocks de menu.
+**Status:** MVP v0.2.6
 
 ---
 
-## Padrao de Desenvolvimento Estrito
+## Uso
 
-Para que o script nao sofra com incompatibilidades de codificacao ou falhas criticas de parser em sistemas Windows antigos com codepages locais personalizadas:
-1. **ASCII-Only**: Todos os arquivos de modulo sao codificados estritamente em **ASCII puro** (sem caracteres acentuados, emojis, ou aspas curvas do Office).
-2. **UTF-8 sem BOM**: No salvamento, garante-se integridade do texto sem marcas especiais de ordem de byte.
-3. **Encadeamento Binario**: Chamadas do utilitario `Join-Path` utilizam no maximo dois argumentos simultaneamente por comando, aninhando-as para manter compatibilidade com PowerShell 5.1.
-4. **Resiliencia Cross-Platform**: Qualquer funcionalidade nativa do Windows (ex.: CimInstance, Registry, Spooler) possui fallbacks ou mensagens amigaveis de `N/A` em ambientes Unix de forma silenciosa e limpa.
+O fluxo principal do Atlas sera execucao online via PowerShell — sem necessidade de clonar o repositorio ou instalar o projeto manualmente.
 
-## Como Executar
-
-### Carregar o assistente (Menu Interativo):
 ```powershell
-Powershell -ExecutionPolicy Bypass -File bootstrap/install.ps1
+irm https://sua-url-curta/atlas | iex
 ```
 
-### Rodar a suite de testes locais:
-```powershell
-# Testes v0.1
-pwsh -File tests/test_parser.ps1
-pwsh -File tests/test_imports.ps1
+> A URL acima e um placeholder. O bootstrap online ainda nao esta publicado.
 
-# Testes v0.2
-pwsh -File tests/test_v02_modules.ps1
-pwsh -File tests/test_loop.ps1
-pwsh -File tests/test_software_install.ps1
-pwsh -File tests/test_winget_catalog.ps1
+**Como funcionara:**
+
+- O bootstrap online baixara a versao estavel do Atlas a partir das releases do GitHub.
+- A execucao sera temporaria — o objetivo e rodar a ferramenta sem instalacao local do projeto.
+- O repositorio GitHub permanece como fonte de codigo, versionamento e releases oficiais.
+- O usuario final nao precisa de `git clone`, dependencias manuais ou configuracao de ambiente de desenvolvimento.
+
+---
+
+## Funcionalidades
+
+| Modulo | Recursos |
+|--------|----------|
+| Limpeza segura | Temporarios, lixeira, cache Windows Update |
+| Rede e internet | DNS, IP, Winsock, TCP/IP |
+| OneDrive | Status, reset, remocao assistida, reinstalacao |
+| Impressoras | Spooler, fila, TCP/IP, impressora compartilhada |
+| Reparos Windows | SFC, DISM, Windows Update |
+| Outlook | Status, cache, reparo Office |
+| Teams | Cache, Teams pessoal/corporativo |
+| Navegadores | Chrome, Edge, Firefox, cache |
+| Instalacao de programas | Catalogo Winget por categorias |
+
+O menu principal oferece 9 acoes operacionais acessiveis por numeracao simples, com confirmacao antes de qualquer acao destrutiva.
+
+---
+
+## Catalogo de software
+
+Programas organizados por categoria em `config/software-catalog.json`, instalados via Winget com confirmacao unica por item:
+
+- Navegadores
+- PDF e Documentos
+- Desenvolvimento
+- Infraestrutura e Redes
+- Banco de Dados
+- Microsoft
+- Utilitarios
+
+Fluxos especiais incluem RSAT e Microsoft 365 Apps, com validacao de pacotes antes da instalacao.
+
+---
+
+## Seguranca operacional
+
+Atlas foi projetado para uso em ambiente corporativo e de suporte tecnico:
+
+- **Confirmacao obrigatoria** antes de acoes destrutivas (limpeza, reset, remocao).
+- **Confirmacao obrigatoria** antes de cada instalacao de programa.
+- **Sem ativadores** de software ou licencas.
+- **Sem scripts de terceiros** — apenas modulos proprios do Atlas.
+- **Recursos nativos do Windows** (SFC, DISM, WMI, Registry, Spooler) e **Winget** para instalacao.
+- **Compativel com Windows PowerShell 5.1** — padrao em estacoes corporativas.
+
+Cada sessao gera log persistente em `logs/sessions/` para auditoria e rastreabilidade.
+
+---
+
+## Compatibilidade
+
+| Requisito | Suporte |
+|-----------|---------|
+| Windows 10 | Sim |
+| Windows 11 | Sim |
+| Windows PowerShell 5.1 | Sim (recomendado) |
+| PowerShell 7+ | Sim |
+| Winget | Necessario para instalacao de programas |
+
+Funcionalidades nativas do Windows retornam mensagens informativas em ambientes nao-Windows (util para desenvolvimento e testes).
+
+---
+
+## Roadmap
+
+| Versao | Entrega |
+|--------|---------|
+| **v0.2.6** | MVP estavel — manutencao, correcao e suporte operacional |
+| **v0.3** | Bootstrap online via `irm \| iex` |
+| **v0.4** | Execucao temporaria com limpeza automatica |
+| **v0.5** | Pagina publica e documentacao para usuario final |
+| **Futuro** | Interface grafica |
+
+Detalhes tecnicos em [docs/ROADMAP.md](docs/ROADMAP.md).
+
+---
+
+## Estrutura do projeto
+
 ```
+bootstrap/     # Bootstrap e menu principal
+modules/       # Modulos de manutencao e toolkit corporativo
+config/        # Catalogo de software e configuracoes
+tests/         # Suite de testes automatizados
+docs/          # Arquitetura, escopo, roadmap e releases
+logs/          # Logs de sessao e operacao
+```
+
+Documentacao complementar: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/PRODUCT_SCOPE.md](docs/PRODUCT_SCOPE.md)
+
+---
+
+## Desenvolvimento
+
+Esta secao e destinada a contribuidores e mantenedores do projeto — nao ao usuario final.
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File .\tests\test_loop.ps1
+powershell.exe -ExecutionPolicy Bypass -File .\tests\test_software_install.ps1
+```
+
+Para execucao local durante o desenvolvimento:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File .\bootstrap\install.ps1
+```
+
+---
+
+## Licenca
+
+A definir.
