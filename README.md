@@ -2,19 +2,15 @@
 
 Ferramenta de manutenção, suporte e automação para ambientes Windows.
 
-O Atlas foi criado para centralizar tarefas comuns de suporte técnico, infraestrutura e administração de estações Windows em uma única interface simples e prática.
-
-Seu objetivo é reduzir o tempo gasto com atividades repetitivas, facilitar correções comuns e padronizar procedimentos executados diariamente por equipes de TI.
-
-**Versão Atual:** v0.3.3
+O Atlas foi criado para centralizar tarefas comuns executadas diariamente por equipes de suporte, infraestrutura e administração de ambientes Microsoft. A proposta é simples: reduzir o tempo gasto com atividades repetitivas, facilitar correções recorrentes e disponibilizar ferramentas úteis em uma única interface.
 
 ---
 
 ## Execução
 
-O Atlas pode ser executado diretamente pela internet, sem necessidade de instalação manual.
+O Atlas pode ser executado diretamente pela internet sem necessidade de instalação manual.
 
-### PowerShell
+Abra o **Windows PowerShell 5.1** ou **PowerShell 7+** como administrador e execute:
 
 ```powershell
 irm https://a.bitsdeconhecimento.blog.br/i.ps1 | iex
@@ -22,15 +18,15 @@ irm https://a.bitsdeconhecimento.blog.br/i.ps1 | iex
 
 ---
 
-## Principais Funcionalidades
+## O que o Atlas faz?
 
 ### Limpeza e Otimização
 
 - Limpeza de arquivos temporários
 - Limpeza de cache DNS
 - Limpeza de cache do Windows Update
-- Limpeza de lixeira
-- Identificação de arquivos e pastas com grande consumo de espaço
+- Limpeza da lixeira
+- Identificação de pastas com grande consumo de espaço
 
 ### Rede e Conectividade
 
@@ -40,45 +36,61 @@ irm https://a.bitsdeconhecimento.blog.br/i.ps1 | iex
 - Reset TCP/IP
 - Diagnóstico DNS
 
-### Microsoft 365
+### OneDrive
 
-- OneDrive
-- Outlook
-- Teams
-- Microsoft 365 Apps
+- Verificação de status
+- Reinicialização
+- Reset completo
+- Remoção de resíduos
+- Reinstalação
+
+### Outlook
+
+- Diagnóstico
+- Verificação da instalação
+- Reparo do Microsoft 365
+- Acesso rápido às ferramentas de correção
+
+### Teams
+
+- Limpeza de cache
+- Correções comuns
+- Remoção do Teams pessoal
+- Verificação do Teams corporativo
 
 ### Impressoras
 
-- Reinício do serviço de impressão
+- Reinício do Spooler
 - Limpeza de filas de impressão
 - Diagnóstico básico
 - Correções comuns
 
 ### Reparos do Windows
 
-- SFC
-- DISM
-- Reset do Windows Update
-- Verificações de integridade do sistema
+- SFC Verify
+- SFC Scannow
+- DISM CheckHealth
+- DISM ScanHealth
+- DISM RestoreHealth
+- Reset Windows Update
 
-### Instalação de Softwares
+### Navegadores
 
-Catálogo integrado com instalação e atualização via Winget.
+- Google Chrome
+- Microsoft Edge
+- Mozilla Firefox
 
-Inclui aplicações utilizadas em:
+Ferramentas de limpeza e correções básicas.
 
-- Suporte Técnico
-- Infraestrutura
-- Redes
-- Desenvolvimento
-- Banco de Dados
-- Produtividade
+### Instalação e Atualização de Softwares
+
+Catálogo integrado utilizando Winget para instalação e atualização de aplicações.
 
 ---
 
 ## Histórico Operacional
 
-Todas as ações executadas pelo Atlas são registradas automaticamente.
+O Atlas registra automaticamente as ações executadas.
 
 Localização:
 
@@ -86,7 +98,7 @@ Localização:
 C:\ProgramData\Atlas\Logs\atlas.log
 ```
 
-Informações registradas:
+Cada registro contém:
 
 - Data e hora
 - Usuário
@@ -94,6 +106,14 @@ Informações registradas:
 - Módulo executado
 - Ação realizada
 - Resultado da operação
+
+Exemplo:
+
+```text
+2026-06-07 18:42:11 | INFO | Instalacao | Google Chrome | Sucesso
+2026-06-07 18:44:01 | INFO | Rede | Reset Winsock | Sucesso
+2026-06-07 18:46:20 | ERROR | OneDrive | Reset | Falha
+```
 
 O histórico pode ser consultado diretamente pelo menu do Atlas.
 
@@ -114,7 +134,7 @@ O histórico pode ser consultado diretamente pelo menu do Atlas.
 - PDF24 Creator
 - Foxit PDF Reader
 - LibreOffice
-- Draw.io
+- Draw.io Desktop
 - Evernote
 - Notion
 
@@ -137,7 +157,8 @@ O histórico pode ser consultado diretamente pelo menu do Atlas.
 - PuTTY
 - WinSCP
 - MobaXterm
-- OpenVPN
+- OpenVPN Community
+- OpenVPN Connect
 - Wireshark
 - Nmap
 - Remote Desktop Manager
@@ -147,17 +168,19 @@ O histórico pode ser consultado diretamente pelo menu do Atlas.
 ### Banco de Dados
 
 - SQL Server Management Studio
+- SQL Server Management Studio 21
+- SQL Server Management Studio 22
 - DBeaver Community
 
 ### Microsoft
 
 - Microsoft 365 Apps
-- Teams
-- OneDrive
-- PowerToys
+- Microsoft Teams
+- Microsoft OneDrive
+- Microsoft PowerToys
 - Windows Terminal
 - Power BI Desktop
-- Remote Desktop
+- Microsoft Remote Desktop
 
 ### Utilitários
 
@@ -171,10 +194,10 @@ O histórico pode ser consultado diretamente pelo menu do Atlas.
 ## Segurança
 
 - Utiliza recursos nativos do Windows
-- Utiliza o Winget para gerenciamento de softwares
+- Utiliza Winget para instalação e atualização de softwares
 - Não utiliza ativadores ou ferramentas não oficiais
 - Operações críticas exigem confirmação do usuário
-- Mantém histórico das ações executadas
+- Mantém histórico operacional das ações executadas
 
 ---
 
@@ -195,6 +218,30 @@ O histórico pode ser consultado diretamente pelo menu do Atlas.
 
 ---
 
-## Projeto
+## Requisitos Recomendados
 
-O Atlas é um projeto pessoal focado em automação, suporte e infraestrutura Windows, desenvolvido para simplificar atividades recorrentes do dia a dia de profissionais de TI.
+- Executar como Administrador
+- Conexão com internet para instalação de softwares
+- Permissões locais para manutenção do sistema
+
+---
+
+## Código Fonte
+
+GitHub:
+
+https://github.com/ManoelAugusto-F/Atlas
+
+---
+
+## Feedback
+
+O Atlas nasceu para resolver problemas reais do dia a dia de suporte e infraestrutura.
+
+Se você utilizar a ferramenta, sugestões, críticas, ideias de melhoria e feedbacks são sempre bem-vindos através do GitHub ou do LinkedIn.
+
+Toda contribuição ajuda a tornar o projeto mais útil para a comunidade de TI.
+
+---
+
+**Versão Atual:** v0.3.3 — Histórico Operacional Completo
