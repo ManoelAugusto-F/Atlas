@@ -1,8 +1,12 @@
-# Versao Atual: Atlas v0.2.6
+# Versao Atual: Atlas v0.3.0
 
 ---
 
 ## Historico de Versoes
+
+### v0.3.0 - Catalogo de softwares expandido
+- **Catalogo**: 13 programas validados no Winget adicionados ao catalogo principal
+- **Removido**: `config/software-candidates.json` e `tests/test_winget_candidates.ps1`
 
 ### v0.2.6 - Remocao do modulo de relatorio
 - **Removido**: `modules/support-report.ps1`, `tests/test_html_report.ps1` e exemplos `reports/atlas_support_*`
