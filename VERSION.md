@@ -1,8 +1,12 @@
-# Versao Atual: Atlas v0.3.2
+# Versao Atual: Atlas v0.3.3
 
 ---
 
 ## Historico de Versoes
+
+### v0.3.3 - Historico Operacional Completo
+- **Integracao**: OneDrive, Outlook, Teams, Navegadores, Impressoras e Reparos Windows
+- **Logger**: todas as acoes operacionais principais registradas em atlas.log
 
 ### v0.3.2 - Historico Operacional
 - **Logger**: `Initialize-AtlasLogger`, `Write-AtlasLog`, `Get-AtlasLogPath` em `C:\ProgramData\Atlas\Logs\atlas.log`

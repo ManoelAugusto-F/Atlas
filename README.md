@@ -4,7 +4,7 @@
 
 O Atlas reúne em uma única interface recursos utilizados diariamente por equipes de suporte, infraestrutura e TI para diagnóstico, correção e manutenção de estações Windows.
 
-**Versao atual:** v0.3.2 — Historico Operacional.
+**Versao atual:** v0.3.3 — Historico Operacional Completo.
 
 ---
 
@@ -27,7 +27,9 @@ O Atlas reúne em uma única interface recursos utilizados diariamente por equip
 
 O Atlas registra automaticamente as ações executadas em `C:\ProgramData\Atlas\Logs\atlas.log`.
 
-Cada entrada contém data, módulo, ação e resultado. O menu **Histórico do Atlas** permite consultar os últimos eventos, abrir a pasta de logs ou limpar o histórico.
+Cada entrada contém data, módulo, ação e resultado. O histórico cobre limpeza, rede, instalação de programas, OneDrive, Outlook, Teams, navegadores, impressoras e reparos Windows.
+
+O menu **Histórico do Atlas** permite consultar os últimos eventos, abrir a pasta de logs ou limpar o histórico.
 
 ---
 

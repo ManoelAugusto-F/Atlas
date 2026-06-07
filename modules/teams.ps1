@@ -157,9 +157,11 @@ function Restart-TeamsSafe {
         Start-Sleep -Seconds 2
         Write-Host "Teams foi encerrado e sera reiniciado." -ForegroundColor Green
         Write-Log -Level "INFO" -Message "Teams reiniciado."
+        Write-AtlasLog -Nivel INFO -Modulo "Teams" -Acao "Correcao comum" -Resultado "Sucesso"
     } catch {
         Write-Host "Erro ao reiniciar Teams: $_" -ForegroundColor Red
         Write-Log -Level "ERROR" -Message "Erro ao reiniciar Teams: $_"
+        Write-AtlasLog -Nivel ERROR -Modulo "Teams" -Acao "Correcao comum" -Resultado "Falha"
     }
 }
 
@@ -190,8 +192,10 @@ function Clear-TeamsCacheSafe {
     $result = Clear-TeamsCache
     if ($result) {
         Write-Host "Cache do Teams limpo com sucesso." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Teams" -Acao "Limpeza cache" -Resultado "Sucesso"
     } else {
         Write-Host "Nenhum cache foi encontrado para limpar." -ForegroundColor Yellow
+        Write-AtlasLog -Nivel WARN -Modulo "Teams" -Acao "Limpeza cache" -Resultado "Falha"
     }
 }
 
@@ -263,6 +267,9 @@ function Get-TeamsWorkSchoolStatus {
     } else {
         Write-Host "  Status: Nao instalado" -ForegroundColor Gray
     }
+
+    $corpResult = if ($installed) { "Instalado" } else { "Nao instalado" }
+    Write-AtlasLog -Nivel INFO -Modulo "Teams" -Acao "Verificacao Teams corporativo" -Resultado $corpResult
     
     return $installed
 }
@@ -305,9 +312,11 @@ function Remove-TeamsPersonalSafe {
         Remove-Item -Path "$personalPath\*" -Recurse -Force -ErrorAction Stop
         Write-Host "Teams pessoal foi removido." -ForegroundColor Green
         Write-Log -Level "INFO" -Message "Teams pessoal removido com sucesso."
+        Write-AtlasLog -Nivel INFO -Modulo "Teams" -Acao "Remocao Teams pessoal" -Resultado "Sucesso"
     } catch {
         Write-Host "Erro ao remover Teams: $_" -ForegroundColor Red
         Write-Log -Level "ERROR" -Message "Erro ao remover Teams pessoal: $_"
+        Write-AtlasLog -Nivel ERROR -Modulo "Teams" -Acao "Remocao Teams pessoal" -Resultado "Falha"
     }
 }
 

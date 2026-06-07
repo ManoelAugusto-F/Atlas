@@ -90,6 +90,14 @@ function Get-OutlookStatus {
     }
 
     Write-Log -Level "INFO" -Message "Status do Outlook mapeado - Instalado: $installed, Em Execucao: $procRunning"
+
+    if ($IsWindows -or ($env:OS -like "*Windows*")) {
+        $instLabel = if ($installed) { "Sim" } else { "Nao" }
+        $procLabel = if ($procRunning) { "Sim" } else { "Nao" }
+        Write-AtlasLog -Nivel INFO -Modulo "Outlook" -Acao "Diagnostico" -Resultado "Instalado: $instLabel | Processo: $procLabel"
+        Write-AtlasLog -Nivel INFO -Modulo "Outlook" -Acao "Verificacao instalacao" -Resultado "Instalado: $instLabel"
+    }
+
     return $ret
 }
 
@@ -331,13 +339,16 @@ function Open-OfficeRepairPanel {
     try {
         Start-Process "appwiz.cpl"
         Write-Host "Painel Programas e Recursos aberto." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Outlook" -Acao "Reparo Office" -Resultado "Sucesso"
     } catch {
         try {
             Start-Process "ms-settings:appsfeatures"
             Write-Host "Configuracoes de aplicativos abertas." -ForegroundColor Green
+            Write-AtlasLog -Nivel INFO -Modulo "Outlook" -Acao "Reparo Office" -Resultado "Sucesso"
         } catch {
             Write-Host "Erro ao abrir painel: $_" -ForegroundColor Red
             Write-Log -Level "ERROR" -Message "Erro ao abrir reparo Office: $_"
+            Write-AtlasLog -Nivel ERROR -Modulo "Outlook" -Acao "Reparo Office" -Resultado "Falha"
         }
     }
 }

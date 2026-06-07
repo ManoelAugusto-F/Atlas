@@ -54,9 +54,11 @@ function Get-PrinterList {
         } else {
             Write-Host "Nenhuma impressora instalada encontrada." -ForegroundColor Yellow
         }
+        Write-AtlasLog -Nivel INFO -Modulo "Impressoras" -Acao "Diagnostico" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao listar impressoras: $_" -Level "ERROR"
         Write-Host "Erro ao listar impressoras. Modulo PrintManagement pode nao estar disponivel." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Impressoras" -Acao "Diagnostico" -Resultado "Falha"
     }
 }
 
@@ -103,9 +105,11 @@ function Get-PrintQueueStatus {
             Write-Host ""
             Write-Host ("Total de jobs na fila: {0}" -f $totalJobs) -ForegroundColor Yellow
         }
+        Write-AtlasLog -Nivel INFO -Modulo "Impressoras" -Acao "Diagnostico fila" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao verificar fila de impressao: $_" -Level "ERROR"
         Write-Host "Erro ao verificar fila. Modulo PrintManagement pode nao estar disponivel." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Impressoras" -Acao "Diagnostico fila" -Resultado "Falha"
     }
 }
 
@@ -144,9 +148,11 @@ function Restart-SpoolerSafe {
         Restart-Service -Name Spooler -Force -ErrorAction Stop
         Write-Log -Message "Spooler reiniciado com sucesso" -Level "INFO"
         Write-Host "Spooler reiniciado com sucesso." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Impressoras" -Acao "Reinicio spooler" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao reiniciar Spooler: $_" -Level "ERROR"
         Write-Host "Erro ao reiniciar o Spooler." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Impressoras" -Acao "Reinicio spooler" -Resultado "Falha"
     }
 }
 
@@ -206,11 +212,13 @@ function Clear-PrintQueueSafe {
 
         Write-Log -Message "Fila limpa: $removed jobs removidos, $skipped ignorados" -Level "INFO"
         Write-Host ("Concluido: {0} job(s) removido(s), {1} ignorado(s)." -f $removed, $skipped) -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Impressoras" -Acao "Limpeza fila" -Resultado "Sucesso"
     } catch {
         # Garantir que o Spooler seja reiniciado mesmo em caso de erro
         try { Start-Service -Name Spooler -ErrorAction SilentlyContinue } catch { }
         Write-Log -Message "Erro ao limpar fila de impressao: $_" -Level "ERROR"
         Write-Host "Erro durante a limpeza. Spooler reiniciado." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Impressoras" -Acao "Limpeza fila" -Resultado "Falha"
     }
 }
 

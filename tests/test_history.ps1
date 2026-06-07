@@ -63,6 +63,27 @@ try {
     $afterClear = @(Get-Content -Path $logPath | Where-Object { $_ -match '\S' })
     Test-Assert ($afterClear.Count -eq 1) "Log limpo mantem apenas entrada de limpeza"
     Test-Assert ($afterClear[0] -match "Limpeza de Logs") "Entrada de limpeza registrada"
+
+    $sampleModules = @(
+        @{ Modulo = "OneDrive"; Acao = "Consulta status" }
+        @{ Modulo = "Outlook"; Acao = "Diagnostico" }
+        @{ Modulo = "Teams"; Acao = "Limpeza cache" }
+        @{ Modulo = "Navegadores"; Acao = "Chrome" }
+        @{ Modulo = "Impressoras"; Acao = "Reinicio spooler" }
+        @{ Modulo = "Reparos Windows"; Acao = "SFC Verify" }
+    )
+
+    Write-Host ""
+    Write-Host "Simulando eventos dos modulos integrados..." -ForegroundColor Gray
+    foreach ($sample in $sampleModules) {
+        Write-AtlasLog -Nivel INFO -Modulo $sample.Modulo -Acao $sample.Acao -Resultado "Sucesso"
+    }
+
+    $merged = Get-Content -Path $logPath -Raw
+    foreach ($sample in $sampleModules) {
+        Test-Assert ($merged -match [regex]::Escape($sample.Modulo)) "Evento $($sample.Modulo) registrado"
+        Test-Assert ($merged -match [regex]::Escape($sample.Acao)) "Acao $($sample.Acao) registrada"
+    }
 }
 catch {
     Write-Host "[FAIL] Erro no teste: $_" -ForegroundColor Red

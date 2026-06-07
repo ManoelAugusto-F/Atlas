@@ -274,8 +274,10 @@ function Clear-ChromeCacheSafe {
     $result = Clear-BrowserCache -BrowserName "Chrome"
     if ($result) {
         Write-Host "Cache do Chrome limpo com sucesso." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Navegadores" -Acao "Chrome" -Resultado "Sucesso"
     } else {
         Write-Host "Nenhum cache foi encontrado para limpar." -ForegroundColor Yellow
+        Write-AtlasLog -Nivel WARN -Modulo "Navegadores" -Acao "Chrome" -Resultado "Falha"
     }
 }
 
@@ -301,8 +303,10 @@ function Clear-EdgeCacheSafe {
     $result = Clear-BrowserCache -BrowserName "Edge"
     if ($result) {
         Write-Host "Cache do Edge limpo com sucesso." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Navegadores" -Acao "Edge" -Resultado "Sucesso"
     } else {
         Write-Host "Nenhum cache foi encontrado para limpar." -ForegroundColor Yellow
+        Write-AtlasLog -Nivel WARN -Modulo "Navegadores" -Acao "Edge" -Resultado "Falha"
     }
 }
 
@@ -328,8 +332,10 @@ function Clear-FirefoxCacheSafe {
     $result = Clear-BrowserCache -BrowserName "Firefox"
     if ($result) {
         Write-Host "Cache do Firefox limpo com sucesso." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Navegadores" -Acao "Firefox" -Resultado "Sucesso"
     } else {
         Write-Host "Nenhum cache foi encontrado para limpar." -ForegroundColor Yellow
+        Write-AtlasLog -Nivel WARN -Modulo "Navegadores" -Acao "Firefox" -Resultado "Falha"
     }
 }
 

@@ -46,9 +46,11 @@ function Test-SfcVerifyOnly {
     try {
         & sfc /verifyonly
         Write-Log -Message "SFC /verifyonly concluido" -Level "INFO"
+        Write-AtlasLog -Nivel INFO -Modulo "Reparos Windows" -Acao "SFC Verify" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao executar SFC /verifyonly: $_" -Level "ERROR"
         Write-Host "Erro ao executar SFC." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Reparos Windows" -Acao "SFC Verify" -Resultado "Falha"
     }
 }
 
@@ -88,9 +90,11 @@ function Invoke-SfcScannowSafe {
         Write-Log -Message "SFC /scannow concluido" -Level "INFO"
         Write-Host ""
         Write-Host "SFC concluido. Verifique o resultado acima." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Reparos Windows" -Acao "SFC Scannow" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao executar SFC /scannow: $_" -Level "ERROR"
         Write-Host "Erro durante o SFC." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Reparos Windows" -Acao "SFC Scannow" -Resultado "Falha"
     }
 }
 
@@ -114,9 +118,11 @@ function Test-DismCheckHealth {
     try {
         & DISM /Online /Cleanup-Image /CheckHealth
         Write-Log -Message "DISM CheckHealth concluido" -Level "INFO"
+        Write-AtlasLog -Nivel INFO -Modulo "Reparos Windows" -Acao "DISM CheckHealth" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao executar DISM CheckHealth: $_" -Level "ERROR"
         Write-Host "Erro ao executar DISM CheckHealth." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Reparos Windows" -Acao "DISM CheckHealth" -Resultado "Falha"
     }
 }
 
@@ -149,9 +155,11 @@ function Invoke-DismScanHealthSafe {
         Write-Log -Message "DISM ScanHealth concluido" -Level "INFO"
         Write-Host ""
         Write-Host "DISM ScanHealth concluido. Verifique o resultado acima." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Reparos Windows" -Acao "DISM ScanHealth" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao executar DISM ScanHealth: $_" -Level "ERROR"
         Write-Host "Erro durante o DISM ScanHealth." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Reparos Windows" -Acao "DISM ScanHealth" -Resultado "Falha"
     }
 }
 
@@ -192,9 +200,11 @@ function Invoke-DismRestoreHealthSafe {
         Write-Log -Message "DISM RestoreHealth concluido" -Level "INFO"
         Write-Host ""
         Write-Host "DISM RestoreHealth concluido. Verifique o resultado acima." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Reparos Windows" -Acao "DISM RestoreHealth" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao executar DISM RestoreHealth: $_" -Level "ERROR"
         Write-Host "Erro durante o DISM RestoreHealth." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Reparos Windows" -Acao "DISM RestoreHealth" -Resultado "Falha"
     }
 }
 
@@ -286,6 +296,7 @@ function Reset-WindowsUpdateSafe {
         Write-Log -Message "Reset do Windows Update concluido com sucesso" -Level "INFO"
         Write-Host ""
         Write-Host "Reset concluido. O Windows Update sera reinicializado na proxima verificacao." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Reparos Windows" -Acao "Reset Windows Update" -Resultado "Sucesso"
 
     } catch {
         # Garantir que os servicos sejam reiniciados mesmo em caso de erro
@@ -295,6 +306,7 @@ function Reset-WindowsUpdateSafe {
             try { Start-Service -Name $svc -ErrorAction SilentlyContinue } catch { }
         }
         Write-Host "Servicos reiniciados. Verifique o log para detalhes." -ForegroundColor Yellow
+        Write-AtlasLog -Nivel ERROR -Modulo "Reparos Windows" -Acao "Reset Windows Update" -Resultado "Falha"
     }
 }
 

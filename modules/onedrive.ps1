@@ -84,6 +84,8 @@ function Get-OneDriveStatus {
     } else {
         Write-Host "  [INFO] Variavel de ambiente OneDrive nao configurada ou pasta nao encontrada." -ForegroundColor Gray
     }
+
+    Write-AtlasLog -Nivel INFO -Modulo "OneDrive" -Acao "Consulta status" -Resultado "Sucesso"
 }
 
 # ------------------------------------------
@@ -129,13 +131,16 @@ function Restart-OneDriveSafe {
         if ($procs) {
             Write-Log -Message "OneDrive reiniciado com sucesso (PID: $($procs[0].Id))" -Level "INFO"
             Write-Host "OneDrive reiniciado com sucesso." -ForegroundColor Green
+            Write-AtlasLog -Nivel INFO -Modulo "OneDrive" -Acao "Reinicio" -Resultado "Sucesso"
         } else {
             Write-Log -Message "OneDrive pode nao ter iniciado apos reinicio" -Level "WARN"
             Write-Host "OneDrive iniciado, mas processo nao confirmado. Verifique manualmente." -ForegroundColor Yellow
+            Write-AtlasLog -Nivel WARN -Modulo "OneDrive" -Acao "Reinicio" -Resultado "Falha"
         }
     } catch {
         Write-Log -Message "Erro ao reiniciar OneDrive: $_" -Level "ERROR"
         Write-Host "Erro ao reiniciar o OneDrive." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "OneDrive" -Acao "Reinicio" -Resultado "Falha"
     }
 }
 
@@ -186,12 +191,15 @@ function Reset-OneDriveSafe {
         $procs = Get-Process -Name "OneDrive" -ErrorAction SilentlyContinue
         if ($procs) {
             Write-Host "OneDrive resetado e reiniciado com sucesso." -ForegroundColor Green
+            Write-AtlasLog -Nivel INFO -Modulo "OneDrive" -Acao "Reset" -Resultado "Sucesso"
         } else {
             Write-Host "Reset executado. Inicie o OneDrive manualmente se necessario." -ForegroundColor Yellow
+            Write-AtlasLog -Nivel WARN -Modulo "OneDrive" -Acao "Reset" -Resultado "Falha"
         }
     } catch {
         Write-Log -Message "Erro ao resetar OneDrive: $_" -Level "ERROR"
         Write-Host "Erro ao resetar o OneDrive." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "OneDrive" -Acao "Reset" -Resultado "Falha"
     }
 }
 
@@ -325,9 +333,11 @@ function Uninstall-OneDriveSafe {
         Start-Process -FilePath $setup -ArgumentList "/uninstall" -Wait -ErrorAction Stop
         Write-Log -Message "Desinstalacao do OneDrive executada via $setup" -Level "INFO"
         Write-Host "Comando de desinstalacao executado. Verifique se o OneDrive foi removido." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "OneDrive" -Acao "Remocao" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao desinstalar OneDrive: $_" -Level "ERROR"
         Write-Host "Erro ao desinstalar OneDrive: $_" -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "OneDrive" -Acao "Remocao" -Resultado "Falha"
     }
 }
 
@@ -375,6 +385,7 @@ function Clear-OneDriveResidualFilesSafe {
         return
     }
 
+    $cleanupOk = $true
     foreach ($p in $existing) {
         try {
             Write-Host "Removendo: $p ..." -ForegroundColor Gray
@@ -384,7 +395,14 @@ function Clear-OneDriveResidualFilesSafe {
         } catch {
             Write-Log -Message "Erro ao remover $p : $_" -Level "ERROR"
             Write-Host "  [ERRO] $p : $_" -ForegroundColor Red
+            $cleanupOk = $false
         }
+    }
+
+    if ($cleanupOk) {
+        Write-AtlasLog -Nivel INFO -Modulo "OneDrive" -Acao "Limpeza residuos" -Resultado "Sucesso"
+    } else {
+        Write-AtlasLog -Nivel ERROR -Modulo "OneDrive" -Acao "Limpeza residuos" -Resultado "Falha"
     }
 }
 
@@ -400,9 +418,11 @@ function Open-OneDriveDownloadPage {
         Write-Host ""
         Write-Host "Pagina oficial aberta no navegador." -ForegroundColor Green
         Write-Host "Baixe e instale o OneDrive manualmente." -ForegroundColor Gray
+        Write-AtlasLog -Nivel INFO -Modulo "OneDrive" -Acao "Reinstalacao" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao abrir pagina OneDrive: $_" -Level "ERROR"
         Write-Host "Erro ao abrir navegador: $_" -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "OneDrive" -Acao "Reinstalacao" -Resultado "Falha"
     }
 }
 
