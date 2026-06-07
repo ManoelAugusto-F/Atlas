@@ -48,7 +48,7 @@
         { "name": "Remote Desktop Manager", "id": "Devolutions.RemoteDesktopManager", "manager": "winget" },
         { "name": "OpenVPN Community", "id": "OpenVPNTechnologies.OpenVPN", "manager": "winget" },
         { "name": "OpenVPN Connect", "id": "OpenVPNTechnologies.OpenVPNConnect", "manager": "winget" },
-        { "name": "WinBox", "id": "MikroTik.WinBox", "manager": "winget" },
+        { "name": "WinBox", "id": "Mikrotik.Winbox", "manager": "winget" },
         { "name": "RSAT Completo", "id": "SPECIAL:RSAT_FULL", "manager": "special" }
       ]
     },
@@ -57,9 +57,8 @@
       "items": [
         { "name": "SQL Server Management Studio 22", "id": "Microsoft.SQLServerManagementStudio.22", "manager": "winget" },
         { "name": "SSMS 21", "id": "Microsoft.SQLServerManagementStudio.21", "manager": "winget" },
-        { "name": "SSMS 20", "id": "Microsoft.SQLServerManagementStudio.20", "manager": "winget" },
-        { "name": "SSMS 19", "id": "Microsoft.SQLServerManagementStudio.19", "manager": "winget" },
-        { "name": "DBeaver Community", "id": "dbeaver.dbeaver", "manager": "winget" }
+        { "name": "SSMS 20", "id": "Microsoft.SQLServerManagementStudio", "manager": "winget" },
+        { "name": "DBeaver Community", "id": "DBeaver.DBeaver.Community", "manager": "winget" }
       ]
     },
     {

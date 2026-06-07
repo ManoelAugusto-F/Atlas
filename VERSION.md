@@ -1,8 +1,12 @@
-# Versao Atual: Atlas v0.3.0
+# Versao Atual: Atlas v0.3.1
 
 ---
 
 ## Historico de Versoes
+
+### v0.3.1 - Correcao de IDs Winget do catalogo
+- **Corrigido**: WinBox, DBeaver Community e SSMS 20
+- **Removido**: SSMS 19 (ID inexistente no Winget)
 
 ### v0.3.0 - Catalogo de softwares expandido
 - **Catalogo**: 13 programas validados no Winget adicionados ao catalogo principal
