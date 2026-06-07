@@ -1,172 +1,62 @@
 # Atlas
 
-**Assistente de manutenção e suporte para Windows.**
+**Ferramenta de manutenção e suporte para Windows.**
 
-Atlas é uma ferramenta criada para centralizar tarefas comuns de suporte, manutenção e correção de problemas em estações Windows.
-
-Seu objetivo é reduzir o tempo gasto com atividades repetitivas e disponibilizar correções comuns em uma interface simples e organizada.
+O Atlas reúne em uma única interface recursos utilizados diariamente por equipes de suporte, infraestrutura e TI para diagnóstico, correção e manutenção de estações Windows.
 
 ---
 
-## O que o Atlas resolve
+## Recursos
 
-- ✓ Lentidão
-- ✓ Problemas de rede
-- ✓ OneDrive
-- ✓ Outlook
-- ✓ Teams
-- ✓ Impressoras
-- ✓ Windows Update
-- ✓ Arquivos temporários
-- ✓ Cache
-- ✓ Instalação de programas
-- ✓ Correções comuns do Windows
+- Limpeza de arquivos temporários e cache
+- Correções de rede e conectividade
+- Ferramentas para OneDrive
+- Ferramentas para impressoras
+- Reparos do Windows (SFC, DISM e Windows Update)
+- Suporte para Outlook
+- Suporte para Teams
+- Correções para navegadores
+- Instalação e atualização de softwares via Winget
 
 ---
 
-## Funcionalidades
-
-### Limpeza Segura
-
-- Limpeza de temporários
-- Limpeza de DNS
-- Limpeza de cache Windows Update
-- Limpeza de lixeira
-- Identificação de pastas grandes
-
-### Rede e Internet
-
-- Diagnóstico de conectividade
-- Renovação de IP
-- Reset Winsock
-- Reset TCP/IP
-- Diagnóstico DNS
-
-### OneDrive
-
-- Reiniciar
-- Resetar
-- Remover
-- Limpar resíduos
-- Reinstalar
-
-### Impressoras
-
-- Reiniciar spooler
-- Limpar fila
-- Diagnosticar problemas
-- Corrigir falhas comuns
-
-### Reparos Windows
-
-- SFC
-- DISM
-- Reset Windows Update
-- Verificações de integridade
-
-### Outlook
-
-- Diagnóstico
-- Limpeza
-- Reparo
-- Verificação de instalação
-
-### Teams
-
-- Limpeza de cache
-- Correções comuns
-- Remoção de componentes pessoais
+## Catálogo de Software
 
 ### Navegadores
-
-- Chrome
-- Edge
-- Firefox
-
-Limpeza de cache e correções básicas.
-
-### Instalação de Programas
-
-Catálogo organizado por categorias, com confirmação antes de cada instalação.
-
----
-
-## Catálogo de software
-
-### Navegadores
-
-Google Chrome · Microsoft Edge · Mozilla Firefox · Brave
+Google Chrome, Microsoft Edge, Mozilla Firefox e Brave
 
 ### PDF e Documentos
-
-Adobe Acrobat Reader · PDF24 Creator · LibreOffice · Draw.io
+Adobe Acrobat Reader, PDF24 Creator, LibreOffice e Draw.io
 
 ### Desenvolvimento
-
-Visual Studio Code · Git · PowerShell 7 · Notepad++ · Docker Desktop · WSL
+Visual Studio Code, Git, PowerShell 7, Docker Desktop e WSL
 
 ### Infraestrutura e Redes
-
-PuTTY · WinSCP · MobaXterm · Wireshark · Nmap · Remote Desktop Manager · OpenVPN Community · OpenVPN Connect · RSAT
+PuTTY, WinSCP, MobaXterm, Wireshark, Nmap, OpenVPN, Remote Desktop Manager e RSAT
 
 ### Banco de Dados
-
-SQL Server Management Studio
+SQL Server Management Studio (SSMS)
 
 ### Microsoft
-
-Microsoft 365 · Teams · OneDrive · PowerToys · Windows Terminal · Power BI Desktop · Remote Desktop
+Microsoft 365, Teams, OneDrive, PowerToys, Windows Terminal, Power BI Desktop e Remote Desktop
 
 ### Utilitários
-
-7-Zip · Everything · ShareX · Greenshot
+7-Zip, Everything, ShareX e Greenshot
 
 ---
 
 ## Segurança
 
-- Atlas não utiliza ativadores.
-- Atlas não modifica configurações sem confirmação.
-- Atlas utiliza recursos nativos do Windows.
-- Atlas utiliza Winget para instalação de softwares.
-- Operações destrutivas exigem confirmação explícita.
+- Utiliza recursos nativos do Windows
+- Utiliza Winget para instalação de softwares
+- Não utiliza ativadores ou ferramentas não oficiais
+- Operações críticas exigem confirmação do usuário
 
 ---
 
 ## Compatibilidade
 
-### Plataformas oficialmente suportadas
-
 - Windows 11
 - Windows PowerShell 5.1
 - PowerShell 7+
-
-### Requisitos
-
-- Winget (para instalação e atualização de softwares)
-
-### Observação
-
-Versões anteriores do Windows podem funcionar parcialmente, mas não fazem parte da matriz oficial de testes do projeto.
-
----
-
-## Roadmap
-
-**Versão atual:** Atlas v0.2.6 — MVP estável
-
-**Próximas versões:**
-
-| Entrega | Descrição |
-|---------|-----------|
-| Bootstrap online | Execução direta via PowerShell, sem instalação manual |
-| Execução temporária | Sessão isolada com limpeza automática ao encerrar |
-| Atualizações simplificadas | Obtenção da versão estável sem intervenção do usuário |
-| Documentação pública | Guias e referência para uso em campo |
-| Interface gráfica | Experiência visual além do menu em terminal |
-
----
-
-## Objetivo do projeto
-
-Centralizar tarefas comuns de manutenção e suporte em uma única ferramenta simples, portátil e fácil de utilizar.
+- Winget
