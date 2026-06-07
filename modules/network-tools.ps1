@@ -204,9 +204,11 @@ function Update-IpAddressLeaseSafe {
         Write-Host $output
         Write-Log -Message "IP renovado com sucesso" -Level "INFO"
         Write-Host "IP renovado." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Rede" -Acao "Renovacao IP" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao renovar IP: $_" -Level "ERROR"
         Write-Host "Erro durante a renovacao de IP." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Rede" -Acao "Renovacao IP" -Resultado "Falha"
     }
 }
 
@@ -239,9 +241,11 @@ function Reset-WinsockSafe {
         Write-Log -Message "Winsock resetado. Reinicializacao necessaria." -Level "INFO"
         Write-Host ""
         Write-Host "Winsock resetado. Reinicie o computador para concluir." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Rede" -Acao "Reset Winsock" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao resetar Winsock: $_" -Level "ERROR"
         Write-Host "Erro ao resetar Winsock." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Rede" -Acao "Reset Winsock" -Resultado "Falha"
     }
 }
 
@@ -274,9 +278,11 @@ function Reset-TcpIpSafe {
         Write-Log -Message "TCP/IP resetado. Reinicializacao necessaria." -Level "INFO"
         Write-Host ""
         Write-Host "TCP/IP resetado. Reinicie o computador para concluir." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Rede" -Acao "Reset TCP/IP" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao resetar TCP/IP: $_" -Level "ERROR"
         Write-Host "Erro ao resetar TCP/IP." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Rede" -Acao "Reset TCP/IP" -Resultado "Falha"
     }
 }
 

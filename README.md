@@ -4,7 +4,7 @@
 
 O Atlas reúne em uma única interface recursos utilizados diariamente por equipes de suporte, infraestrutura e TI para diagnóstico, correção e manutenção de estações Windows.
 
-**Versao atual:** v0.3.1 — Correcao de IDs Winget do catalogo.
+**Versao atual:** v0.3.2 — Historico Operacional.
 
 ---
 
@@ -19,6 +19,15 @@ O Atlas reúne em uma única interface recursos utilizados diariamente por equip
 - Suporte para Teams
 - Correções para navegadores
 - Instalação e atualização de softwares via Winget
+- Histórico operacional das ações executadas
+
+---
+
+## Histórico Operacional
+
+O Atlas registra automaticamente as ações executadas em `C:\ProgramData\Atlas\Logs\atlas.log`.
+
+Cada entrada contém data, módulo, ação e resultado. O menu **Histórico do Atlas** permite consultar os últimos eventos, abrir a pasta de logs ou limpar o histórico.
 
 ---
 

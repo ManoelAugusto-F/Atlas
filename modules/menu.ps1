@@ -17,6 +17,7 @@ function Show-MainMenu {
     Write-Host "[7]  Teams"
     Write-Host "[8]  Navegadores"
     Write-Host "[9]  Instalacao de programas"
+    Write-Host "[10] Historico do Atlas"
     Write-Host "[0]  Sair"
     Write-Host ""
 }

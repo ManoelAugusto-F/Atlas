@@ -179,6 +179,7 @@ function Install-SoftwareByWingetSafe {
             Write-Host ""
             Write-Host "Instalacao concluida." -ForegroundColor Green
             Write-AtlasSessionLog -Message "Instalacao concluida: $PackageId" -Level "ACTION"
+            Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao $DisplayName -Resultado "Sucesso"
             return $true
         }
 
@@ -186,12 +187,14 @@ function Install-SoftwareByWingetSafe {
         Write-Host "Instalacao falhou. Verifique logs." -ForegroundColor Red
         Write-AtlasSessionLog -Message "Instalacao falhou (codigo $exitCode): $PackageId" -Level "ERROR"
         Write-Log -Message "winget install falhou para $PackageId codigo $exitCode" -Level "ERROR"
+        Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao $DisplayName -Resultado "Falha"
         return $false
     } catch {
         Write-Host ""
         Write-Host "Instalacao falhou. Verifique logs." -ForegroundColor Red
         Write-AtlasSessionLog -Message "Erro winget install $PackageId : $_" -Level "ERROR"
         Write-Log -Message "Erro ao instalar $PackageId : $_" -Level "ERROR"
+        Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao $DisplayName -Resultado "Falha"
         return $false
     }
 }

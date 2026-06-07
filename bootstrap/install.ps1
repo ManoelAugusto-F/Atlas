@@ -19,9 +19,14 @@
 . "$PSScriptRoot/../modules/programs.ps1"
 . "$PSScriptRoot/../modules/services.ps1"
 . "$PSScriptRoot/../modules/software-install.ps1"
+. "$PSScriptRoot/../modules/history.ps1"
 
 # Validacao de import
 $requiredFunctions = @(
+    "Initialize-AtlasLogger",
+    "Write-AtlasLog",
+    "Get-AtlasLogPath",
+    "Show-HistoryMenu",
     "Show-CleanupMenu",
     "Show-NetworkMenu",
     "Show-OneDriveMenu",
@@ -48,6 +53,11 @@ foreach ($fn in $requiredFunctions) {
 $running = $true
 
 try {
+    Initialize-AtlasLogger | Out-Null
+    $userName = [System.Environment]::UserName
+    $hostName = [System.Environment]::MachineName
+    Write-AtlasLog -Nivel INFO -Modulo "Sistema" -Acao "Inicio Atlas" -Resultado "Usuario: $userName | Computador: $hostName"
+
     $sessionLog = Start-AtlasSessionLog
     Write-Log -Message "Atlas iniciado" -Level "INFO"
     Write-AtlasSessionLog -Message "Sessao iniciada: $sessionLog" -Level "INFO"
@@ -107,6 +117,11 @@ try {
                 Show-SoftwareInstallMenu
             }
 
+            "10" {
+                Write-AtlasSessionLog -Message "Acao: Historico do Atlas" -Level "ACTION"
+                Show-HistoryMenu
+            }
+
             "0" {
                 Write-Log -Message "Atlas encerrado pelo usuario" -Level "INFO"
                 Write-AtlasSessionLog -Message "Encerrado pelo usuario (opcao 0)" -Level "ACTION"
@@ -116,7 +131,7 @@ try {
             default {
                 Write-Log -Message "Opcao invalida selecionada: $option" -Level "WARN"
                 Write-AtlasSessionLog -Message "Opcao invalida: $option" -Level "WARN"
-                Write-Host "Opcao invalida. Escolha entre 0 e 9." -ForegroundColor Yellow
+                Write-Host "Opcao invalida. Escolha entre 0 e 10." -ForegroundColor Yellow
                 Wait-UserInput
             }
         }

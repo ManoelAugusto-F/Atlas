@@ -1,8 +1,14 @@
-# Versao Atual: Atlas v0.3.1
+# Versao Atual: Atlas v0.3.2
 
 ---
 
 ## Historico de Versoes
+
+### v0.3.2 - Historico Operacional
+- **Logger**: `Initialize-AtlasLogger`, `Write-AtlasLog`, `Get-AtlasLogPath` em `C:\ProgramData\Atlas\Logs\atlas.log`
+- **Menu**: opcao [10] Historico do Atlas (`modules/history.ps1`)
+- **Integracao inicial**: Instalacao de Programas, Rede e Limpeza Segura
+- **Testes**: `test_logger.ps1` e `test_history.ps1`
 
 ### v0.3.1 - Correcao de IDs Winget do catalogo
 - **Corrigido**: WinBox, DBeaver Community e SSMS 20

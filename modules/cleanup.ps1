@@ -143,9 +143,11 @@ function Clear-UserTemp {
         }
         Write-Log -Message "TEMP limpo: $removed removidos, $skipped em uso (ignorados)" -Level "INFO"
         Write-Host "Concluido: $removed itens removidos, $skipped em uso ignorados." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Limpeza" -Acao "Temporarios do usuario" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro na limpeza de TEMP: $_" -Level "ERROR"
         Write-Host "Erro durante a limpeza." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Limpeza" -Acao "Temporarios do usuario" -Resultado "Falha"
     }
 }
 
@@ -192,9 +194,11 @@ function Clear-WindowsTemp {
         }
         Write-Log -Message "Windows\Temp limpo: $removed removidos, $skipped em uso (ignorados)" -Level "INFO"
         Write-Host "Concluido: $removed itens removidos, $skipped em uso ignorados." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Limpeza" -Acao "Temporarios do Windows" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro na limpeza de Windows\Temp: $_" -Level "ERROR"
         Write-Host "Erro durante a limpeza." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Limpeza" -Acao "Temporarios do Windows" -Resultado "Falha"
     }
 }
 
@@ -251,12 +255,14 @@ function Clear-WindowsUpdateCache {
 
         Write-Log -Message "Cache WU limpo: $removed removidos, $skipped ignorados" -Level "INFO"
         Write-Host "Concluido: $removed itens removidos, $skipped ignorados." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Limpeza" -Acao "Cache Windows Update" -Resultado "Sucesso"
     } catch {
         # Tentar restartar servicos mesmo em caso de erro
         try { Start-Service -Name wuauserv -ErrorAction SilentlyContinue } catch { }
         try { Start-Service -Name BITS    -ErrorAction SilentlyContinue } catch { }
         Write-Log -Message "Erro na limpeza do Windows Update: $_" -Level "ERROR"
         Write-Host "Erro durante a limpeza. Servicos reiniciados." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Limpeza" -Acao "Cache Windows Update" -Resultado "Falha"
     }
 }
 
@@ -286,9 +292,11 @@ function Clear-RecycleBinSafe {
         Clear-RecycleBin -Force -ErrorAction Stop
         Write-Log -Message "Lixeira esvaziada com sucesso" -Level "INFO"
         Write-Host "Lixeira esvaziada com sucesso." -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Limpeza" -Acao "Lixeira" -Resultado "Sucesso"
     } catch {
         Write-Log -Message "Erro ao esvaziar lixeira: $_" -Level "ERROR"
         Write-Host "Erro ao esvaziar a lixeira." -ForegroundColor Red
+        Write-AtlasLog -Nivel ERROR -Modulo "Limpeza" -Acao "Lixeira" -Resultado "Falha"
     }
 }
 
