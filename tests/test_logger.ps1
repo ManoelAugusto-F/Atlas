@@ -10,9 +10,10 @@ Write-Host "[TESTE] Logger operacional" -ForegroundColor Magenta
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-$allOk = $true
-$tempBase = if ($env:TEMP) { $env:TEMP } elseif ($env:TMP) { $env:TMP } else { [System.IO.Path]::GetTempPath() }
-$testRoot = Join-Path $tempBase ("AtlasLoggerTest_" + [guid]::NewGuid().ToString())
+$script:LoggerTestFailed = $false
+$expectedLogsDir = Join-Path $env:ProgramData "Atlas\Logs"
+$expectedLogPath = Join-Path $expectedLogsDir "atlas.log"
+$expectedSessionsDir = Join-Path $expectedLogsDir "Sessions"
 
 function Test-Assert {
     param(
@@ -27,24 +28,35 @@ function Test-Assert {
     }
 }
 
-$script:LoggerTestFailed = $false
-
 $required = @(
     'Initialize-AtlasLogger',
     'Write-AtlasLog',
-    'Get-AtlasLogPath'
+    'Get-AtlasLogPath',
+    'Start-AtlasSessionLog'
 )
 
 foreach ($fn in $required) {
     Test-Assert ([bool](Get-Command $fn -ErrorAction SilentlyContinue)) "Funcao $fn"
 }
 
-try {
-    $logPath = Initialize-AtlasLogger -LogRoot $testRoot
-    $logsDir = Join-Path $testRoot "Logs"
+$loggerSource = Get-Content -Path (Join-Path $PSScriptRoot "../modules/logger.ps1") -Raw
+Test-Assert ($loggerSource -notmatch '\.\./logs') "Logger nao usa caminho relativo ../logs"
+Test-Assert ($loggerSource -notmatch 'logs/sessions') "Logger nao usa caminho relativo logs/sessions"
+Test-Assert ($loggerSource -notmatch 'logs\\sessions') "Logger nao usa caminho relativo logs\sessions"
 
-    Test-Assert (Test-Path $logsDir) "Pasta Logs criada"
+try {
+    $script:AtlasOperationalLogPath = $null
+    $script:AtlasLoggerInitialized = $false
+    $script:AtlasSessionLogPath = $null
+    $script:AtlasSessionActive = $false
+
+    Test-Assert ((Get-AtlasLogPath) -eq $expectedLogPath) "Get-AtlasLogPath retorna C:\ProgramData\Atlas\Logs\atlas.log"
+
+    $logPath = Initialize-AtlasLogger
+    Test-Assert (Test-Path $expectedLogsDir) "Pasta C:\ProgramData\Atlas\Logs criada"
+    Test-Assert (Test-Path $expectedSessionsDir) "Pasta C:\ProgramData\Atlas\Logs\Sessions criada"
     Test-Assert (Test-Path $logPath) "Arquivo atlas.log criado"
+    Test-Assert ($logPath -eq $expectedLogPath) "Initialize-AtlasLogger usa ProgramData"
     Test-Assert ($logPath -eq (Get-AtlasLogPath)) "Get-AtlasLogPath retorna caminho correto"
 
     Write-AtlasLog -Nivel INFO -Modulo "Teste" -Acao "Escrita" -Resultado "Sucesso"
@@ -54,6 +66,15 @@ try {
     Test-Assert ($content -match "Escrita") "Log contem acao Escrita"
     Test-Assert ($content -match "Sucesso") "Log contem resultado Sucesso"
     Test-Assert ($content -match "\| INFO \|") "Log contem nivel INFO"
+
+    $sessionLog = Start-AtlasSessionLog
+    Test-Assert ($sessionLog.StartsWith($expectedSessionsDir)) "Log de sessao em ProgramData\Logs\Sessions"
+    Test-Assert ($sessionLog -match 'session_\d{8}_\d{6}\.log$') "Nome do log de sessao no formato esperado"
+    Test-Assert (Test-Path $sessionLog) "Arquivo de sessao criado"
+
+    Write-AtlasSessionLog -Message "Teste de sessao" -Level "INFO"
+    $sessionContent = Get-Content -Path $sessionLog -Raw
+    Test-Assert ($sessionContent -match "Teste de sessao") "Log de sessao gravado com sucesso"
 
     $modulesDir = Join-Path $PSScriptRoot "../modules"
     $integrationChecks = @(
@@ -79,11 +100,6 @@ try {
 catch {
     Write-Host "[FAIL] Erro no teste: $_" -ForegroundColor Red
     $script:LoggerTestFailed = $true
-}
-finally {
-    if (Test-Path $testRoot) {
-        Remove-Item -Path $testRoot -Recurse -Force -ErrorAction SilentlyContinue
-    }
 }
 
 Write-Host ""

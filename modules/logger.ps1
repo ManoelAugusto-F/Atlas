@@ -24,6 +24,18 @@ function script:Get-AtlasDefaultRoot {
     return Join-Path (script:Get-AtlasTempPath) "Atlas"
 }
 
+function script:Ensure-AtlasLogDirectory {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath
+    )
+
+    $dir = Split-Path $FilePath -Parent
+    if ($dir -and -not (Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    }
+}
+
 function Get-AtlasLogPath {
     if ($script:AtlasOperationalLogPath) {
         return $script:AtlasOperationalLogPath
@@ -45,8 +57,13 @@ function Initialize-AtlasLogger {
     }
 
     $logsDir = Join-Path $atlasRoot "Logs"
+    $sessionsDir = Join-Path $logsDir "Sessions"
+
     if (-not (Test-Path $logsDir)) {
         New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+    }
+    if (-not (Test-Path $sessionsDir)) {
+        New-Item -ItemType Directory -Path $sessionsDir -Force | Out-Null
     }
 
     $script:AtlasOperationalLogPath = Join-Path $logsDir "atlas.log"
@@ -76,14 +93,16 @@ function Write-AtlasLog {
 
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $logLine = "$timestamp | $Nivel | $Modulo | $Acao | $Resultado"
+    $logPath = Get-AtlasLogPath
 
     try {
-        Add-Content -Path (Get-AtlasLogPath) -Value $logLine -Encoding UTF8
+        script:Ensure-AtlasLogDirectory -FilePath $logPath
+        Add-Content -Path $logPath -Value $logLine -Encoding UTF8
     } catch { }
 }
 
 function Get-AtlasLogsRoot {
-    return (Join-Path $PSScriptRoot "../logs")
+    return Join-Path (script:Get-AtlasDefaultRoot) "Logs"
 }
 
 function Get-AtlasSessionLogPath {
@@ -91,8 +110,12 @@ function Get-AtlasSessionLogPath {
 }
 
 function Start-AtlasSessionLog {
+    if (-not $script:AtlasLoggerInitialized) {
+        Initialize-AtlasLogger | Out-Null
+    }
+
     $logsRoot = Get-AtlasLogsRoot
-    $sessionsDir = Join-Path $logsRoot "sessions"
+    $sessionsDir = Join-Path $logsRoot "Sessions"
 
     if (-not (Test-Path $sessionsDir)) {
         New-Item -ItemType Directory -Path $sessionsDir -Force | Out-Null
@@ -121,7 +144,11 @@ function Start-AtlasSessionLog {
         "=========================================="
     )
 
-    Set-Content -Path $script:AtlasSessionLogPath -Value ($header -join "`n") -Encoding UTF8
+    try {
+        script:Ensure-AtlasLogDirectory -FilePath $script:AtlasSessionLogPath
+        Set-Content -Path $script:AtlasSessionLogPath -Value ($header -join "`n") -Encoding UTF8
+    } catch { }
+
     return $script:AtlasSessionLogPath
 }
 
@@ -141,6 +168,7 @@ function Write-AtlasSessionLog {
     $logLine = "[$timestamp] [$Level] $Message"
 
     try {
+        script:Ensure-AtlasLogDirectory -FilePath $script:AtlasSessionLogPath
         Add-Content -Path $script:AtlasSessionLogPath -Value $logLine -Encoding UTF8
     } catch { }
 }
@@ -177,13 +205,17 @@ function Write-Log {
         default { Write-Host $logLine -ForegroundColor Cyan }
     }
 
-    $logDir = Get-AtlasLogsRoot
-    if (-not (Test-Path $logDir)) {
-        New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+    if (-not $script:AtlasLoggerInitialized) {
+        Initialize-AtlasLogger | Out-Null
     }
 
+    $logDir = Get-AtlasLogsRoot
     $logFile = Join-Path $logDir "provisionador.log"
-    Add-Content -Path $logFile -Value $logLine
+
+    try {
+        script:Ensure-AtlasLogDirectory -FilePath $logFile
+        Add-Content -Path $logFile -Value $logLine -Encoding UTF8
+    } catch { }
 
     if ($script:AtlasSessionActive) {
         Write-AtlasSessionLog -Message $Message -Level $Level

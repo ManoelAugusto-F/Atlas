@@ -30,6 +30,45 @@ function script:Confirm-Action {
     return ($resp -match '^[sS]$')
 }
 
+function script:Get-AtlasExecutionTempRoot {
+    $tempPath = if ($env:TEMP) { $env:TEMP } else { [System.IO.Path]::GetTempPath() }
+    $current = $PSScriptRoot
+
+    while ($current) {
+        $leaf = Split-Path $current -Leaf
+        $normalizedCurrent = $current.TrimEnd('\')
+        $normalizedTemp = $tempPath.TrimEnd('\')
+
+        if ($leaf -match '^Atlas_' -and $normalizedCurrent.StartsWith($normalizedTemp, [StringComparison]::OrdinalIgnoreCase)) {
+            return $current
+        }
+
+        $parent = Split-Path $current -Parent
+        if (-not $parent -or $parent -eq $current) { break }
+        $current = $parent
+    }
+
+    return $null
+}
+
+function script:Test-ShouldSkipAtlasTempItem {
+    param(
+        [Parameter(Mandatory = $true)]
+        $Item
+    )
+
+    if ($Item.Name -match '^Atlas_') {
+        return $true
+    }
+
+    $atlasRoot = script:Get-AtlasExecutionTempRoot
+    if ($atlasRoot -and $Item.FullName -eq $atlasRoot) {
+        return $true
+    }
+
+    return $false
+}
+
 # ──────────────────────────────────────────
 # [1] Maiores pastas do perfil
 # ──────────────────────────────────────────
@@ -132,8 +171,21 @@ function Clear-UserTemp {
 
     try {
         $items = Get-ChildItem -Path $tempPath -ErrorAction SilentlyContinue
-        $removed = 0; $skipped = 0
+        $removed = 0; $skipped = 0; $atlasIgnored = 0
+        $atlasRoot = script:Get-AtlasExecutionTempRoot
+
         foreach ($item in $items) {
+            if (script:Test-ShouldSkipAtlasTempItem -Item $item) {
+                $skipped++
+                $atlasIgnored++
+                if ($atlasRoot -and $item.FullName -eq $atlasRoot) {
+                    Write-Log -Message "Pasta temporaria do Atlas ignorada: $($item.FullName)" -Level "INFO"
+                } else {
+                    Write-Log -Message "Pasta temporaria Atlas ignorada: $($item.FullName)" -Level "INFO"
+                }
+                continue
+            }
+
             try {
                 Remove-Item -Path $item.FullName -Recurse -Force -ErrorAction Stop
                 $removed++
@@ -141,7 +193,7 @@ function Clear-UserTemp {
                 $skipped++
             }
         }
-        Write-Log -Message "TEMP limpo: $removed removidos, $skipped em uso (ignorados)" -Level "INFO"
+        Write-Log -Message "TEMP limpo: $removed removidos, $skipped ignorados ($atlasIgnored pasta(s) Atlas)" -Level "INFO"
         Write-Host "Concluido: $removed itens removidos, $skipped em uso ignorados." -ForegroundColor Green
         Write-AtlasLog -Nivel INFO -Modulo "Limpeza" -Acao "Temporarios do usuario" -Resultado "Sucesso"
     } catch {
