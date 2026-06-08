@@ -35,16 +35,6 @@ function Format-AtlasCenteredText {
     return (' ' * $left) + $Text
 }
 
-function script:Format-AtlasCenteredText {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Text,
-        [int]$Width = $script:AtlasMenuWidth
-    )
-
-    return Format-AtlasCenteredText -Text $Text -Width $Width
-}
-
 function Show-AtlasHeader {
     param(
         [string]$Title
