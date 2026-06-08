@@ -40,7 +40,8 @@ $requiredFunctions = @(
     "Install-SoftwareByWingetSafe",
     "Get-SoftwareCatalog",
     "Start-AtlasSessionLog",
-    "Stop-AtlasSessionLog"
+    "Stop-AtlasSessionLog",
+    "Start-WindowsDiagnostic"
 )
 
 foreach ($fn in $requiredFunctions) {
@@ -67,7 +68,7 @@ try {
         Show-MainMenu
         Write-AtlasSessionLog -Message "Menu principal exibido" -Level "MENU"
 
-        $option = Read-Host "Escolha uma opcao"
+        $option = Read-AtlasMenuChoice
         Write-AtlasSessionLog -Message "Menu principal opcao: $option" -Level "MENU"
 
         switch ($option) {
@@ -131,7 +132,7 @@ try {
             default {
                 Write-Log -Message "Opcao invalida selecionada: $option" -Level "WARN"
                 Write-AtlasSessionLog -Message "Opcao invalida: $option" -Level "WARN"
-                Write-Host "Opcao invalida. Escolha entre 0 e 10." -ForegroundColor Yellow
+                Write-AtlasWarning "Opcao invalida. Escolha entre 0 e 10."
                 Wait-UserInput
             }
         }

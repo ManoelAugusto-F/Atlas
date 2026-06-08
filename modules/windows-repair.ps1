@@ -311,6 +311,211 @@ function Reset-WindowsUpdateSafe {
 }
 
 # ------------------------------------------
+# Diagnostico guiado
+# ------------------------------------------
+
+function script:Invoke-SfcVerifyOnlyCapture {
+    try {
+        $output = & sfc /verifyonly 2>&1 | Out-String
+        $hasCorruption = $output -match '(?i)(found corrupt|corrupt files|arquivos corrompidos|integrity violations were found)'
+        $isClean = $output -match '(?i)(did not find any integrity violations|nao encontrou violac|n.o encontrou viola)'
+
+        if ($hasCorruption -and -not $isClean) {
+            return @{ Status = "problem"; Output = $output }
+        }
+        if ($isClean) {
+            return @{ Status = "ok"; Output = $output }
+        }
+        return @{ Status = "unknown"; Output = $output }
+    } catch {
+        return @{ Status = "error"; Output = $_.Exception.Message }
+    }
+}
+
+function script:Invoke-DismCheckHealthCapture {
+    try {
+        $output = & DISM /Online /Cleanup-Image /CheckHealth 2>&1 | Out-String
+        $hasCorruption = $output -match '(?i)(corruption was detected|corrupcao.*detectada|component store is repairable|reparavel)'
+        $isClean = $output -match '(?i)(no component store corruption|nenhuma corrupcao)'
+
+        if ($hasCorruption) {
+            return @{ Status = "problem"; Output = $output }
+        }
+        if ($isClean) {
+            return @{ Status = "ok"; Output = $output }
+        }
+        return @{ Status = "unknown"; Output = $output }
+    } catch {
+        return @{ Status = "error"; Output = $_.Exception.Message }
+    }
+}
+
+function script:Test-PendingRebootCapture {
+    if (-not (script:Test-IsWindowsRepair)) {
+        return @{ Pending = $false; Reasons = @() }
+    }
+
+    $pending = $false
+    $reasons = [System.Collections.Generic.List[string]]::new()
+
+    if (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending" -ErrorAction SilentlyContinue) {
+        $pending = $true
+        $reasons.Add("Component Based Servicing")
+    }
+
+    if (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" -ErrorAction SilentlyContinue) {
+        $pending = $true
+        $reasons.Add("Windows Update")
+    }
+
+    $pfr = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" `
+        -Name PendingFileRenameOperations -ErrorAction SilentlyContinue
+    if ($pfr -and $pfr.PendingFileRenameOperations) {
+        $pending = $true
+        $reasons.Add("PendingFileRenameOperations")
+    }
+
+    return @{ Pending = $pending; Reasons = @($reasons) }
+}
+
+function script:Test-WindowsUpdateIssueCapture {
+    if (-not (script:Test-IsWindowsRepair)) {
+        return @{ HasIssue = $false; Detail = "" }
+    }
+
+    try {
+        $svc = Get-Service -Name wuauserv -ErrorAction SilentlyContinue
+        if ($svc -and $svc.StartType -ne 'Disabled' -and $svc.Status -ne 'Running') {
+            return @{ HasIssue = $true; Detail = "Servico Windows Update parado ($($svc.Status))" }
+        }
+    } catch { }
+
+    $sdPath = "$env:SystemRoot\SoftwareDistribution\Download"
+    if (Test-Path $sdPath) {
+        try {
+            $staleFiles = Get-ChildItem -Path $sdPath -Recurse -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) }
+            if ($staleFiles -and @($staleFiles).Count -gt 50) {
+                return @{ HasIssue = $true; Detail = "Cache de atualizacoes antigo detectado" }
+            }
+        } catch { }
+    }
+
+    return @{ HasIssue = $false; Detail = "" }
+}
+
+function Start-WindowsDiagnostic {
+    Write-Log -Message "Iniciando diagnostico guiado do Windows" -Level "INFO"
+
+    if (-not (script:Test-IsWindowsRepair)) {
+        Write-Host ""
+        Write-AtlasWarning "Funcao disponivel apenas no Windows."
+        return
+    }
+
+    Write-Host ""
+    Write-AtlasInfo "Executando diagnostico do sistema. Aguarde..."
+    Write-Host ""
+
+    Write-AtlasInfo "Etapa 1/3: Verificando arquivos do Windows..."
+    $sfcResult = script:Invoke-SfcVerifyOnlyCapture
+    Write-Log -Message "Diagnostico SFC: $($sfcResult.Status)" -Level "INFO"
+
+    Write-AtlasInfo "Etapa 2/3: Verificando imagem do Windows..."
+    $dismResult = script:Invoke-DismCheckHealthCapture
+    Write-Log -Message "Diagnostico DISM: $($dismResult.Status)" -Level "INFO"
+
+    Write-AtlasInfo "Etapa 3/3: Verificando atualizacoes e reinicializacao..."
+    $rebootResult = script:Test-PendingRebootCapture
+    $wuResult = script:Test-WindowsUpdateIssueCapture
+    Write-Log -Message "Diagnostico reboot pendente: $($rebootResult.Pending)" -Level "INFO"
+    Write-Log -Message "Diagnostico Windows Update: $($wuResult.HasIssue)" -Level "INFO"
+
+    $findings = [System.Collections.Generic.List[string]]::new()
+    $recommendation = $null
+    $recommendOption = $null
+
+    if ($sfcResult.Status -eq "problem") {
+        $findings.Add("Arquivos corrompidos detectados")
+        if (-not $recommendation) {
+            $recommendation = "Executar opcao [3] Corrigir arquivos do Windows"
+            $recommendOption = "3"
+        }
+    } elseif ($sfcResult.Status -eq "ok") {
+        $findings.Add("Nenhum problema encontrado nos arquivos do Windows")
+    } else {
+        $findings.Add("Nao foi possivel confirmar integridade dos arquivos do Windows")
+    }
+
+    if ($dismResult.Status -eq "problem") {
+        $findings.Add("Problemas detectados na imagem do Windows")
+        $recommendation = "Executar opcao [5] Reparar imagem do Windows"
+        $recommendOption = "5"
+    } elseif ($dismResult.Status -eq "ok") {
+        $findings.Add("Imagem do Windows em bom estado")
+    } else {
+        $findings.Add("Nao foi possivel confirmar integridade da imagem do Windows")
+    }
+
+    if ($rebootResult.Pending) {
+        $reasonText = ($rebootResult.Reasons -join ", ")
+        $findings.Add("Reinicializacao pendente detectada ($reasonText)")
+        if (-not $recommendation) {
+            $recommendation = "Reinicie o computador antes de continuar com reparos"
+            $recommendOption = $null
+        }
+    }
+
+    if ($wuResult.HasIssue) {
+        $findings.Add("Problemas com Windows Update: $($wuResult.Detail)")
+        if (-not $recommendation -or $recommendOption -eq $null) {
+            $recommendation = "Executar opcao [6] Resetar Windows Update"
+            $recommendOption = "6"
+        }
+    } elseif ($rebootResult.Reasons -contains "Windows Update") {
+        $findings.Add("Atualizacoes pendentes detectadas")
+        if (-not $recommendation) {
+            $recommendation = "Executar opcao [6] Resetar Windows Update"
+            $recommendOption = "6"
+        }
+    }
+
+    Write-Host ""
+    Write-Host "==========================================" -ForegroundColor Cyan
+    Write-Host " Diagnostico do Sistema" -ForegroundColor Cyan
+    Write-Host "==========================================" -ForegroundColor Cyan
+    Write-Host ""
+
+    $hasAttention = $false
+    foreach ($finding in $findings) {
+        $isOk = $finding -match '(?i)(nenhum problema|em bom estado)'
+        if ($isOk) {
+            Write-Host "[OK]" -ForegroundColor Green -NoNewline
+            Write-Host " $finding" -ForegroundColor White
+        } else {
+            $hasAttention = $true
+            Write-Host "[ATENCAO]" -ForegroundColor Yellow -NoNewline
+            Write-Host " $finding" -ForegroundColor White
+        }
+    }
+
+    Write-Host ""
+    if ($recommendation) {
+        Write-Host "Recomendacao:" -ForegroundColor Cyan
+        Write-Host $recommendation -ForegroundColor White
+    } elseif (-not $hasAttention) {
+        Write-AtlasSuccess "Seu sistema parece estar em ordem. Nenhuma acao necessaria no momento."
+    } else {
+        Write-AtlasInfo "Revise os itens acima e escolha a opcao adequada no menu de Reparos Windows."
+    }
+
+    Write-Host ""
+    Write-Host "==========================================" -ForegroundColor Cyan
+
+    Write-AtlasLog -Nivel INFO -Modulo "Reparos Windows" -Acao "Diagnostico Guiado" -Resultado $(if ($recommendOption) { "Recomendacao: opcao $recommendOption" } else { "Concluido" })
+}
+
+# ------------------------------------------
 # Menu de reparos Windows
 # ------------------------------------------
 
@@ -318,51 +523,41 @@ function Show-WindowsRepairMenu {
     $repairRunning = $true
 
     while ($repairRunning) {
-        Clear-Host
-        Write-Host ""
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host "  Atlas - Reparos Windows" -ForegroundColor Cyan
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "[1]  Verificar integridade SFC (somente leitura)"
-        Write-Host "     Scan sem alteracoes - recomendado antes de reparar"
-        Write-Host ""
-        Write-Host "[2]  Executar SFC /scannow"
-        Write-Host "     Verifica e repara arquivos corrompidos do Windows"
-        Write-Host ""
-        Write-Host "[3]  DISM CheckHealth (somente leitura)"
-        Write-Host "     Verificar saude da imagem do Windows"
-        Write-Host ""
-        Write-Host "[4]  DISM ScanHealth"
-        Write-Host "     Scan mais profundo de integridade da imagem"
-        Write-Host ""
-        Write-Host "[5]  DISM RestoreHealth"
-        Write-Host "     Restaura componentes corrompidos da imagem"
-        Write-Host ""
-        Write-Host "[6]  Reset Windows Update"
-        Write-Host "     Limpa cache e reseta servico Windows Update"
-        Write-Host ""
-        Write-Host "[0]  Voltar"
-        Write-Host ""
+        Show-AtlasMenuHeader -Title "Reparos Windows"
 
-        $opt = Read-Host "Escolha uma opcao"
+        Show-AtlasMenuOption -Number "1" -Name "Diagnostico Recomendado" `
+            -Description "Analisa o Windows e sugere a proxima acao" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "2" -Name "Verificar arquivos do Windows" `
+            -Description "Apenas verifica problemas" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "3" -Name "Corrigir arquivos do Windows" `
+            -Description "Repara arquivos corrompidos" -Risk "medio"
+        Show-AtlasMenuOption -Number "4" -Name "Verificar imagem do Windows" `
+            -Description "Analisa integridade da instalacao" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "5" -Name "Reparar imagem do Windows" `
+            -Description "Corrige problemas detectados na imagem" -Risk "medio"
+        Show-AtlasMenuOption -Number "6" -Name "Resetar Windows Update" `
+            -Description "Use apenas para erros de atualizacao" -Risk "medio"
+
+        Show-AtlasMenuBackOption
+        $opt = Read-AtlasMenuChoice
 
         switch ($opt) {
-            "1" { Test-SfcVerifyOnly;             Wait-UserInput }
-            "2" { Invoke-SfcScannowSafe;           Wait-UserInput }
-            "3" { Test-DismCheckHealth;            Wait-UserInput }
-            "4" { Invoke-DismScanHealthSafe;       Wait-UserInput }
-            "5" { Invoke-DismRestoreHealthSafe;    Wait-UserInput }
-            "6" { Reset-WindowsUpdateSafe;         Wait-UserInput }
+            "1" { Start-WindowsDiagnostic;              Wait-UserInput }
+            "2" { Test-SfcVerifyOnly;                     Wait-UserInput }
+            "3" { Invoke-SfcScannowSafe;                  Wait-UserInput }
+            "4" { Test-DismCheckHealth;                   Wait-UserInput }
+            "5" { Invoke-DismRestoreHealthSafe;           Wait-UserInput }
+            "6" { Reset-WindowsUpdateSafe;                Wait-UserInput }
             "0" {
                 Write-Log -Message "Saindo do menu de reparos Windows" -Level "INFO"
                 $repairRunning = $false
             }
             default {
                 Write-Log -Message "Opcao invalida no menu de reparos: $opt" -Level "WARN"
-                Write-Host "Opcao invalida." -ForegroundColor Yellow
+                Write-AtlasWarning "Opcao invalida."
                 Wait-UserInput
             }
         }
     }
 }
+

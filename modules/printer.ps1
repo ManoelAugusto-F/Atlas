@@ -378,23 +378,25 @@ function Show-PrinterMenu {
     $printerRunning = $true
 
     while ($printerRunning) {
-        Clear-Host
-        Write-Host ""
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host "  Atlas - Impressoras" -ForegroundColor Cyan
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "[1]  Listar impressoras"
-        Write-Host "[2]  Ver fila de impressao"
-        Write-Host "[3]  Reiniciar Spooler"
-        Write-Host "[4]  Limpar fila de impressao"
-        Write-Host "[5]  Ver drivers de impressora"
-        Write-Host "[6]  Instalar impressora TCP/IP"
-        Write-Host "[7]  Adicionar impressora compartilhada (UNC)"
-        Write-Host "[0]  Voltar"
-        Write-Host ""
+        Show-AtlasMenuHeader -Title "Impressoras"
 
-        $opt = Read-Host "Escolha uma opcao"
+        Show-AtlasMenuOption -Number "1" -Name "Listar impressoras" `
+            -Description "Mostra impressoras instaladas no computador" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "2" -Name "Ver fila de impressao" `
+            -Description "Exibe documentos aguardando impressao" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "3" -Name "Reiniciar Spooler" `
+            -Description "Reinicia o servico de impressao do Windows" -Risk "baixo"
+        Show-AtlasMenuOption -Number "4" -Name "Limpar fila de impressao" `
+            -Description "Remove trabalhos presos na fila" -Risk "baixo"
+        Show-AtlasMenuOption -Number "5" -Name "Ver drivers de impressora" `
+            -Description "Lista drivers instalados para impressao" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "6" -Name "Instalar impressora TCP/IP" `
+            -Description "Adiciona impressora de rede por endereco IP" -Risk "baixo"
+        Show-AtlasMenuOption -Number "7" -Name "Adicionar impressora compartilhada" `
+            -Description "Conecta a impressora de outro computador (UNC)" -Risk "baixo"
+
+        Show-AtlasMenuBackOption
+        $opt = Read-AtlasMenuChoice
 
         switch ($opt) {
             "1" { Get-PrinterList;                Wait-UserInput }
@@ -410,7 +412,7 @@ function Show-PrinterMenu {
             }
             default {
                 Write-Log -Message "Opcao invalida no menu de impressoras: $opt" -Level "WARN"
-                Write-Host "Opcao invalida." -ForegroundColor Yellow
+                Write-AtlasWarning "Opcao invalida."
                 Wait-UserInput
             }
         }

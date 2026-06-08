@@ -907,25 +907,29 @@ function Show-SoftwareInstallMenu {
     $running = $true
 
     while ($running) {
-        Clear-Host
-        Write-Host ""
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host "  Atlas - Instalacao de Programas" -ForegroundColor Cyan
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "[1]  Navegadores"
-        Write-Host "[2]  PDF e Documentos"
-        Write-Host "[3]  Desenvolvimento"
-        Write-Host "[4]  Infraestrutura e Redes"
-        Write-Host "[5]  Banco de Dados"
-        Write-Host "[6]  Microsoft"
-        Write-Host "[7]  Utilitarios"
-        Write-Host "[8]  Atualizar programas instalados"
-        Write-Host "[0]  Voltar"
-        Write-Host ""
+        Show-AtlasMenuHeader -Title "Instalacao de Programas"
+
+        Show-AtlasMenuOption -Number "1" -Name "Navegadores" `
+            -Description "Chrome, Firefox e outros navegadores" -Risk "baixo"
+        Show-AtlasMenuOption -Number "2" -Name "PDF e Documentos" `
+            -Description "Leitores e editores de documentos" -Risk "baixo"
+        Show-AtlasMenuOption -Number "3" -Name "Desenvolvimento" `
+            -Description "Ferramentas para programadores" -Risk "baixo"
+        Show-AtlasMenuOption -Number "4" -Name "Infraestrutura e Redes" `
+            -Description "Utilitarios de rede e administracao" -Risk "baixo"
+        Show-AtlasMenuOption -Number "5" -Name "Banco de Dados" `
+            -Description "Clientes e ferramentas de banco de dados" -Risk "baixo"
+        Show-AtlasMenuOption -Number "6" -Name "Microsoft" `
+            -Description "Office, Teams e apps Microsoft" -Risk "medio"
+        Show-AtlasMenuOption -Number "7" -Name "Utilitarios" `
+            -Description "Programas uteis para o dia a dia" -Risk "baixo"
+        Show-AtlasMenuOption -Number "8" -Name "Atualizar programas instalados" `
+            -Description "Verifica e aplica atualizacoes via Winget" -Risk "baixo"
+
+        Show-AtlasMenuBackOption
 
         Write-AtlasSessionLog -Message "Menu Instalacao de Programas exibido" -Level "MENU"
-        $opt = Read-Host "Escolha uma opcao"
+        $opt = Read-AtlasMenuChoice
         Write-AtlasSessionLog -Message "Instalacao de Programas opcao: $opt" -Level "MENU"
 
         $categoryMap = script:Get-SoftwareCategoryMenuMap
@@ -943,7 +947,7 @@ function Show-SoftwareInstallMenu {
                 $running = $false
             }
             default {
-                Write-Host "Opcao invalida." -ForegroundColor Yellow
+                Write-AtlasWarning "Opcao invalida."
                 Wait-UserInput
             }
         }

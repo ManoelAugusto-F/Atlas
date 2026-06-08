@@ -388,37 +388,25 @@ function Show-CleanupMenu {
     $cleanRunning = $true
 
     while ($cleanRunning) {
-        Clear-Host
-        Write-Host ""
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host "  Atlas - Limpeza Segura" -ForegroundColor Cyan
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "[1]  Ver maiores pastas do perfil"
-        Write-Host "     Analisa D:\Users para encontrar pasta mais pesada"
-        Write-Host ""
-        Write-Host "[2]  Ver maiores arquivos do perfil"
-        Write-Host "     Lista arquivos individuais acima de 50MB"
-        Write-Host ""
-        Write-Host "[3]  Limpar temporarios do usuario"
-        Write-Host "     Remove %TEMP% e AppData\Local\Temp (seguro)"
-        Write-Host ""
-        Write-Host "[4]  Limpar temporarios do Windows"
-        Write-Host "     Limpa C:\Windows\Temp sem afetar sistema"
-        Write-Host ""
-        Write-Host "[5]  Limpar cache do Windows Update"
-        Write-Host "     Remove arquivos baixados ja instalados"
-        Write-Host ""
-        Write-Host "[6]  Esvaziar lixeira"
-        Write-Host "     Permanentemente remove arquivos deletados"
-        Write-Host ""
-        Write-Host "[7]  Limpeza segura completa"
-        Write-Host "     Executa 1-6 em sequencia (requer confirmacao)"
-        Write-Host ""
-        Write-Host "[0]  Voltar"
-        Write-Host ""
+        Show-AtlasMenuHeader -Title "Limpeza Segura"
 
-        $opt = Read-Host "Escolha uma opcao"
+        Show-AtlasMenuOption -Number "1" -Name "Ver maiores pastas do perfil" `
+            -Description "Mostra quais pastas ocupam mais espaco" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "2" -Name "Ver maiores arquivos do perfil" `
+            -Description "Lista os arquivos individuais mais pesados" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "3" -Name "Limpar temporarios do usuario" `
+            -Description "Remove arquivos temporarios da sua conta" -Risk "baixo"
+        Show-AtlasMenuOption -Number "4" -Name "Limpar temporarios do Windows" `
+            -Description "Limpa C:\Windows\Temp (requer administrador)" -Risk "baixo"
+        Show-AtlasMenuOption -Number "5" -Name "Limpar cache do Windows Update" `
+            -Description "Remove downloads de atualizacoes ja instaladas" -Risk "medio"
+        Show-AtlasMenuOption -Number "6" -Name "Esvaziar lixeira" `
+            -Description "Remove permanentemente arquivos deletados" -Risk "baixo"
+        Show-AtlasMenuOption -Number "7" -Name "Limpeza segura completa" `
+            -Description "Executa varias limpezas com confirmacao em cada etapa" -Risk "medio"
+
+        Show-AtlasMenuBackOption
+        $opt = Read-AtlasMenuChoice
 
         switch ($opt) {
             "1" { Get-LargestUserFolders;    Wait-UserInput }
@@ -429,19 +417,18 @@ function Show-CleanupMenu {
             "6" { Clear-RecycleBinSafe;       Wait-UserInput }
             "7" {
                 Write-Host ""
-                Write-Host "AVISO: Limpeza Segura Completa" -ForegroundColor Yellow
-                Write-Host "Sera removido:" -ForegroundColor Yellow
-                Write-Host "  - Temporarios do usuario" -ForegroundColor Gray
-                Write-Host "  - Temporarios do Windows" -ForegroundColor Gray
-                Write-Host "  - Cache Windows Update" -ForegroundColor Gray
-                Write-Host "  - Lixeira" -ForegroundColor Gray
-                Write-Host "" -ForegroundColor Yellow
-                Write-Host "NAO sera removido:" -ForegroundColor Yellow
-                Write-Host "  - Documentos, Downloads, Fotos, Desktop" -ForegroundColor Gray
-                Write-Host "  - Arquivos pessoais ou programas" -ForegroundColor Gray
-                Write-Host "  - Senhas ou configuracoes" -ForegroundColor Gray
-                Write-Host "" -ForegroundColor Yellow
-                $confirm = Read-Host "Continuar? (s/N)"
+                Write-AtlasWarning "Limpeza Segura Completa"
+                Write-AtlasInfo "Sera removido:"
+                Write-Host "  - Temporarios do usuario" -ForegroundColor White
+                Write-Host "  - Temporarios do Windows" -ForegroundColor White
+                Write-Host "  - Lixeira" -ForegroundColor White
+                Write-Host ""
+                Write-AtlasInfo "NAO sera removido:"
+                Write-Host "  - Documentos, Downloads, Fotos, Desktop" -ForegroundColor White
+                Write-Host "  - Arquivos pessoais ou programas" -ForegroundColor White
+                Write-Host "  - Senhas ou configuracoes" -ForegroundColor White
+                Write-Host ""
+                $confirm = Read-AtlasConfirm -Message "Deseja continuar com a limpeza completa?"
                 if ($confirm -match '^[sS]$') {
                     Invoke-SafeCleanup
                 }
@@ -453,7 +440,7 @@ function Show-CleanupMenu {
             }
             default {
                 Write-Log -Message "Opcao invalida no menu de limpeza: $opt" -Level "WARN"
-                Write-Host "Opcao invalida." -ForegroundColor Yellow
+                Write-AtlasWarning "Opcao invalida."
                 Wait-UserInput
             }
         }

@@ -67,12 +67,17 @@ irm https://a.bitsdeconhecimento.blog.br/i.ps1 | iex
 
 ### Reparos do Windows
 
-- SFC Verify
-- SFC Scannow
-- DISM CheckHealth
-- DISM ScanHealth
-- DISM RestoreHealth
+- **Diagnóstico guiado** — analisa o sistema e recomenda a próxima ação
+- Verificar e corrigir arquivos do Windows (SFC)
+- Verificar e reparar imagem do Windows (DISM)
 - Reset Windows Update
+
+### Interface aprimorada
+
+- Menus padronizados com descrições claras para cada opção
+- Indicação de nível de risco (sem risco, baixo, médio, alto)
+- Cores consistentes para facilitar a leitura
+- Orientações em linguagem simples, sem termos técnicos desnecessários
 
 ### Navegadores
 
@@ -244,4 +249,4 @@ Toda contribuição ajuda a tornar o projeto mais útil para a comunidade de TI.
 
 ---
 
-**Versão Atual:** v0.3.3 — Histórico Operacional Completo
+**Versão Atual:** v0.3.4 — Melhorias de UX e Diagnóstico Guiado

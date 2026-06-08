@@ -434,25 +434,29 @@ function Show-OneDriveMenu {
     $odRunning = $true
 
     while ($odRunning) {
-        Clear-Host
-        Write-Host ""
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host "  Atlas - OneDrive" -ForegroundColor Cyan
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "[1]  Verificar se OneDrive esta rodando"
-        Write-Host "[2]  Reiniciar OneDrive"
-        Write-Host "[3]  Resetar OneDrive"
-        Write-Host "[4]  Abrir pasta do OneDrive"
-        Write-Host "[5]  Abrir logs do OneDrive"
-        Write-Host "[6]  Localizar executavel do OneDrive"
-        Write-Host "[7]  Desinstalar OneDrive"
-        Write-Host "[8]  Remover residuos do OneDrive"
-        Write-Host "[9]  Abrir pagina oficial para reinstalar OneDrive"
-        Write-Host "[0]  Voltar"
-        Write-Host ""
+        Show-AtlasMenuHeader -Title "OneDrive"
 
-        $opt = Read-Host "Escolha uma opcao"
+        Show-AtlasMenuOption -Number "1" -Name "Verificar status do OneDrive" `
+            -Description "Mostra se o OneDrive esta aberto e sincronizando" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "2" -Name "Reiniciar OneDrive" `
+            -Description "Fecha e abre o OneDrive novamente" -Risk "baixo"
+        Show-AtlasMenuOption -Number "3" -Name "Resetar OneDrive" `
+            -Description "Restaura configuracoes padrao do OneDrive" -Risk "medio"
+        Show-AtlasMenuOption -Number "4" -Name "Abrir pasta do OneDrive" `
+            -Description "Abre a pasta sincronizada no Explorer" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "5" -Name "Abrir logs do OneDrive" `
+            -Description "Acessa registros para diagnostico avancado" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "6" -Name "Localizar executavel do OneDrive" `
+            -Description "Encontra onde o OneDrive esta instalado" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "7" -Name "Desinstalar OneDrive" `
+            -Description "Remove o OneDrive deste computador" -Risk "alto"
+        Show-AtlasMenuOption -Number "8" -Name "Remover residuos do OneDrive" `
+            -Description "Apaga pastas e arquivos antigos do OneDrive" -Risk "medio"
+        Show-AtlasMenuOption -Number "9" -Name "Pagina oficial para reinstalar" `
+            -Description "Abre o site da Microsoft para baixar novamente" -Risk "nenhum"
+
+        Show-AtlasMenuBackOption
+        $opt = Read-AtlasMenuChoice
 
         switch ($opt) {
             "1" { Get-OneDriveStatus;      Wait-UserInput }
@@ -481,7 +485,7 @@ function Show-OneDriveMenu {
             }
             default {
                 Write-Log -Message "Opcao invalida no menu OneDrive: $opt" -Level "WARN"
-                Write-Host "Opcao invalida." -ForegroundColor Yellow
+                Write-AtlasWarning "Opcao invalida."
                 Wait-UserInput
             }
         }

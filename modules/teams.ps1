@@ -332,64 +332,65 @@ function Show-TeamsMenu {
     $running = $true
 
     while ($running) {
-        Clear-Host
-        Write-Host ""
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host "  Atlas - Microsoft Teams" -ForegroundColor Cyan
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host ""
+        Show-AtlasMenuHeader -Title "Microsoft Teams"
 
-        Write-Host "[1] Ver status do Teams"
-        Write-Host "[2] Reiniciar Teams"
-        Write-Host "[3] Limpar cache do Teams"
-        Write-Host "[4] Abrir pasta de cache"
-        Write-Host "[5] Detectar Teams Pessoal"
-        Write-Host "[6] Detectar Teams Corporativo"
-        Write-Host "[7] Remover Teams Pessoal"
-        Write-Host "[0] Voltar"
-        Write-Host ""
+        Show-AtlasMenuOption -Number "1" -Name "Ver status do Teams" `
+            -Description "Mostra se o Teams esta aberto e instalado" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "2" -Name "Reiniciar Teams" `
+            -Description "Fecha e abre o Teams novamente" -Risk "baixo"
+        Show-AtlasMenuOption -Number "3" -Name "Limpar cache do Teams" `
+            -Description "Remove arquivos temporarios do Teams" -Risk "baixo"
+        Show-AtlasMenuOption -Number "4" -Name "Abrir pasta de cache" `
+            -Description "Acessa arquivos de cache para diagnostico" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "5" -Name "Detectar Teams Pessoal" `
+            -Description "Verifica instalacao da versao pessoal" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "6" -Name "Detectar Teams Corporativo" `
+            -Description "Verifica instalacao da versao corporativa" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "7" -Name "Remover Teams Pessoal" `
+            -Description "Desinstala a versao pessoal do Teams" -Risk "alto"
 
-        $option = Read-Host "Escolha uma opcao"
+        Show-AtlasMenuBackOption
+        $option = Read-AtlasMenuChoice
 
         switch ($option) {
             "1" {
                 Write-Host ""
                 $status = Get-TeamsStatus
-                Write-Host "Status: $(if ($status.ProcessRunning) { "Aberto" } else { "Fechado" })" -ForegroundColor Green
+                Write-AtlasSuccess "Status: $(if ($status.ProcessRunning) { "Aberto" } else { "Fechado" })"
                 Write-Log -Level "INFO" -Message "Status do Teams consultado."
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "2" {
                 Restart-TeamsSafe
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "3" {
                 Clear-TeamsCacheSafe
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "4" {
                 Open-TeamsCacheFolder
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "5" {
                 Get-TeamsPersonalStatus
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "6" {
                 Get-TeamsWorkSchoolStatus
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "7" {
                 Remove-TeamsPersonalSafe
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "0" {
                 Write-Log -Level "INFO" -Message "Menu do Teams fechado."
                 $running = $false
             }
             default {
-                Write-Host "Opcao invalida." -ForegroundColor Yellow
-                Read-Host "`nPressione Enter para continuar"
+                Write-AtlasWarning "Opcao invalida."
+                Wait-UserInput
             }
         }
     }

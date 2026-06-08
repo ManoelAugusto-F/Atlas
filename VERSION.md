@@ -1,8 +1,15 @@
-# Versao Atual: Atlas v0.3.3
+# Versao Atual: Atlas v0.3.4
 
 ---
 
 ## Historico de Versoes
+
+### v0.3.4 - Melhorias de UX e Diagnostico Guiado
+- **Interface**: menus padronizados com descricoes, nivel de risco e cores consistentes
+- **Reparos Windows**: diagnostico guiado (`Start-WindowsDiagnostic`) com recomendacoes de proximo passo
+- **Menu**: opcoes renomeadas em linguagem simples (verificar/corrigir arquivos e imagem do Windows)
+- **Core**: helpers de UI (`Show-AtlasMenuHeader`, `Show-AtlasMenuOption`, `Read-AtlasMenuChoice`)
+- **Testes**: `test_windows_repair.ps1` e validacao de helpers em `test_loop.ps1`
 
 ### v0.3.3 - Historico Operacional Completo
 - **Integracao**: OneDrive, Outlook, Teams, Navegadores, Impressoras e Reparos Windows

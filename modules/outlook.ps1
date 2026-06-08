@@ -400,83 +400,86 @@ function Show-OutlookMenu {
     $running = $true
 
     while ($running) {
-        Clear-Host
-        Write-Host ""
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host "  Atlas - Outlook" -ForegroundColor Cyan
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host ""
+        Show-AtlasMenuHeader -Title "Outlook"
 
-        Write-Host "[1] Ver status do Outlook"
-        Write-Host "[2] Reiniciar Outlook"
-        Write-Host "[3] Abrir pasta de dados do Outlook"
-        Write-Host "[4] Abrir logs/pasta RoamCache"
-        Write-Host "[5] Limpar cache RoamCache"
-        Write-Host "[6] Ver perfis do Outlook"
-        Write-Host "[7] Reparar Office/Outlook via Painel de Controle"
-        Write-Host "[8] Abrir Apps instalados para desinstalar Office/Outlook"
-        Write-Host "[9] Abrir pagina oficial do Microsoft 365/Office"
-        Write-Host "[0] Voltar"
-        Write-Host ""
+        Show-AtlasMenuOption -Number "1" -Name "Ver status do Outlook" `
+            -Description "Mostra se o Outlook esta aberto e instalado" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "2" -Name "Reiniciar Outlook" `
+            -Description "Fecha e abre o Outlook novamente" -Risk "baixo"
+        Show-AtlasMenuOption -Number "3" -Name "Abrir pasta de dados" `
+            -Description "Acessa arquivos de e-mail e perfis" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "4" -Name "Abrir pasta RoamCache" `
+            -Description "Acessa cache de configuracoes do Outlook" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "5" -Name "Limpar cache RoamCache" `
+            -Description "Remove cache que pode causar erros" -Risk "baixo"
+        Show-AtlasMenuOption -Number "6" -Name "Ver perfis do Outlook" `
+            -Description "Lista contas configuradas no Outlook" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "7" -Name "Reparar Office/Outlook" `
+            -Description "Abre ferramenta oficial de reparo da Microsoft" -Risk "baixo"
+        Show-AtlasMenuOption -Number "8" -Name "Apps instalados (Office)" `
+            -Description "Abre configuracoes para desinstalar Office" -Risk "medio"
+        Show-AtlasMenuOption -Number "9" -Name "Pagina oficial Microsoft 365" `
+            -Description "Abre site para download ou suporte" -Risk "nenhum"
 
-        $option = Read-Host "Escolha uma opcao"
+        Show-AtlasMenuBackOption
+        $option = Read-AtlasMenuChoice
 
         switch ($option) {
             "1" {
                 Write-Host ""
                 $status = Get-OutlookStatus
-                Write-Host "Status: $(if ($status.ProcessRunning) { "Aberto" } else { "Fechado" })" -ForegroundColor Green
-                Write-Host "Instalado: $(if ($status.Installed) { "Sim" } else { "Nao" })" -ForegroundColor Gray
+                Write-AtlasSuccess "Status: $(if ($status.ProcessRunning) { "Aberto" } else { "Fechado" })"
+                Write-AtlasInfo "Instalado: $(if ($status.Installed) { "Sim" } else { "Nao" })"
                 Write-Log -Level "INFO" -Message "Status do Outlook consultado."
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "2" {
                 Restart-OutlookSafe
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "3" {
                 Open-OutlookDataFolder
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "4" {
                 Open-OutlookCacheFolder
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "5" {
                 Clear-OutlookRoamCacheSafe
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "6" {
                 Write-Host ""
                 $profiles = Get-OutlookProfiles
                 if ($profiles.Count -eq 0) {
-                    Write-Host "Nenhum perfil encontrado." -ForegroundColor Yellow
+                    Write-AtlasWarning "Nenhum perfil encontrado."
                 } else {
-                    Write-Host "Perfis encontrados:" -ForegroundColor Green
-                    $profiles | ForEach-Object { Write-Host "  - $_" }
+                    Write-AtlasSuccess "Perfis encontrados:"
+                    $profiles | ForEach-Object { Write-Host "  - $_" -ForegroundColor White }
                 }
                 Write-Log -Level "INFO" -Message "Perfis do Outlook consultados."
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "7" {
                 Open-OfficeRepairPanel
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "8" {
                 Open-InstalledAppsForOffice
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "9" {
                 Open-OfficeDownloadPage
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "0" {
                 Write-Log -Level "INFO" -Message "Menu do Outlook fechado."
                 $running = $false
             }
             default {
-                Write-Host "Opcao invalida." -ForegroundColor Yellow
-                Read-Host "`nPressione Enter para continuar"
+                Write-AtlasWarning "Opcao invalida."
+                Wait-UserInput
             }
         }
     }

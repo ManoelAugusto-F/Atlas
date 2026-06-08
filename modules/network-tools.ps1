@@ -294,23 +294,25 @@ function Show-NetworkMenu {
     $netRunning = $true
 
     while ($netRunning) {
-        Clear-Host
-        Write-Host ""
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host "  Atlas - Rede e Internet" -ForegroundColor Cyan
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "[1]  Testar internet"
-        Write-Host "[2]  Testar DNS"
-        Write-Host "[3]  Mostrar configuracao de rede"
-        Write-Host "[4]  Limpar cache DNS"
-        Write-Host "[5]  Renovar IP"
-        Write-Host "[6]  Reset Winsock"
-        Write-Host "[7]  Reset TCP/IP"
-        Write-Host "[0]  Voltar"
-        Write-Host ""
+        Show-AtlasMenuHeader -Title "Rede e Internet"
 
-        $opt = Read-Host "Escolha uma opcao"
+        Show-AtlasMenuOption -Number "1" -Name "Testar internet" `
+            -Description "Verifica se voce consegue acessar a internet" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "2" -Name "Testar DNS" `
+            -Description "Verifica se nomes de sites sao resolvidos" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "3" -Name "Mostrar configuracao de rede" `
+            -Description "Exibe IP, gateway e adaptadores de rede" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "4" -Name "Limpar cache DNS" `
+            -Description "Forca nova resolucao de enderecos" -Risk "baixo"
+        Show-AtlasMenuOption -Number "5" -Name "Renovar IP" `
+            -Description "Solicita novo endereco IP ao roteador" -Risk "baixo"
+        Show-AtlasMenuOption -Number "6" -Name "Reset Winsock" `
+            -Description "Corrige problemas de conexao de rede" -Risk "medio"
+        Show-AtlasMenuOption -Number "7" -Name "Reset TCP/IP" `
+            -Description "Restaura pilha de rede do Windows" -Risk "medio"
+
+        Show-AtlasMenuBackOption
+        $opt = Read-AtlasMenuChoice
 
         switch ($opt) {
             "1" { Test-InternetConnectionBasic; Wait-UserInput }
@@ -326,7 +328,7 @@ function Show-NetworkMenu {
             }
             default {
                 Write-Log -Message "Opcao invalida no menu de rede: $opt" -Level "WARN"
-                Write-Host "Opcao invalida." -ForegroundColor Yellow
+                Write-AtlasWarning "Opcao invalida."
                 Wait-UserInput
             }
         }

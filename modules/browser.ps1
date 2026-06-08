@@ -378,24 +378,25 @@ function Show-BrowserMenu {
     $running = $true
 
     while ($running) {
-        Clear-Host
-        Write-Host ""
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host "  Atlas - Navegadores" -ForegroundColor Cyan
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host ""
+        Show-AtlasMenuHeader -Title "Navegadores"
 
-        Write-Host "[1] Detectar navegadores instalados"
-        Write-Host "[2] Ver perfis dos navegadores"
-        Write-Host "[3] Abrir pasta de perfil"
-        Write-Host "[4] Limpar cache Chrome"
-        Write-Host "[5] Limpar cache Edge"
-        Write-Host "[6] Limpar cache Firefox"
-        Write-Host "[7] Limpar cache de todos"
-        Write-Host "[0] Voltar"
-        Write-Host ""
+        Show-AtlasMenuOption -Number "1" -Name "Detectar navegadores instalados" `
+            -Description "Mostra Chrome, Edge e Firefox no computador" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "2" -Name "Ver perfis dos navegadores" `
+            -Description "Lista perfis e pastas de dados" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "3" -Name "Abrir pasta de perfil" `
+            -Description "Acessa dados de um navegador especifico" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "4" -Name "Limpar cache Chrome" `
+            -Description "Remove arquivos temporarios do Google Chrome" -Risk "baixo"
+        Show-AtlasMenuOption -Number "5" -Name "Limpar cache Edge" `
+            -Description "Remove arquivos temporarios do Microsoft Edge" -Risk "baixo"
+        Show-AtlasMenuOption -Number "6" -Name "Limpar cache Firefox" `
+            -Description "Remove arquivos temporarios do Mozilla Firefox" -Risk "baixo"
+        Show-AtlasMenuOption -Number "7" -Name "Limpar cache de todos" `
+            -Description "Limpa cache de Chrome, Edge e Firefox" -Risk "baixo"
 
-        $option = Read-Host "Escolha uma opcao"
+        Show-AtlasMenuBackOption
+        $option = Read-AtlasMenuChoice
 
         switch ($option) {
             "1" {
@@ -407,48 +408,48 @@ function Show-BrowserMenu {
                     Write-Host "$status $($p.Browser)" -ForegroundColor Green
                 }
                 Write-Log -Level "INFO" -Message "Navegadores detectados."
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "2" {
                 Write-Host ""
                 Get-BrowserStatus
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "3" {
                 Write-Host ""
-                Write-Host "Qual navegador? [1=Chrome, 2=Edge, 3=Firefox]: " -NoNewline
+                Write-Host "Qual navegador? [1=Chrome, 2=Edge, 3=Firefox]: " -NoNewline -ForegroundColor Magenta
                 $browserChoice = Read-Host
                 $browserMap = @{"1" = "Chrome"; "2" = "Edge"; "3" = "Firefox"}
                 if ($browserChoice -in "1", "2", "3") {
                     Open-BrowserProfileFolder -Browser $browserMap[$browserChoice]
                 } else {
-                    Write-Host "Opcao invalida." -ForegroundColor Yellow
+                    Write-AtlasWarning "Opcao invalida."
                 }
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "4" {
                 Clear-ChromeCacheSafe
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "5" {
                 Clear-EdgeCacheSafe
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "6" {
                 Clear-FirefoxCacheSafe
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "7" {
                 Clear-AllBrowserCachesSafe
-                Read-Host "`nPressione Enter para continuar"
+                Wait-UserInput
             }
             "0" {
                 Write-Log -Level "INFO" -Message "Menu de navegadores fechado."
                 $running = $false
             }
             default {
-                Write-Host "Opcao invalida." -ForegroundColor Yellow
-                Read-Host "`nPressione Enter para continuar"
+                Write-AtlasWarning "Opcao invalida."
+                Wait-UserInput
             }
         }
     }

@@ -203,6 +203,7 @@ Write-Host "[TESTE] Validando funcoes de windows-repair.ps1" -ForegroundColor Ma
 Write-Host "========================================" -ForegroundColor DarkCyan
 
 $repairFunctions = @(
+    'Start-WindowsDiagnostic',
     'Test-SfcVerifyOnly',
     'Invoke-SfcScannowSafe',
     'Test-DismCheckHealth',
@@ -591,8 +592,45 @@ if ($catalog) {
 Write-Host ""
 Write-Host "Todas as funcoes de software-install validadas." -ForegroundColor Green
 
+# ── Validar helpers de UI ───────────────────────────────────────────
+Write-Host ""
+Write-Host "========================================" -ForegroundColor DarkCyan
+Write-Host "[TESTE] Validando helpers de UI (core.ps1)" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor DarkCyan
+
+$uiFunctions = @(
+    'Show-AtlasMenuHeader',
+    'Show-AtlasMenuOption',
+    'Show-AtlasMenuBackOption',
+    'Read-AtlasMenuChoice',
+    'Write-AtlasInfo',
+    'Write-AtlasSuccess',
+    'Write-AtlasWarning',
+    'Write-AtlasError',
+    'Read-AtlasConfirm'
+)
+
+$allOk = $true
+foreach ($fn in $uiFunctions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] $fn" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] $fn nao encontrada" -ForegroundColor Red
+        $allOk = $false
+    }
+}
+
+if (-not $allOk) {
+    Write-Host ""
+    Write-Host "FALHA: helpers de UI nao carregados." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "Helpers de UI validados." -ForegroundColor Green
+
 $running = $true
-$inputs  = @('1','2','3','4','5','6','7','8','9','99','0')
+$inputs  = @('1','2','3','4','5','6','7','8','9','10','99','0')
 $idx     = 0
 
 while ($running) {
@@ -612,6 +650,7 @@ while ($running) {
         '7'  { Write-Log -Message "Submenu Teams (funcao Show-TeamsMenu validada)" -Level "INFO" }
         '8'  { Write-Log -Message "Submenu Navegadores (funcao Show-BrowserMenu validada)" -Level "INFO" }
         '9'  { Write-Log -Message "Submenu Instalacao de programas (Show-SoftwareInstallMenu validada)" -Level "INFO" }
+        '10' { Write-Log -Message "Submenu Historico (Show-HistoryMenu validada)" -Level "INFO" }
         '0'  { Write-Log -Message "Atlas encerrado" -Level "INFO"; $running = $false }
         default {
             Write-Log -Message "Opcao invalida: $option" -Level "WARN"

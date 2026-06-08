@@ -72,19 +72,17 @@ function Show-HistoryMenu {
     $historyRunning = $true
 
     while ($historyRunning) {
-        Clear-Host
-        Write-Host ""
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host "  Atlas - Historico" -ForegroundColor Cyan
-        Write-Host "==========================================" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "[1]  Ver ultimos 50 eventos"
-        Write-Host "[2]  Abrir pasta de logs"
-        Write-Host "[3]  Limpar logs"
-        Write-Host "[0]  Voltar"
-        Write-Host ""
+        Show-AtlasMenuHeader -Title "Historico"
 
-        $option = Read-Host "Escolha uma opcao"
+        Show-AtlasMenuOption -Number "1" -Name "Ver ultimos 50 eventos" `
+            -Description "Mostra acoes recentes realizadas pelo Atlas" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "2" -Name "Abrir pasta de logs" `
+            -Description "Abre C:\ProgramData\Atlas\Logs no Explorer" -Risk "nenhum"
+        Show-AtlasMenuOption -Number "3" -Name "Limpar logs" `
+            -Description "Apaga todo o historico operacional" -Risk "medio"
+
+        Show-AtlasMenuBackOption
+        $option = Read-AtlasMenuChoice
 
         switch ($option) {
             "1" {
@@ -93,10 +91,10 @@ function Show-HistoryMenu {
                 Write-Host ""
                 $events = Get-AtlasRecentLogs -Count 50
                 if ($events.Count -eq 0) {
-                    Write-Host "Nenhum evento registrado." -ForegroundColor Gray
+                    Write-AtlasInfo "Nenhum evento registrado."
                 } else {
                     foreach ($line in $events) {
-                        Write-Host $line
+                        Write-Host $line -ForegroundColor White
                     }
                 }
                 Wait-UserInput
@@ -113,7 +111,7 @@ function Show-HistoryMenu {
                 $historyRunning = $false
             }
             default {
-                Write-Host "Opcao invalida." -ForegroundColor Yellow
+                Write-AtlasWarning "Opcao invalida."
                 Wait-UserInput
             }
         }
