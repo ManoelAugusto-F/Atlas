@@ -72,7 +72,36 @@ Test-Assert ($parsed[0].AvailableVersion -eq '137.0.7151.69') "Versao disponivel
 $empty = ConvertFrom-WingetUpgradeJson -JsonText '{"Sources":[{"Packages":[]}]}'
 Test-Assert ($empty.Count -eq 0) "Parser trata lista vazia"
 
+Write-Host ""
+Write-Host "[TESTE] Lista vazia de upgrades (sem erro)" -ForegroundColor Magenta
+
+$emptyPreviewThrew = $false
+try {
+    Show-WingetUpgradePreview -Upgrades @()
+} catch {
+    $emptyPreviewThrew = $true
+}
+Test-Assert (-not $emptyPreviewThrew) "Show-WingetUpgradePreview aceita lista vazia sem excecao"
+
+function Get-WingetUpgradeEntries { return @() }
+
+$emptyUpgradeThrew = $false
+$emptyUpgradeResult = $null
+try {
+    $emptyUpgradeResult = Update-InstalledSoftwareSafe
+} catch {
+    $emptyUpgradeThrew = $true
+}
+
+. "$PSScriptRoot/../modules/software-install.ps1"
+
+Test-Assert (-not $emptyUpgradeThrew) "Update-InstalledSoftwareSafe nao lanca erro com lista vazia"
+Test-Assert ($emptyUpgradeResult -eq $true) "Update-InstalledSoftwareSafe retorna true sem upgrades"
+
 $source = Get-Content -Path (Join-Path $PSScriptRoot "../modules/software-install.ps1") -Raw
+Test-Assert ($source -match 'if \(\$upgrades\.Count -eq 0\)') "Fluxo trata lista vazia antes do preview"
+Test-Assert ($source -match 'Nenhuma atualizacao disponivel') "Mensagem amigavel para lista vazia"
+Test-Assert ($source -match 'Atualizar programas instalados.*Nenhuma atualizacao disponivel') "Log INFO para lista vazia"
 Test-Assert ($source -match 'Show-WingetUpgradePreview') "Listagem de upgrades implementada"
 Test-Assert ($source -match 'Show-AtlasUpgradeSummary') "Resumo final implementado"
 Test-Assert ($source -match 'winget upgrade --id') "Atualizacao individual por pacote"

@@ -191,13 +191,14 @@ function Get-WingetUpgradeEntries {
 function Show-WingetUpgradePreview {
     param(
         [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
         [array]$Upgrades
     )
 
     Show-AtlasHeader -Title "Atualizacoes"
 
     if (-not $Upgrades -or $Upgrades.Count -eq 0) {
-        Write-AtlasSuccess "Nenhuma atualizacao disponivel no momento."
+        Write-AtlasInfo "Nenhuma atualizacao disponivel."
         Write-Host ""
         return
     }
@@ -701,11 +702,15 @@ function Update-InstalledSoftwareSafe {
     }
 
     $upgrades = @(Get-WingetUpgradeEntries)
-    Show-WingetUpgradePreview -Upgrades $upgrades
 
     if ($upgrades.Count -eq 0) {
+        Write-AtlasInfo "Nenhuma atualizacao disponivel."
+        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Nenhuma atualizacao disponivel"
+        Write-AtlasSessionLog -Message "Nenhuma atualizacao disponivel" -Level "INFO"
         return $true
     }
+
+    Show-WingetUpgradePreview -Upgrades $upgrades
 
     Write-Host "Deseja atualizar? [S/N]: " -NoNewline -ForegroundColor White
     $resp = Read-Host
