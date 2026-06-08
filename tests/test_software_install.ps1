@@ -14,7 +14,6 @@ Write-Host ""
 
 $functions = @(
     'Show-SoftwareInstallMenu',
-    'Show-SoftwareInstallProgramMenu',
     'Test-WingetAvailable',
     'Install-SoftwareByWingetSafe',
     'Get-SoftwareCatalog',
@@ -119,6 +118,18 @@ if ($IsWindows -or $env:OS -eq 'Windows_NT') {
 Write-Host ""
 Write-Host "[TESTE] Visual de instalacao (software-install.ps1)" -ForegroundColor Magenta
 $installSource = Get-Content -Path (Join-Path $PSScriptRoot "../modules/software-install.ps1") -Raw
+if ($installSource -match 'Show-AtlasHeader -Title "Instalacao de Programas"') {
+    Write-Host "  [OK] Menu abre diretamente por categorias" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Menu nao exibe categorias diretamente" -ForegroundColor Red
+    $allOk = $false
+}
+if ($installSource -notmatch 'Show-SoftwareInstallProgramMenu') {
+    Write-Host "  [OK] Submenu intermediario removido" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Submenu intermediario ainda presente" -ForegroundColor Red
+    $allOk = $false
+}
 if ($installSource -match 'Show-AtlasHeader -Title "Instalacao"') {
     Write-Host "  [OK] Cabecalho visual de instalacao" -ForegroundColor Green
 } else {

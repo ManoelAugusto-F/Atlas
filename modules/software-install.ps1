@@ -456,7 +456,7 @@ function Test-Microsoft365WingetAvailable {
         return $false
     }
 
-    & winget show --id $script:Microsoft365WingetId --exact
+    & winget show --id $script:Microsoft365WingetId --exact --disable-interactivity 2>&1 | Out-Null
     return ($LASTEXITCODE -eq 0)
 }
 
@@ -1070,11 +1070,11 @@ function script:Get-SoftwareCategoryMenuMap {
     return $map
 }
 
-function Show-SoftwareInstallProgramMenu {
+function Show-SoftwareInstallMenu {
     $running = $true
 
     while ($running) {
-        Show-AtlasHeader -Title "Instalar Programa"
+        Show-AtlasHeader -Title "Instalacao de Programas"
 
         Show-AtlasCompactOption -Number "1" -Name "Navegadores"
         Show-AtlasCompactOption -Number "2" -Name "PDF e Documentos"
@@ -1083,12 +1083,13 @@ function Show-SoftwareInstallProgramMenu {
         Show-AtlasCompactOption -Number "5" -Name "Banco de Dados"
         Show-AtlasCompactOption -Number "6" -Name "Microsoft"
         Show-AtlasCompactOption -Number "7" -Name "Utilitarios"
+        Show-AtlasCompactOption -Number "8" -Name "Atualizar programas instalados"
 
         Show-AtlasBackOption
 
-        Write-AtlasSessionLog -Message "Submenu instalar programa exibido" -Level "MENU"
+        Write-AtlasSessionLog -Message "Menu Instalacao de Programas exibido" -Level "MENU"
         $opt = Read-AtlasMenuChoice
-        Write-AtlasSessionLog -Message "Instalar programa opcao: $opt" -Level "MENU"
+        Write-AtlasSessionLog -Message "Instalacao de Programas opcao: $opt" -Level "MENU"
 
         $categoryMap = script:Get-SoftwareCategoryMenuMap
 
@@ -1096,42 +1097,12 @@ function Show-SoftwareInstallProgramMenu {
             { $_ -in $categoryMap.Keys } {
                 Show-SoftwareCategoryMenu -CategoryName $categoryMap[$_]
             }
-            "0" {
-                $running = $false
-            }
-            default {
-                Write-AtlasWarning "Opcao invalida."
-                Wait-UserInput
-            }
-        }
-    }
-}
-
-function Show-SoftwareInstallMenu {
-    $running = $true
-
-    while ($running) {
-        Show-AtlasHeader -Title "Softwares"
-
-        Show-AtlasCompactOption -Number "1" -Name "Instalar programa"
-        Show-AtlasCompactOption -Number "2" -Name "Atualizar programas instalados"
-
-        Show-AtlasBackOption
-
-        Write-AtlasSessionLog -Message "Menu Softwares exibido" -Level "MENU"
-        $opt = Read-AtlasMenuChoice
-        Write-AtlasSessionLog -Message "Softwares opcao: $opt" -Level "MENU"
-
-        switch ($opt) {
-            "1" {
-                Show-SoftwareInstallProgramMenu
-            }
-            "2" {
+            "8" {
                 [void](Update-InstalledSoftwareSafe)
                 Wait-UserInput
             }
             "0" {
-                Write-AtlasSessionLog -Message "Saindo do menu Softwares" -Level "MENU"
+                Write-AtlasSessionLog -Message "Saindo do menu Instalacao de Programas" -Level "MENU"
                 $running = $false
             }
             default {

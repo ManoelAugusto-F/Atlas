@@ -537,7 +537,6 @@ Write-Host "========================================" -ForegroundColor DarkCyan
 
 $softwareFunctions = @(
     'Show-SoftwareInstallMenu',
-    'Show-SoftwareInstallProgramMenu',
     'Test-WingetAvailable',
     'Install-SoftwareByWingetSafe',
     'Get-SoftwareCatalog',

@@ -33,7 +33,7 @@ $required = @(
     'Get-WingetAvailableUpgrades',
     'Show-WingetUpgradePreview',
     'Update-InstalledSoftwareSafe',
-    'Show-SoftwareInstallProgramMenu'
+    'Show-SoftwareInstallMenu'
 )
 
 foreach ($fn in $required) {
@@ -77,7 +77,8 @@ Test-Assert ($source -match 'Show-WingetUpgradePreview') "Listagem de upgrades i
 Test-Assert ($source -match 'Show-AtlasUpgradeSummary') "Resumo final implementado"
 Test-Assert ($source -match 'winget upgrade --id') "Atualizacao individual por pacote"
 Test-Assert ($source -notmatch 'winget upgrade --all') "Nao usa upgrade --all silencioso"
-Test-Assert ($source -match 'Show-SoftwareInstallProgramMenu') "Submenu instalar programa"
+Test-Assert ($source -match 'Show-AtlasHeader -Title "Instalacao de Programas"') "Menu abre diretamente por categorias"
+Test-Assert ($source -notmatch 'Show-SoftwareInstallProgramMenu') "Submenu intermediario removido"
 Test-Assert ($source -match 'Atualizar programas instalados') "Opcao atualizar no menu"
 
 Write-Host ""
