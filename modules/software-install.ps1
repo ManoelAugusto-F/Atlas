@@ -108,8 +108,179 @@ function script:Test-WingetPackageExists {
         return $true
     }
 
-    & winget show --id $PackageId --exact
+    & winget show --id $PackageId --exact --disable-interactivity 2>&1 | Out-Null
     return ($LASTEXITCODE -eq 0)
+}
+
+function ConvertFrom-WingetUpgradeJson {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$JsonText
+    )
+
+    $entries = @()
+    if (-not $JsonText -or -not ($JsonText.Trim())) {
+        return $entries
+    }
+
+    $obj = $JsonText | ConvertFrom-Json
+    if (-not $obj.Sources) {
+        return $entries
+    }
+
+    foreach ($source in @($obj.Sources)) {
+        $packages = $null
+        if ($source.PSObject.Properties['Packages']) {
+            $packages = @($source.Packages)
+        } elseif ($source.PSObject.Properties['Upgrades']) {
+            $packages = @($source.Upgrades)
+        }
+
+        if (-not $packages) { continue }
+
+        foreach ($pkg in $packages) {
+            if (-not $pkg.Id) { continue }
+            $entries += [PSCustomObject]@{
+                Name             = $pkg.Name
+                Id               = $pkg.Id
+                Version          = $pkg.Version
+                AvailableVersion = $pkg.AvailableVersion
+            }
+        }
+    }
+
+    return $entries
+}
+
+function Get-WingetUpgradeEntries {
+    Write-AtlasSessionLog -Message "Consulta winget upgrade (JSON)" -Level "ACTION"
+
+    if (-not (script:Test-IsWindowsSoftwareInstall)) {
+        Write-AtlasWarning "Atualizacao via winget disponivel apenas no Windows."
+        return @()
+    }
+
+    $wingetCheck = Test-WingetAvailable
+    if (-not $wingetCheck.Available) {
+        Write-AtlasError $wingetCheck.Message
+        return @()
+    }
+
+    try {
+        Write-AtlasProgress "Verificando atualizacoes disponiveis..."
+        $rawOutput = & winget upgrade --include-unknown --disable-interactivity `
+            --accept-source-agreements --output json 2>&1 | Out-String
+
+        $jsonStart = $rawOutput.IndexOf('{')
+        if ($jsonStart -lt 0) {
+            Write-AtlasSessionLog -Message "winget upgrade JSON nao encontrado na saida" -Level "WARN"
+            return @()
+        }
+
+        $jsonText = $rawOutput.Substring($jsonStart).Trim()
+        $entries = ConvertFrom-WingetUpgradeJson -JsonText $jsonText
+        Write-AtlasSessionLog -Message "winget upgrade: $($entries.Count) pacote(s) pendente(s)" -Level "INFO"
+        return $entries
+    } catch {
+        Write-AtlasSessionLog -Message "Erro ao consultar winget upgrade: $_" -Level "ERROR"
+        Write-Log -Message "Erro Get-WingetUpgradeEntries: $_" -Level "ERROR"
+        return @()
+    }
+}
+
+function Show-WingetUpgradePreview {
+    param(
+        [Parameter(Mandatory = $true)]
+        [array]$Upgrades
+    )
+
+    Show-AtlasHeader -Title "Atualizacoes"
+
+    if (-not $Upgrades -or $Upgrades.Count -eq 0) {
+        Write-AtlasSuccess "Nenhuma atualizacao disponivel no momento."
+        Write-Host ""
+        return
+    }
+
+    Write-Host "Programas com atualizacao disponivel:" -ForegroundColor White
+    Write-Host ""
+
+    for ($i = 0; $i -lt $Upgrades.Count; $i++) {
+        $item = $Upgrades[$i]
+        $num = $i + 1
+        $prefix = if ($num -lt 10) { ' ' } else { '' }
+        Write-Host -NoNewline "${prefix}[$num] "
+        Write-Host $item.Name -ForegroundColor White
+        Write-Host "     $($item.Version) -> $($item.AvailableVersion)" -ForegroundColor White
+        Write-Host ""
+    }
+
+    Write-Host ('=' * 42) -ForegroundColor Cyan
+    Write-Host "Total: $($Upgrades.Count) atualizacao(oes) disponivel(is)" -ForegroundColor White
+    Write-Host ('=' * 42) -ForegroundColor Cyan
+    Write-Host ""
+}
+
+function script:Show-AtlasUpgradeActionHeader {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProgramName
+    )
+
+    Write-Host ""
+    Write-Host ('=' * 42) -ForegroundColor Cyan
+    Write-Host " Atualizando:" -ForegroundColor Cyan
+    Write-Host " $ProgramName" -ForegroundColor White
+    Write-Host ('=' * 42) -ForegroundColor Cyan
+    Write-Host ""
+}
+
+function script:Show-AtlasUpgradeSummary {
+    param(
+        [array]$SuccessItems,
+        [array]$FailedItems,
+        [TimeSpan]$Elapsed
+    )
+
+    Write-Host ""
+    Write-Host ('=' * 42) -ForegroundColor Cyan
+    Write-Host (Format-AtlasCenteredText -Text "RESUMO") -ForegroundColor Cyan
+    Write-Host ('=' * 42) -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Sucesso:" -ForegroundColor Green
+    Write-Host ""
+
+    if ($SuccessItems -and $SuccessItems.Count -gt 0) {
+        foreach ($item in $SuccessItems) {
+            Write-Host "[OK] $item" -ForegroundColor Green
+        }
+    } else {
+        Write-Host "[OK] Nenhuma" -ForegroundColor Green
+    }
+
+    Write-Host ""
+    Write-Host "Falha:" -ForegroundColor Red
+    Write-Host ""
+
+    if ($FailedItems -and $FailedItems.Count -gt 0) {
+        foreach ($item in $FailedItems) {
+            Write-Host "[X] $item" -ForegroundColor Red
+        }
+    } else {
+        Write-Host "[X] Nenhuma" -ForegroundColor White
+    }
+
+    $hours = [int][math]::Floor($Elapsed.TotalHours)
+    $minutes = $Elapsed.Minutes
+    $seconds = $Elapsed.Seconds
+    $timeLabel = '{0:00}:{1:00}:{2:00}' -f $hours, $minutes, $seconds
+
+    Write-Host ""
+    Write-Host "Tempo total:" -ForegroundColor White
+    Write-Host $timeLabel -ForegroundColor White
+    Write-Host ""
+    Write-Host ('=' * 42) -ForegroundColor Cyan
+    Write-Host ""
 }
 
 function Install-SoftwareByWingetSafe {
@@ -140,33 +311,38 @@ function Install-SoftwareByWingetSafe {
 
     $wingetCheck = Test-WingetAvailable
     if (-not $wingetCheck.Available) {
-        Write-Host $wingetCheck.Message -ForegroundColor Red
+        Write-AtlasError $wingetCheck.Message
         Write-AtlasSessionLog -Message "winget indisponivel para $PackageId" -Level "ERROR"
         return $false
     }
 
     Write-Host ""
-    Write-Host "Programa: $DisplayName"
-    Write-Host "Categoria: $Category"
-    Write-Host "ID Winget: $PackageId"
+    Write-AtlasInfo "Programa: $DisplayName"
+    Write-AtlasInfo "ID: $PackageId"
     Write-Host ""
-    Write-Host "Instalar agora? [S/N]: " -NoNewline
+    Write-Host "Instalar agora? [S/N]: " -NoNewline -ForegroundColor White
     $resp = Read-Host
     if ($resp -notmatch '^[sS]$') {
-        Write-Host "Operacao cancelada." -ForegroundColor Gray
+        Write-AtlasInfo "Operacao cancelada."
         Write-AtlasSessionLog -Message "Instalacao cancelada pelo usuario: $PackageId" -Level "INFO"
         return $false
     }
 
     if (-not (script:Test-WingetPackageExists -PackageId $PackageId)) {
         Write-Host ""
-        Write-Host "Pacote nao encontrado no winget. Execute o teste de catalogo." -ForegroundColor Red
+        Write-AtlasError "Pacote nao encontrado no winget. Execute o teste de catalogo."
         Write-AtlasSessionLog -Message "Pacote nao encontrado: $PackageId" -Level "ERROR"
         return $false
     }
 
+    Show-AtlasHeader -Title "Instalacao"
+    Write-Host "Programa:" -ForegroundColor White
+    Write-Host $DisplayName -ForegroundColor White
     Write-Host ""
-    Write-Host "Instalando $DisplayName..." -ForegroundColor Cyan
+    Write-Host "ID:" -ForegroundColor White
+    Write-Host $PackageId -ForegroundColor White
+    Write-Host ""
+    Write-AtlasStep "Iniciando instalacao..."
     Write-AtlasSessionLog -Message "Executando winget install: $PackageId" -Level "ACTION"
 
     try {
@@ -176,22 +352,19 @@ function Install-SoftwareByWingetSafe {
         Write-AtlasSessionLog -Message "winget install finalizado ($PackageId) codigo $exitCode" -Level "INFO"
 
         if ($exitCode -eq 0) {
-            Write-Host ""
-            Write-Host "Instalacao concluida." -ForegroundColor Green
+            Write-AtlasResult -Status 'SUCESSO'
             Write-AtlasSessionLog -Message "Instalacao concluida: $PackageId" -Level "ACTION"
             Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao $DisplayName -Resultado "Sucesso"
             return $true
         }
 
-        Write-Host ""
-        Write-Host "Instalacao falhou. Verifique logs." -ForegroundColor Red
+        Write-AtlasResult -Status 'FALHA'
         Write-AtlasSessionLog -Message "Instalacao falhou (codigo $exitCode): $PackageId" -Level "ERROR"
         Write-Log -Message "winget install falhou para $PackageId codigo $exitCode" -Level "ERROR"
         Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao $DisplayName -Resultado "Falha"
         return $false
     } catch {
-        Write-Host ""
-        Write-Host "Instalacao falhou. Verifique logs." -ForegroundColor Red
+        Write-AtlasResult -Status 'FALHA'
         Write-AtlasSessionLog -Message "Erro winget install $PackageId : $_" -Level "ERROR"
         Write-Log -Message "Erro ao instalar $PackageId : $_" -Level "ERROR"
         Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao $DisplayName -Resultado "Falha"
@@ -504,90 +677,84 @@ function Show-Microsoft365Menu {
 }
 
 function Get-WingetAvailableUpgrades {
-    Write-AtlasSessionLog -Message "Consulta winget upgrade (previa)" -Level "ACTION"
+    $entries = Get-WingetUpgradeEntries
 
-    if (-not (script:Test-IsWindowsSoftwareInstall)) {
-        Write-Host "Atualizacao via winget disponivel apenas no Windows." -ForegroundColor Yellow
-        return $null
-    }
-
-    $wingetCheck = Test-WingetAvailable
-    if (-not $wingetCheck.Available) {
-        Write-Host $wingetCheck.Message -ForegroundColor Red
-        return $null
-    }
-
-    Write-Host ""
-    Write-Host "Verificando atualizacoes disponiveis..." -ForegroundColor Cyan
-    Write-Host ""
-
-    try {
-        & winget upgrade
-        $exitCode = $LASTEXITCODE
-        Write-AtlasSessionLog -Message "winget upgrade (previa) codigo $exitCode" -Level "INFO"
-        return [PSCustomObject]@{
-            ExitCode = $exitCode
-        }
-    } catch {
-        Write-Host "Falha ao verificar atualizacoes. Verifique logs." -ForegroundColor Red
-        Write-AtlasSessionLog -Message "Erro winget upgrade previa: $_" -Level "ERROR"
-        return $null
+    return [PSCustomObject]@{
+        ExitCode = $(if ($entries.Count -gt 0) { 0 } else { -1 })
+        Upgrades = @($entries)
+        Count    = @($entries).Count
     }
 }
 
 function Update-InstalledSoftwareSafe {
-    Write-AtlasSessionLog -Message "Atualizacao winget --all solicitada" -Level "ACTION"
+    Write-AtlasSessionLog -Message "Atualizacao de programas instalados solicitada" -Level "ACTION"
 
     if (-not (script:Test-IsWindowsSoftwareInstall)) {
-        Write-Host "Atualizacao via winget disponivel apenas no Windows." -ForegroundColor Yellow
+        Write-AtlasWarning "Atualizacao via winget disponivel apenas no Windows."
         return $false
     }
 
     $wingetCheck = Test-WingetAvailable
     if (-not $wingetCheck.Available) {
-        Write-Host $wingetCheck.Message -ForegroundColor Red
+        Write-AtlasError $wingetCheck.Message
         return $false
     }
 
-    $preview = Get-WingetAvailableUpgrades
-    if (-not $preview) {
-        return $false
+    $upgrades = @(Get-WingetUpgradeEntries)
+    Show-WingetUpgradePreview -Upgrades $upgrades
+
+    if ($upgrades.Count -eq 0) {
+        return $true
     }
 
-    Write-Host ""
-    Write-Host "Deseja atualizar todos os programas listados? [S/N]: " -NoNewline
+    Write-Host "Deseja atualizar? [S/N]: " -NoNewline -ForegroundColor White
     $resp = Read-Host
     if ($resp -notmatch '^[sS]$') {
-        Write-Host "Operacao cancelada." -ForegroundColor Gray
+        Write-AtlasInfo "Operacao cancelada."
         Write-AtlasSessionLog -Message "Atualizacao winget cancelada pelo usuario" -Level "INFO"
         return $false
     }
 
-    Write-Host ""
-    Write-Host "Atualizando programas..." -ForegroundColor Cyan
-    Write-AtlasSessionLog -Message "Executando winget upgrade --all" -Level "ACTION"
+    $startedAt = Get-Date
+    $successList = New-Object System.Collections.Generic.List[string]
+    $failedList = New-Object System.Collections.Generic.List[string]
 
-    try {
-        & winget upgrade --all --accept-source-agreements --accept-package-agreements
-        $exitCode = $LASTEXITCODE
-        Write-AtlasSessionLog -Message "winget upgrade --all finalizado codigo $exitCode" -Level "INFO"
+    foreach ($upgrade in $upgrades) {
+        script:Show-AtlasUpgradeActionHeader -ProgramName $upgrade.Name
+        Write-AtlasStep "Executando winget upgrade para $($upgrade.Id)..."
+        Write-AtlasSessionLog -Message "winget upgrade: $($upgrade.Id)" -Level "ACTION"
 
-        Write-Host ""
-        if ($exitCode -eq 0) {
-            Write-Host "Atualizacao concluida." -ForegroundColor Green
-            Write-AtlasSessionLog -Message "Atualizacao winget concluida" -Level "ACTION"
-            return $true
+        try {
+            & winget upgrade --id $upgrade.Id --exact `
+                --accept-source-agreements --accept-package-agreements
+            $exitCode = $LASTEXITCODE
+            Write-AtlasSessionLog -Message "winget upgrade $($upgrade.Id) codigo $exitCode" -Level "INFO"
+
+            if ($exitCode -eq 0) {
+                $successList.Add($upgrade.Name)
+                Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar $($upgrade.Name)" -Resultado "Sucesso"
+            } else {
+                $failedList.Add($upgrade.Name)
+                Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar $($upgrade.Name)" -Resultado "Falha"
+            }
+        } catch {
+            $failedList.Add($upgrade.Name)
+            Write-AtlasSessionLog -Message "Erro winget upgrade $($upgrade.Id): $_" -Level "ERROR"
+            Write-Log -Message "Erro winget upgrade $($upgrade.Id): $_" -Level "ERROR"
+            Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar $($upgrade.Name)" -Resultado "Falha"
         }
-
-        Write-Host "Atualizacao falhou ou parcial. Verifique logs." -ForegroundColor Yellow
-        Write-AtlasSessionLog -Message "winget upgrade --all codigo $exitCode" -Level "WARN"
-        return $false
-    } catch {
-        Write-Host ""
-        Write-Host "Atualizacao falhou. Verifique logs." -ForegroundColor Red
-        Write-AtlasSessionLog -Message "Erro winget upgrade --all: $_" -Level "ERROR"
-        return $false
     }
+
+    $elapsed = (Get-Date) - $startedAt
+    script:Show-AtlasUpgradeSummary -SuccessItems @($successList) -FailedItems @($failedList) -Elapsed $elapsed
+
+    if ($failedList.Count -eq 0) {
+        Write-AtlasSessionLog -Message "Atualizacao winget concluida ($($successList.Count) pacotes)" -Level "ACTION"
+        return $true
+    }
+
+    Write-AtlasSessionLog -Message "Atualizacao winget parcial: $($successList.Count) ok, $($failedList.Count) falha(s)" -Level "WARN"
+    return $false
 }
 
 function Export-SoftwareInventory {
@@ -903,11 +1070,11 @@ function script:Get-SoftwareCategoryMenuMap {
     return $map
 }
 
-function Show-SoftwareInstallMenu {
+function Show-SoftwareInstallProgramMenu {
     $running = $true
 
     while ($running) {
-        Show-AtlasHeader -Title "Instalacao de Programas"
+        Show-AtlasHeader -Title "Instalar Programa"
 
         Show-AtlasCompactOption -Number "1" -Name "Navegadores"
         Show-AtlasCompactOption -Number "2" -Name "PDF e Documentos"
@@ -916,13 +1083,12 @@ function Show-SoftwareInstallMenu {
         Show-AtlasCompactOption -Number "5" -Name "Banco de Dados"
         Show-AtlasCompactOption -Number "6" -Name "Microsoft"
         Show-AtlasCompactOption -Number "7" -Name "Utilitarios"
-        Show-AtlasCompactOption -Number "8" -Name "Atualizar instalados"
 
         Show-AtlasBackOption
 
-        Write-AtlasSessionLog -Message "Menu Instalacao de Programas exibido" -Level "MENU"
+        Write-AtlasSessionLog -Message "Submenu instalar programa exibido" -Level "MENU"
         $opt = Read-AtlasMenuChoice
-        Write-AtlasSessionLog -Message "Instalacao de Programas opcao: $opt" -Level "MENU"
+        Write-AtlasSessionLog -Message "Instalar programa opcao: $opt" -Level "MENU"
 
         $categoryMap = script:Get-SoftwareCategoryMenuMap
 
@@ -930,12 +1096,42 @@ function Show-SoftwareInstallMenu {
             { $_ -in $categoryMap.Keys } {
                 Show-SoftwareCategoryMenu -CategoryName $categoryMap[$_]
             }
-            "8" {
+            "0" {
+                $running = $false
+            }
+            default {
+                Write-AtlasWarning "Opcao invalida."
+                Wait-UserInput
+            }
+        }
+    }
+}
+
+function Show-SoftwareInstallMenu {
+    $running = $true
+
+    while ($running) {
+        Show-AtlasHeader -Title "Softwares"
+
+        Show-AtlasCompactOption -Number "1" -Name "Instalar programa"
+        Show-AtlasCompactOption -Number "2" -Name "Atualizar programas instalados"
+
+        Show-AtlasBackOption
+
+        Write-AtlasSessionLog -Message "Menu Softwares exibido" -Level "MENU"
+        $opt = Read-AtlasMenuChoice
+        Write-AtlasSessionLog -Message "Softwares opcao: $opt" -Level "MENU"
+
+        switch ($opt) {
+            "1" {
+                Show-SoftwareInstallProgramMenu
+            }
+            "2" {
                 [void](Update-InstalledSoftwareSafe)
                 Wait-UserInput
             }
             "0" {
-                Write-AtlasSessionLog -Message "Saindo do menu Instalacao de Programas" -Level "MENU"
+                Write-AtlasSessionLog -Message "Saindo do menu Softwares" -Level "MENU"
                 $running = $false
             }
             default {

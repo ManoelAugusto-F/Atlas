@@ -19,7 +19,7 @@ function Wait-UserInput {
     Read-Host | Out-Null
 }
 
-function script:Format-AtlasCenteredText {
+function Format-AtlasCenteredText {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Text,
@@ -33,6 +33,16 @@ function script:Format-AtlasCenteredText {
     $pad = $Width - $Text.Length
     $left = [math]::Floor($pad / 2)
     return (' ' * $left) + $Text
+}
+
+function script:Format-AtlasCenteredText {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Text,
+        [int]$Width = $script:AtlasMenuWidth
+    )
+
+    return Format-AtlasCenteredText -Text $Text -Width $Width
 }
 
 function Show-AtlasHeader {
@@ -51,7 +61,7 @@ function Show-AtlasHeader {
         $headerText = 'ATLAS'
     }
 
-    Write-Host (script:Format-AtlasCenteredText -Text $headerText) -ForegroundColor Cyan
+    Write-Host (Format-AtlasCenteredText -Text $headerText) -ForegroundColor Cyan
     Write-Host $bar -ForegroundColor Cyan
     Write-Host ""
 }
@@ -166,4 +176,48 @@ function Read-AtlasConfirm {
     Write-Host ""
     Write-Host $Message -ForegroundColor White
     return Read-Host "Confirmar? (s/N)"
+}
+
+function Write-AtlasStep {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Message
+    )
+
+    Write-Host ""
+    Write-Host "[INFO] " -NoNewline -ForegroundColor Cyan
+    Write-Host $Message -ForegroundColor White
+}
+
+function Write-AtlasProgress {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Message
+    )
+
+    Write-Host "[INFO] " -NoNewline -ForegroundColor Cyan
+    Write-Host $Message -ForegroundColor White
+}
+
+function Write-AtlasResult {
+    param(
+        [ValidateSet('SUCESSO', 'FALHA', 'AVISO')]
+        [string]$Status = 'SUCESSO',
+        [string]$Message = ''
+    )
+
+    $color = switch ($Status) {
+        'SUCESSO' { 'Green' }
+        'FALHA'   { 'Red' }
+        'AVISO'   { 'Yellow' }
+    }
+
+    Write-Host ""
+    Write-Host ('=' * $script:AtlasMenuWidth) -ForegroundColor Cyan
+    if ($Message) {
+        Write-Host "Resultado: $Status - $Message" -ForegroundColor $color
+    } else {
+        Write-Host "Resultado: $Status" -ForegroundColor $color
+    }
+    Write-Host ('=' * $script:AtlasMenuWidth) -ForegroundColor Cyan
 }

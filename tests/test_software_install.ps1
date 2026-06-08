@@ -14,6 +14,7 @@ Write-Host ""
 
 $functions = @(
     'Show-SoftwareInstallMenu',
+    'Show-SoftwareInstallProgramMenu',
     'Test-WingetAvailable',
     'Install-SoftwareByWingetSafe',
     'Get-SoftwareCatalog',
@@ -27,12 +28,17 @@ $functions = @(
     'Repair-Microsoft365Safe',
     'Open-Microsoft365InstallPage',
     'Show-Microsoft365Menu',
+    'ConvertFrom-WingetUpgradeJson',
+    'Get-WingetUpgradeEntries',
     'Get-WingetAvailableUpgrades',
+    'Show-WingetUpgradePreview',
     'Update-InstalledSoftwareSafe',
     'Export-SoftwareInventory',
     'Test-WingetCatalogItem',
     'Invoke-WingetCatalogValidation',
-    'Export-WingetCatalogValidationHtml'
+    'Export-WingetCatalogValidationHtml',
+    'Write-AtlasStep',
+    'Write-AtlasResult'
 )
 
 $allOk = $true
@@ -108,6 +114,28 @@ if ($IsWindows -or $env:OS -eq 'Windows_NT') {
     Write-Host "  Winget M365 disponivel: $m365Winget" -ForegroundColor Gray
 } else {
     Write-Host "  [SKIP] Validacao winget M365 requer Windows" -ForegroundColor DarkGray
+}
+
+Write-Host ""
+Write-Host "[TESTE] Visual de instalacao (software-install.ps1)" -ForegroundColor Magenta
+$installSource = Get-Content -Path (Join-Path $PSScriptRoot "../modules/software-install.ps1") -Raw
+if ($installSource -match 'Show-AtlasHeader -Title "Instalacao"') {
+    Write-Host "  [OK] Cabecalho visual de instalacao" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Cabecalho visual de instalacao ausente" -ForegroundColor Red
+    $allOk = $false
+}
+if ($installSource -match 'Write-AtlasResult') {
+    Write-Host "  [OK] Resultado amigavel de instalacao" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Resultado amigavel ausente" -ForegroundColor Red
+    $allOk = $false
+}
+if ($installSource -notmatch 'winget install.*Out-Null') {
+    Write-Host "  [OK] Saida do winget install nao ocultada" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Saida do winget install ocultada" -ForegroundColor Red
+    $allOk = $false
 }
 
 Write-Host ""

@@ -90,6 +90,9 @@ Ferramentas de limpeza e correções básicas.
 
 Catálogo integrado utilizando Winget para instalação e atualização de aplicações.
 
+- **Instalação visual** — saída real do Winget com progresso de download e instalação
+- **Atualização guiada** — lista pacotes pendentes com versões, confirmação e resumo final
+
 ---
 
 ## Histórico Operacional
@@ -248,4 +251,4 @@ Toda contribuição ajuda a tornar o projeto mais útil para a comunidade de TI.
 
 ---
 
-**Versão Atual:** v0.3.5 — Ajuste visual dos menus
+**Versão Atual:** v0.3.6 — Melhorias visuais em instalações e atualizações

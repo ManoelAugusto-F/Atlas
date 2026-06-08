@@ -537,6 +537,7 @@ Write-Host "========================================" -ForegroundColor DarkCyan
 
 $softwareFunctions = @(
     'Show-SoftwareInstallMenu',
+    'Show-SoftwareInstallProgramMenu',
     'Test-WingetAvailable',
     'Install-SoftwareByWingetSafe',
     'Get-SoftwareCatalog',
@@ -550,12 +551,17 @@ $softwareFunctions = @(
     'Repair-Microsoft365Safe',
     'Open-Microsoft365InstallPage',
     'Show-Microsoft365Menu',
+    'ConvertFrom-WingetUpgradeJson',
+    'Get-WingetUpgradeEntries',
     'Get-WingetAvailableUpgrades',
+    'Show-WingetUpgradePreview',
     'Update-InstalledSoftwareSafe',
     'Export-SoftwareInventory',
     'Test-WingetCatalogItem',
     'Invoke-WingetCatalogValidation',
-    'Export-WingetCatalogValidationHtml'
+    'Export-WingetCatalogValidationHtml',
+    'Write-AtlasStep',
+    'Write-AtlasResult'
 )
 
 $allOk = $true
@@ -611,7 +617,10 @@ $uiFunctions = @(
     'Write-AtlasSuccess',
     'Write-AtlasWarning',
     'Write-AtlasError',
-    'Read-AtlasConfirm'
+    'Read-AtlasConfirm',
+    'Write-AtlasStep',
+    'Write-AtlasProgress',
+    'Write-AtlasResult'
 )
 
 $allOk = $true

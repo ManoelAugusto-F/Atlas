@@ -1,8 +1,14 @@
-# Versao Atual: Atlas v0.3.5
+# Versao Atual: Atlas v0.3.6
 
 ---
 
 ## Historico de Versoes
+
+### v0.3.6 - Melhorias visuais em instalacoes e atualizacoes
+- **Instalacao**: cabecalho visual, saida real do winget e resultado amigavel (`Write-AtlasStep`, `Write-AtlasResult`)
+- **Atualizacao**: listagem de pacotes pendentes, upgrade individual com progresso e resumo final com tempo
+- **Menu**: Softwares com opcoes Instalar programa e Atualizar programas instalados
+- **Testes**: `test_software_upgrade.ps1` e validacao visual em `test_software_install.ps1`
 
 ### v0.3.5 - Ajuste visual dos menus
 - **Interface**: menus compactos e centralizados em todos os modulos
