@@ -523,22 +523,22 @@ function Show-WindowsRepairMenu {
     $repairRunning = $true
 
     while ($repairRunning) {
-        Show-AtlasMenuHeader -Title "Reparos Windows"
+        Show-AtlasHeader -Title "Reparos Windows"
 
-        Show-AtlasMenuOption -Number "1" -Name "Diagnostico Recomendado" `
-            -Description "Analisa o Windows e sugere a proxima acao" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "2" -Name "Verificar arquivos do Windows" `
-            -Description "Apenas verifica problemas" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "3" -Name "Corrigir arquivos do Windows" `
-            -Description "Repara arquivos corrompidos" -Risk "medio"
-        Show-AtlasMenuOption -Number "4" -Name "Verificar imagem do Windows" `
-            -Description "Analisa integridade da instalacao" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "5" -Name "Reparar imagem do Windows" `
-            -Description "Corrige problemas detectados na imagem" -Risk "medio"
-        Show-AtlasMenuOption -Number "6" -Name "Resetar Windows Update" `
-            -Description "Use apenas para erros de atualizacao" -Risk "medio"
+        Show-AtlasDescribedOption -Number "1" -Name "Diagnostico recomendado" `
+            -Description "Analisa o Windows e sugere o proximo passo."
+        Show-AtlasDescribedOption -Number "2" -Name "Verificar arquivos do Windows" `
+            -Description "Apenas verifica problemas. Nao altera o sistema."
+        Show-AtlasDescribedOption -Number "3" -Name "Corrigir arquivos do Windows" `
+            -Description "Repara arquivos corrompidos com SFC."
+        Show-AtlasDescribedOption -Number "4" -Name "Verificar imagem do Windows" `
+            -Description "Analisa a integridade da instalacao."
+        Show-AtlasDescribedOption -Number "5" -Name "Reparar imagem do Windows" `
+            -Description "Corrige componentes danificados com DISM."
+        Show-AtlasDescribedOption -Number "6" -Name "Resetar Windows Update" `
+            -Description "Recria caches e servicos de atualizacao."
 
-        Show-AtlasMenuBackOption
+        Show-AtlasBackOption
         $opt = Read-AtlasMenuChoice
 
         switch ($opt) {

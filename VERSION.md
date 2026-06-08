@@ -1,8 +1,13 @@
-# Versao Atual: Atlas v0.3.4
+# Versao Atual: Atlas v0.3.5
 
 ---
 
 ## Historico de Versoes
+
+### v0.3.5 - Ajuste visual dos menus
+- **Interface**: menus compactos e centralizados em todos os modulos
+- **Reparos Windows**: unico menu com descricoes curtas por opcao
+- **Core**: `Show-AtlasHeader`, `Show-AtlasCompactOption`, `Show-AtlasDescribedOption`, `Show-AtlasBackOption`
 
 ### v0.3.4 - Melhorias de UX e Diagnostico Guiado
 - **Interface**: menus padronizados com descricoes, nivel de risco e cores consistentes

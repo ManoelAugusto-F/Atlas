@@ -400,28 +400,19 @@ function Show-OutlookMenu {
     $running = $true
 
     while ($running) {
-        Show-AtlasMenuHeader -Title "Outlook"
+        Show-AtlasHeader -Title "Outlook"
 
-        Show-AtlasMenuOption -Number "1" -Name "Ver status do Outlook" `
-            -Description "Mostra se o Outlook esta aberto e instalado" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "2" -Name "Reiniciar Outlook" `
-            -Description "Fecha e abre o Outlook novamente" -Risk "baixo"
-        Show-AtlasMenuOption -Number "3" -Name "Abrir pasta de dados" `
-            -Description "Acessa arquivos de e-mail e perfis" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "4" -Name "Abrir pasta RoamCache" `
-            -Description "Acessa cache de configuracoes do Outlook" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "5" -Name "Limpar cache RoamCache" `
-            -Description "Remove cache que pode causar erros" -Risk "baixo"
-        Show-AtlasMenuOption -Number "6" -Name "Ver perfis do Outlook" `
-            -Description "Lista contas configuradas no Outlook" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "7" -Name "Reparar Office/Outlook" `
-            -Description "Abre ferramenta oficial de reparo da Microsoft" -Risk "baixo"
-        Show-AtlasMenuOption -Number "8" -Name "Apps instalados (Office)" `
-            -Description "Abre configuracoes para desinstalar Office" -Risk "medio"
-        Show-AtlasMenuOption -Number "9" -Name "Pagina oficial Microsoft 365" `
-            -Description "Abre site para download ou suporte" -Risk "nenhum"
+        Show-AtlasCompactOption -Number "1" -Name "Ver status"
+        Show-AtlasCompactOption -Number "2" -Name "Reiniciar Outlook"
+        Show-AtlasCompactOption -Number "3" -Name "Abrir pasta de dados"
+        Show-AtlasCompactOption -Number "4" -Name "Abrir RoamCache"
+        Show-AtlasCompactOption -Number "5" -Name "Limpar RoamCache"
+        Show-AtlasCompactOption -Number "6" -Name "Ver perfis"
+        Show-AtlasCompactOption -Number "7" -Name "Reparar Office"
+        Show-AtlasCompactOption -Number "8" -Name "Apps instalados"
+        Show-AtlasCompactOption -Number "9" -Name "Pagina Microsoft 365"
 
-        Show-AtlasMenuBackOption
+        Show-AtlasBackOption
         $option = Read-AtlasMenuChoice
 
         switch ($option) {

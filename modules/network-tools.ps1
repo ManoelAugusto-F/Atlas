@@ -294,24 +294,17 @@ function Show-NetworkMenu {
     $netRunning = $true
 
     while ($netRunning) {
-        Show-AtlasMenuHeader -Title "Rede e Internet"
+        Show-AtlasHeader -Title "Rede e Internet"
 
-        Show-AtlasMenuOption -Number "1" -Name "Testar internet" `
-            -Description "Verifica se voce consegue acessar a internet" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "2" -Name "Testar DNS" `
-            -Description "Verifica se nomes de sites sao resolvidos" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "3" -Name "Mostrar configuracao de rede" `
-            -Description "Exibe IP, gateway e adaptadores de rede" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "4" -Name "Limpar cache DNS" `
-            -Description "Forca nova resolucao de enderecos" -Risk "baixo"
-        Show-AtlasMenuOption -Number "5" -Name "Renovar IP" `
-            -Description "Solicita novo endereco IP ao roteador" -Risk "baixo"
-        Show-AtlasMenuOption -Number "6" -Name "Reset Winsock" `
-            -Description "Corrige problemas de conexao de rede" -Risk "medio"
-        Show-AtlasMenuOption -Number "7" -Name "Reset TCP/IP" `
-            -Description "Restaura pilha de rede do Windows" -Risk "medio"
+        Show-AtlasCompactOption -Number "1" -Name "Testar internet"
+        Show-AtlasCompactOption -Number "2" -Name "Testar DNS"
+        Show-AtlasCompactOption -Number "3" -Name "Configuracao de rede"
+        Show-AtlasCompactOption -Number "4" -Name "Limpar cache DNS"
+        Show-AtlasCompactOption -Number "5" -Name "Renovar IP"
+        Show-AtlasCompactOption -Number "6" -Name "Reset Winsock"
+        Show-AtlasCompactOption -Number "7" -Name "Reset TCP/IP"
 
-        Show-AtlasMenuBackOption
+        Show-AtlasBackOption
         $opt = Read-AtlasMenuChoice
 
         switch ($opt) {

@@ -74,10 +74,9 @@ irm https://a.bitsdeconhecimento.blog.br/i.ps1 | iex
 
 ### Interface aprimorada
 
-- Menus padronizados com descrições claras para cada opção
-- Indicação de nível de risco (sem risco, baixo, médio, alto)
-- Cores consistentes para facilitar a leitura
-- Orientações em linguagem simples, sem termos técnicos desnecessários
+- Menus compactos e centralizados para leitura rapida no PowerShell
+- Reparos Windows com orientacao guiada e descricoes curtas por opcao
+- Cores discretas: titulo em Cyan, numeros em Yellow, opcoes em White
 
 ### Navegadores
 
@@ -249,4 +248,4 @@ Toda contribuição ajuda a tornar o projeto mais útil para a comunidade de TI.
 
 ---
 
-**Versão Atual:** v0.3.4 — Melhorias de UX e Diagnóstico Guiado
+**Versão Atual:** v0.3.5 — Ajuste visual dos menus

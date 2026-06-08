@@ -907,26 +907,18 @@ function Show-SoftwareInstallMenu {
     $running = $true
 
     while ($running) {
-        Show-AtlasMenuHeader -Title "Instalacao de Programas"
+        Show-AtlasHeader -Title "Instalacao de Programas"
 
-        Show-AtlasMenuOption -Number "1" -Name "Navegadores" `
-            -Description "Chrome, Firefox e outros navegadores" -Risk "baixo"
-        Show-AtlasMenuOption -Number "2" -Name "PDF e Documentos" `
-            -Description "Leitores e editores de documentos" -Risk "baixo"
-        Show-AtlasMenuOption -Number "3" -Name "Desenvolvimento" `
-            -Description "Ferramentas para programadores" -Risk "baixo"
-        Show-AtlasMenuOption -Number "4" -Name "Infraestrutura e Redes" `
-            -Description "Utilitarios de rede e administracao" -Risk "baixo"
-        Show-AtlasMenuOption -Number "5" -Name "Banco de Dados" `
-            -Description "Clientes e ferramentas de banco de dados" -Risk "baixo"
-        Show-AtlasMenuOption -Number "6" -Name "Microsoft" `
-            -Description "Office, Teams e apps Microsoft" -Risk "medio"
-        Show-AtlasMenuOption -Number "7" -Name "Utilitarios" `
-            -Description "Programas uteis para o dia a dia" -Risk "baixo"
-        Show-AtlasMenuOption -Number "8" -Name "Atualizar programas instalados" `
-            -Description "Verifica e aplica atualizacoes via Winget" -Risk "baixo"
+        Show-AtlasCompactOption -Number "1" -Name "Navegadores"
+        Show-AtlasCompactOption -Number "2" -Name "PDF e Documentos"
+        Show-AtlasCompactOption -Number "3" -Name "Desenvolvimento"
+        Show-AtlasCompactOption -Number "4" -Name "Infraestrutura e Redes"
+        Show-AtlasCompactOption -Number "5" -Name "Banco de Dados"
+        Show-AtlasCompactOption -Number "6" -Name "Microsoft"
+        Show-AtlasCompactOption -Number "7" -Name "Utilitarios"
+        Show-AtlasCompactOption -Number "8" -Name "Atualizar instalados"
 
-        Show-AtlasMenuBackOption
+        Show-AtlasBackOption
 
         Write-AtlasSessionLog -Message "Menu Instalacao de Programas exibido" -Level "MENU"
         $opt = Read-AtlasMenuChoice

@@ -72,16 +72,13 @@ function Show-HistoryMenu {
     $historyRunning = $true
 
     while ($historyRunning) {
-        Show-AtlasMenuHeader -Title "Historico"
+        Show-AtlasHeader -Title "Historico"
 
-        Show-AtlasMenuOption -Number "1" -Name "Ver ultimos 50 eventos" `
-            -Description "Mostra acoes recentes realizadas pelo Atlas" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "2" -Name "Abrir pasta de logs" `
-            -Description "Abre C:\ProgramData\Atlas\Logs no Explorer" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "3" -Name "Limpar logs" `
-            -Description "Apaga todo o historico operacional" -Risk "medio"
+        Show-AtlasCompactOption -Number "1" -Name "Ultimos 50 eventos"
+        Show-AtlasCompactOption -Number "2" -Name "Abrir pasta de logs"
+        Show-AtlasCompactOption -Number "3" -Name "Limpar logs"
 
-        Show-AtlasMenuBackOption
+        Show-AtlasBackOption
         $option = Read-AtlasMenuChoice
 
         switch ($option) {

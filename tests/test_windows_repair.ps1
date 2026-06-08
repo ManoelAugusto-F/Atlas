@@ -35,7 +35,8 @@ $required = @(
     'Test-DismCheckHealth',
     'Invoke-DismScanHealthSafe',
     'Invoke-DismRestoreHealthSafe',
-    'Reset-WindowsUpdateSafe'
+    'Reset-WindowsUpdateSafe',
+    'Show-AtlasDescribedOption'
 )
 
 foreach ($fn in $required) {
@@ -43,16 +44,25 @@ foreach ($fn in $required) {
 }
 
 $repairSource = Get-Content -Path (Join-Path $PSScriptRoot "../modules/windows-repair.ps1") -Raw
+$menuSource = Get-Content -Path (Join-Path $PSScriptRoot "../modules/menu.ps1") -Raw
+$cleanupSource = Get-Content -Path (Join-Path $PSScriptRoot "../modules/cleanup.ps1") -Raw
 
-Test-Assert ($repairSource -match 'Diagnostico Recomendado') "Menu contem Diagnostico Recomendado"
+Test-Assert ($repairSource -match 'Show-AtlasDescribedOption') "Reparos Windows usa opcoes descritas"
+Test-Assert ($repairSource -match 'Diagnostico recomendado') "Menu contem diagnostico recomendado"
+Test-Assert ($repairSource -match 'Analisa o Windows e sugere o proximo passo') "Descricao do diagnostico presente"
 Test-Assert ($repairSource -match 'Verificar arquivos do Windows') "Menu contem verificacao de arquivos"
 Test-Assert ($repairSource -match 'Corrigir arquivos do Windows') "Menu contem correcao de arquivos"
 Test-Assert ($repairSource -match 'Verificar imagem do Windows') "Menu contem verificacao de imagem"
 Test-Assert ($repairSource -match 'Reparar imagem do Windows') "Menu contem reparo de imagem"
 Test-Assert ($repairSource -match 'Resetar Windows Update') "Menu contem reset do Windows Update"
+Test-Assert ($repairSource -notmatch '-Risk ') "Reparos Windows sem nivel de risco"
 Test-Assert ($repairSource -match 'Start-WindowsDiagnostic') "Diagnostico guiado implementado"
 Test-Assert ($repairSource -match 'Diagnostico do Sistema') "Resumo de diagnostico implementado"
-Test-Assert ($repairSource -match 'Recomendacao:') "Recomendacoes de proximo passo implementadas"
+
+Test-Assert ($menuSource -match 'Show-AtlasCompactOption') "Menu principal usa formato compacto"
+Test-Assert ($menuSource -notmatch 'Show-AtlasDescribedOption') "Menu principal sem descricoes"
+Test-Assert ($cleanupSource -match 'Show-AtlasCompactOption') "Limpeza usa formato compacto"
+Test-Assert ($cleanupSource -notmatch 'Show-AtlasDescribedOption') "Limpeza sem descricoes"
 
 Test-Assert ($repairSource -match '"1" \{ Start-WindowsDiagnostic') "Opcao 1 executa diagnostico"
 Test-Assert ($repairSource -match '"2" \{ Test-SfcVerifyOnly') "Opcao 2 verifica arquivos"

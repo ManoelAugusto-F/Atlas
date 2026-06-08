@@ -2,6 +2,8 @@
 # Atlas — Funcoes utilitarias centrais
 # ==========================================
 
+$script:AtlasMenuWidth = 42
+
 function Show-FeaturePlaceholder {
     param([string]$FeatureName)
 
@@ -13,8 +15,91 @@ function Show-FeaturePlaceholder {
 
 function Wait-UserInput {
     Write-Host ""
-    Write-Host "Pressione Enter para continuar" -ForegroundColor Magenta
+    Write-Host "Pressione Enter para continuar" -ForegroundColor White
     Read-Host | Out-Null
+}
+
+function script:Format-AtlasCenteredText {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Text,
+        [int]$Width = $script:AtlasMenuWidth
+    )
+
+    if ($Text.Length -ge $Width) {
+        return $Text.Substring(0, $Width)
+    }
+
+    $pad = $Width - $Text.Length
+    $left = [math]::Floor($pad / 2)
+    return (' ' * $left) + $Text
+}
+
+function Show-AtlasHeader {
+    param(
+        [string]$Title
+    )
+
+    Clear-Host
+    Write-Host ""
+    $bar = '=' * $script:AtlasMenuWidth
+    Write-Host $bar -ForegroundColor Cyan
+
+    if ($Title) {
+        $headerText = "ATLAS - $($Title.ToUpper())"
+    } else {
+        $headerText = 'ATLAS'
+    }
+
+    Write-Host (script:Format-AtlasCenteredText -Text $headerText) -ForegroundColor Cyan
+    Write-Host $bar -ForegroundColor Cyan
+    Write-Host ""
+}
+
+function Show-AtlasCompactOption {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Number,
+        [Parameter(Mandatory = $true)]
+        [string]$Name
+    )
+
+    $prefix = if ($Number.Length -eq 1) { ' ' } else { '' }
+    Write-Host -NoNewline "${prefix}[$Number] " -ForegroundColor Yellow
+    Write-Host $Name -ForegroundColor White
+}
+
+function Show-AtlasDescribedOption {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Number,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string]$Description
+    )
+
+    $prefix = if ($Number.Length -eq 1) { ' ' } else { '' }
+    Write-Host -NoNewline "${prefix}[$Number] " -ForegroundColor Yellow
+    Write-Host $Name -ForegroundColor White
+    Write-Host "     $Description" -ForegroundColor White
+    Write-Host ""
+}
+
+function Show-AtlasBackOption {
+    param(
+        [string]$Label = "Voltar"
+    )
+
+    Write-Host ""
+    Write-Host -NoNewline ' [0] ' -ForegroundColor Yellow
+    Write-Host $Label -ForegroundColor White
+    Write-Host ""
+}
+
+function Read-AtlasMenuChoice {
+    Write-Host "Escolha uma opcao:" -ForegroundColor White
+    return Read-Host
 }
 
 function Show-AtlasMenuHeader {
@@ -23,12 +108,7 @@ function Show-AtlasMenuHeader {
         [string]$Title
     )
 
-    Clear-Host
-    Write-Host ""
-    Write-Host "==========================================" -ForegroundColor Cyan
-    Write-Host "  Atlas - $Title" -ForegroundColor Cyan
-    Write-Host "==========================================" -ForegroundColor Cyan
-    Write-Host ""
+    Show-AtlasHeader -Title $Title
 }
 
 function Show-AtlasMenuOption {
@@ -42,38 +122,19 @@ function Show-AtlasMenuOption {
         [string]$Risk = ""
     )
 
-    Write-Host "[$Number] $Name" -ForegroundColor White
-
-    $line = $Description
-    if ($Risk) {
-        $riskLabel = switch ($Risk) {
-            "nenhum" { "sem risco" }
-            "baixo"  { "baixo risco" }
-            "medio"  { "medio risco" }
-            "alto"   { "alto risco" }
-        }
-        if ($line) {
-            $line = "$line ($riskLabel)"
-        } else {
-            $line = $riskLabel
-        }
+    if ($Description) {
+        Show-AtlasDescribedOption -Number $Number -Name $Name -Description $Description
+    } else {
+        Show-AtlasCompactOption -Number $Number -Name $Name
     }
-
-    if ($line) {
-        Write-Host "    $line" -ForegroundColor White
-    }
-
-    Write-Host ""
 }
 
 function Show-AtlasMenuBackOption {
-    Write-Host "[0] Voltar" -ForegroundColor White
-    Write-Host ""
-}
+    param(
+        [string]$Label = "Voltar"
+    )
 
-function Read-AtlasMenuChoice {
-    Write-Host "Escolha uma opcao: " -NoNewline -ForegroundColor Magenta
-    return Read-Host
+    Show-AtlasBackOption -Label $Label
 }
 
 function Write-AtlasInfo {
@@ -103,6 +164,6 @@ function Read-AtlasConfirm {
     )
 
     Write-Host ""
-    Write-Host $Message -ForegroundColor Magenta
+    Write-Host $Message -ForegroundColor White
     return Read-Host "Confirmar? (s/N)"
 }

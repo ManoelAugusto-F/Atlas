@@ -378,24 +378,17 @@ function Show-PrinterMenu {
     $printerRunning = $true
 
     while ($printerRunning) {
-        Show-AtlasMenuHeader -Title "Impressoras"
+        Show-AtlasHeader -Title "Impressoras"
 
-        Show-AtlasMenuOption -Number "1" -Name "Listar impressoras" `
-            -Description "Mostra impressoras instaladas no computador" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "2" -Name "Ver fila de impressao" `
-            -Description "Exibe documentos aguardando impressao" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "3" -Name "Reiniciar Spooler" `
-            -Description "Reinicia o servico de impressao do Windows" -Risk "baixo"
-        Show-AtlasMenuOption -Number "4" -Name "Limpar fila de impressao" `
-            -Description "Remove trabalhos presos na fila" -Risk "baixo"
-        Show-AtlasMenuOption -Number "5" -Name "Ver drivers de impressora" `
-            -Description "Lista drivers instalados para impressao" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "6" -Name "Instalar impressora TCP/IP" `
-            -Description "Adiciona impressora de rede por endereco IP" -Risk "baixo"
-        Show-AtlasMenuOption -Number "7" -Name "Adicionar impressora compartilhada" `
-            -Description "Conecta a impressora de outro computador (UNC)" -Risk "baixo"
+        Show-AtlasCompactOption -Number "1" -Name "Listar impressoras"
+        Show-AtlasCompactOption -Number "2" -Name "Ver fila de impressao"
+        Show-AtlasCompactOption -Number "3" -Name "Reiniciar Spooler"
+        Show-AtlasCompactOption -Number "4" -Name "Limpar fila"
+        Show-AtlasCompactOption -Number "5" -Name "Ver drivers"
+        Show-AtlasCompactOption -Number "6" -Name "Impressora TCP/IP"
+        Show-AtlasCompactOption -Number "7" -Name "Impressora compartilhada"
 
-        Show-AtlasMenuBackOption
+        Show-AtlasBackOption
         $opt = Read-AtlasMenuChoice
 
         switch ($opt) {

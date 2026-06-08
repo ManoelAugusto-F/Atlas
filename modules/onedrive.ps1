@@ -434,28 +434,19 @@ function Show-OneDriveMenu {
     $odRunning = $true
 
     while ($odRunning) {
-        Show-AtlasMenuHeader -Title "OneDrive"
+        Show-AtlasHeader -Title "OneDrive"
 
-        Show-AtlasMenuOption -Number "1" -Name "Verificar status do OneDrive" `
-            -Description "Mostra se o OneDrive esta aberto e sincronizando" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "2" -Name "Reiniciar OneDrive" `
-            -Description "Fecha e abre o OneDrive novamente" -Risk "baixo"
-        Show-AtlasMenuOption -Number "3" -Name "Resetar OneDrive" `
-            -Description "Restaura configuracoes padrao do OneDrive" -Risk "medio"
-        Show-AtlasMenuOption -Number "4" -Name "Abrir pasta do OneDrive" `
-            -Description "Abre a pasta sincronizada no Explorer" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "5" -Name "Abrir logs do OneDrive" `
-            -Description "Acessa registros para diagnostico avancado" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "6" -Name "Localizar executavel do OneDrive" `
-            -Description "Encontra onde o OneDrive esta instalado" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "7" -Name "Desinstalar OneDrive" `
-            -Description "Remove o OneDrive deste computador" -Risk "alto"
-        Show-AtlasMenuOption -Number "8" -Name "Remover residuos do OneDrive" `
-            -Description "Apaga pastas e arquivos antigos do OneDrive" -Risk "medio"
-        Show-AtlasMenuOption -Number "9" -Name "Pagina oficial para reinstalar" `
-            -Description "Abre o site da Microsoft para baixar novamente" -Risk "nenhum"
+        Show-AtlasCompactOption -Number "1" -Name "Ver status"
+        Show-AtlasCompactOption -Number "2" -Name "Reiniciar OneDrive"
+        Show-AtlasCompactOption -Number "3" -Name "Resetar OneDrive"
+        Show-AtlasCompactOption -Number "4" -Name "Abrir pasta local"
+        Show-AtlasCompactOption -Number "5" -Name "Abrir logs"
+        Show-AtlasCompactOption -Number "6" -Name "Localizar executavel"
+        Show-AtlasCompactOption -Number "7" -Name "Remover OneDrive"
+        Show-AtlasCompactOption -Number "8" -Name "Limpar residuos"
+        Show-AtlasCompactOption -Number "9" -Name "Reinstalar OneDrive"
 
-        Show-AtlasMenuBackOption
+        Show-AtlasBackOption
         $opt = Read-AtlasMenuChoice
 
         switch ($opt) {

@@ -332,24 +332,17 @@ function Show-TeamsMenu {
     $running = $true
 
     while ($running) {
-        Show-AtlasMenuHeader -Title "Microsoft Teams"
+        Show-AtlasHeader -Title "Teams"
 
-        Show-AtlasMenuOption -Number "1" -Name "Ver status do Teams" `
-            -Description "Mostra se o Teams esta aberto e instalado" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "2" -Name "Reiniciar Teams" `
-            -Description "Fecha e abre o Teams novamente" -Risk "baixo"
-        Show-AtlasMenuOption -Number "3" -Name "Limpar cache do Teams" `
-            -Description "Remove arquivos temporarios do Teams" -Risk "baixo"
-        Show-AtlasMenuOption -Number "4" -Name "Abrir pasta de cache" `
-            -Description "Acessa arquivos de cache para diagnostico" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "5" -Name "Detectar Teams Pessoal" `
-            -Description "Verifica instalacao da versao pessoal" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "6" -Name "Detectar Teams Corporativo" `
-            -Description "Verifica instalacao da versao corporativa" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "7" -Name "Remover Teams Pessoal" `
-            -Description "Desinstala a versao pessoal do Teams" -Risk "alto"
+        Show-AtlasCompactOption -Number "1" -Name "Ver status"
+        Show-AtlasCompactOption -Number "2" -Name "Reiniciar Teams"
+        Show-AtlasCompactOption -Number "3" -Name "Limpar cache"
+        Show-AtlasCompactOption -Number "4" -Name "Abrir pasta de cache"
+        Show-AtlasCompactOption -Number "5" -Name "Teams Pessoal"
+        Show-AtlasCompactOption -Number "6" -Name "Teams Corporativo"
+        Show-AtlasCompactOption -Number "7" -Name "Remover Teams Pessoal"
 
-        Show-AtlasMenuBackOption
+        Show-AtlasBackOption
         $option = Read-AtlasMenuChoice
 
         switch ($option) {

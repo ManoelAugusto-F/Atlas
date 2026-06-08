@@ -388,24 +388,17 @@ function Show-CleanupMenu {
     $cleanRunning = $true
 
     while ($cleanRunning) {
-        Show-AtlasMenuHeader -Title "Limpeza Segura"
+        Show-AtlasHeader -Title "Limpeza Segura"
 
-        Show-AtlasMenuOption -Number "1" -Name "Ver maiores pastas do perfil" `
-            -Description "Mostra quais pastas ocupam mais espaco" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "2" -Name "Ver maiores arquivos do perfil" `
-            -Description "Lista os arquivos individuais mais pesados" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "3" -Name "Limpar temporarios do usuario" `
-            -Description "Remove arquivos temporarios da sua conta" -Risk "baixo"
-        Show-AtlasMenuOption -Number "4" -Name "Limpar temporarios do Windows" `
-            -Description "Limpa C:\Windows\Temp (requer administrador)" -Risk "baixo"
-        Show-AtlasMenuOption -Number "5" -Name "Limpar cache do Windows Update" `
-            -Description "Remove downloads de atualizacoes ja instaladas" -Risk "medio"
-        Show-AtlasMenuOption -Number "6" -Name "Esvaziar lixeira" `
-            -Description "Remove permanentemente arquivos deletados" -Risk "baixo"
-        Show-AtlasMenuOption -Number "7" -Name "Limpeza segura completa" `
-            -Description "Executa varias limpezas com confirmacao em cada etapa" -Risk "medio"
+        Show-AtlasCompactOption -Number "1" -Name "Maiores pastas"
+        Show-AtlasCompactOption -Number "2" -Name "Maiores arquivos"
+        Show-AtlasCompactOption -Number "3" -Name "Temporarios do usuario"
+        Show-AtlasCompactOption -Number "4" -Name "Temporarios do Windows"
+        Show-AtlasCompactOption -Number "5" -Name "Cache Windows Update"
+        Show-AtlasCompactOption -Number "6" -Name "Esvaziar lixeira"
+        Show-AtlasCompactOption -Number "7" -Name "Limpeza completa"
 
-        Show-AtlasMenuBackOption
+        Show-AtlasBackOption
         $opt = Read-AtlasMenuChoice
 
         switch ($opt) {

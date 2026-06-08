@@ -599,6 +599,10 @@ Write-Host "[TESTE] Validando helpers de UI (core.ps1)" -ForegroundColor Magenta
 Write-Host "========================================" -ForegroundColor DarkCyan
 
 $uiFunctions = @(
+    'Show-AtlasHeader',
+    'Show-AtlasCompactOption',
+    'Show-AtlasDescribedOption',
+    'Show-AtlasBackOption',
     'Show-AtlasMenuHeader',
     'Show-AtlasMenuOption',
     'Show-AtlasMenuBackOption',

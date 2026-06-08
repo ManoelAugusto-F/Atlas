@@ -378,24 +378,17 @@ function Show-BrowserMenu {
     $running = $true
 
     while ($running) {
-        Show-AtlasMenuHeader -Title "Navegadores"
+        Show-AtlasHeader -Title "Navegadores"
 
-        Show-AtlasMenuOption -Number "1" -Name "Detectar navegadores instalados" `
-            -Description "Mostra Chrome, Edge e Firefox no computador" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "2" -Name "Ver perfis dos navegadores" `
-            -Description "Lista perfis e pastas de dados" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "3" -Name "Abrir pasta de perfil" `
-            -Description "Acessa dados de um navegador especifico" -Risk "nenhum"
-        Show-AtlasMenuOption -Number "4" -Name "Limpar cache Chrome" `
-            -Description "Remove arquivos temporarios do Google Chrome" -Risk "baixo"
-        Show-AtlasMenuOption -Number "5" -Name "Limpar cache Edge" `
-            -Description "Remove arquivos temporarios do Microsoft Edge" -Risk "baixo"
-        Show-AtlasMenuOption -Number "6" -Name "Limpar cache Firefox" `
-            -Description "Remove arquivos temporarios do Mozilla Firefox" -Risk "baixo"
-        Show-AtlasMenuOption -Number "7" -Name "Limpar cache de todos" `
-            -Description "Limpa cache de Chrome, Edge e Firefox" -Risk "baixo"
+        Show-AtlasCompactOption -Number "1" -Name "Detectar instalados"
+        Show-AtlasCompactOption -Number "2" -Name "Ver perfis"
+        Show-AtlasCompactOption -Number "3" -Name "Abrir pasta de perfil"
+        Show-AtlasCompactOption -Number "4" -Name "Limpar cache Chrome"
+        Show-AtlasCompactOption -Number "5" -Name "Limpar cache Edge"
+        Show-AtlasCompactOption -Number "6" -Name "Limpar cache Firefox"
+        Show-AtlasCompactOption -Number "7" -Name "Limpar todos os caches"
 
-        Show-AtlasMenuBackOption
+        Show-AtlasBackOption
         $option = Read-AtlasMenuChoice
 
         switch ($option) {
