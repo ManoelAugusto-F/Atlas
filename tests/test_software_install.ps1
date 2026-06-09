@@ -15,7 +15,6 @@ Write-Host ""
 $functions = @(
     'Show-SoftwareInstallMenu',
     'Test-WingetAvailable',
-    'Invoke-WingetWithLoading',
     'Install-SoftwareByWingetSafe',
     'Get-SoftwareCatalog',
     'Get-SoftwareCategory',
@@ -140,15 +139,19 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     $installBody = $Matches[1]
 
     $requiredInstall = @(
-        'Invoke-WingetWithLoading',
-        'install --id',
+        'winget install',
         '--exact',
         '--accept-source-agreements',
         '--accept-package-agreements',
-        'ATLAS - INSTALACAO',
+        '*> $null',
+        '$LASTEXITCODE',
+        'Instalando',
+        'Aguarde...',
         '[OK] Instalacao concluida:',
-        '[ERRO] Falha na instalacao:',
-        'Verifique o log do Winget em:'
+        '[ERRO] Nao foi possivel instalar:',
+        'Codigo de saida:',
+        'Tente executar manualmente:',
+        'winget install --id'
     )
 
     foreach ($token in $requiredInstall) {
@@ -161,10 +164,14 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     }
 
     $forbiddenInstall = @(
+        'Invoke-WingetWithLoading',
         'Invoke-WingetVisible',
+        'Start-Process',
         '$env:ComSpec',
-        '/c',
-        '& winget install',
+        'RedirectStandardOutput',
+        'RedirectStandardError',
+        'winget_',
+        'Executando Winget',
         '--output json',
         'ConvertFrom-Json',
         'Parse-WingetUpgradeList',
@@ -182,49 +189,15 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
 }
 
 Write-Host ""
-Write-Host "[TESTE] Invoke-WingetWithLoading (analise de arquivo)" -ForegroundColor Magenta
+Write-Host "[TESTE] Funcoes winget removidas (analise de arquivo)" -ForegroundColor Magenta
 
-if ($moduleText -notmatch '(?s)function Invoke-WingetWithLoading\s*\{(.+?)\r?\nfunction ') {
-    Write-Host "  [FAIL] Nao foi possivel extrair Invoke-WingetWithLoading" -ForegroundColor Red
-    $allOk = $false
-} else {
-    $wingetLoadingBody = $Matches[1]
-
-    $requiredLoading = @(
-        'Start-Process',
-        'RedirectStandardOutput',
-        'RedirectStandardError',
-        'ExitCode',
-        'Executando Winget...',
-        'Atlas\Logs',
-        'winget_'
-    )
-
-    foreach ($token in $requiredLoading) {
-        if ($wingetLoadingBody -match [regex]::Escape($token)) {
-            Write-Host "  [OK] Contem: $token" -ForegroundColor Green
-        } else {
-            Write-Host "  [FAIL] Ausente: $token" -ForegroundColor Red
-            $allOk = $false
-        }
-    }
-
-    $forbiddenLoading = @(
-        '$env:ComSpec',
-        '/c',
-        'ConvertFrom-Json',
-        '--output json',
-        'Parse-WingetUpgradeList',
-        'Update-WingetPackageVisible'
-    )
-
-    foreach ($token in $forbiddenLoading) {
-        if ($wingetLoadingBody -match [regex]::Escape($token)) {
-            Write-Host "  [FAIL] Proibido em Invoke-WingetWithLoading: $token" -ForegroundColor Red
-            $allOk = $false
-        } else {
-            Write-Host "  [OK] Ausente (correto): $token" -ForegroundColor Green
-        }
+$removedWingetFns = @('Invoke-WingetWithLoading', 'Invoke-WingetVisible')
+foreach ($fn in $removedWingetFns) {
+    if ($moduleText -match "function $fn\s*\{") {
+        Write-Host "  [FAIL] Funcao ainda presente: $fn" -ForegroundColor Red
+        $allOk = $false
+    } else {
+        Write-Host "  [OK] Funcao removida: $fn" -ForegroundColor Green
     }
 }
 

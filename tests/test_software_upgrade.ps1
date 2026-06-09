@@ -13,7 +13,6 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 $functions = @(
-    'Invoke-WingetWithLoading',
     'Get-WingetAvailableUpgrades',
     'Update-InstalledSoftwareSafe'
 )
@@ -29,6 +28,7 @@ foreach ($fn in $functions) {
 }
 
 $removed = @(
+    'Invoke-WingetWithLoading',
     'Invoke-WingetVisible',
     'Get-WingetUpgradeListText',
     'Parse-WingetUpgradeList',
@@ -60,14 +60,18 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
     $upgradeBody = $Matches[1]
 
     $requiredUpgrade = @(
-        'Invoke-WingetWithLoading',
-        'upgrade --all --accept-source-agreements --accept-package-agreements',
-        'Esta opcao executa:',
         'winget upgrade --all',
-        'Executar atualizacao dos programas agora? [S/N]',
-        '[OK] Atualizacao concluida pelo Winget.',
-        '[ERRO] Atualizacao finalizada com erro ou cancelamento.',
-        'Verifique o log do Winget em:'
+        '--accept-source-agreements',
+        '--accept-package-agreements',
+        '*> $null',
+        '$LASTEXITCODE',
+        'Esta opcao executa a atualizacao de programas via Winget.',
+        'Executar atualizacao agora? [S/N]',
+        'Atualizando programas. Aguarde...',
+        '[OK] Atualizacao concluida.',
+        '[ERRO] Nao foi possivel concluir a atualizacao.',
+        'Codigo de saida:',
+        'Tente executar manualmente:'
     )
 
     foreach ($token in $requiredUpgrade) {
@@ -80,11 +84,14 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
     }
 
     $forbiddenUpgrade = @(
+        'Invoke-WingetWithLoading',
         'Invoke-WingetVisible',
+        'Start-Process',
         '$env:ComSpec',
-        '/c',
-        'upgrade --accept-source-agreements',
-        '& winget upgrade',
+        'RedirectStandardOutput',
+        'RedirectStandardError',
+        'winget_',
+        'Executando Winget',
         '--output json',
         'ConvertFrom-Json',
         'Parse-WingetUpgradeList',

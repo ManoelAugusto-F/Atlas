@@ -118,83 +118,6 @@ function script:Test-WingetPackageExists {
     return ($LASTEXITCODE -eq 0)
 }
 
-function script:Set-WingetConsoleEncoding {
-    try {
-        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-        $OutputEncoding = [System.Text.Encoding]::UTF8
-    } catch { }
-
-    try {
-        chcp 65001 > $null
-    } catch { }
-}
-
-function Invoke-WingetWithLoading {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Arguments,
-        [Parameter(Mandatory = $true)]
-        [string]$ActionName
-    )
-
-    $script:LastWingetLogPath = $null
-
-    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-AtlasError "winget nao encontrado. Instale o App Installer da Microsoft Store."
-        return 1
-    }
-
-    $logDir = Join-Path $env:ProgramData "Atlas\Logs"
-    if (-not (Test-Path $logDir)) {
-        New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-    }
-
-    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    $logPath = Join-Path $logDir "winget_$timestamp.log"
-    $errPath = Join-Path $logDir "winget_$timestamp.err"
-    $script:LastWingetLogPath = $logPath
-
-    Write-Host ""
-    Write-Host $ActionName -ForegroundColor Cyan
-    Write-Host ""
-
-    $process = Start-Process -FilePath "winget" `
-        -ArgumentList $Arguments `
-        -RedirectStandardOutput $logPath `
-        -RedirectStandardError $errPath `
-        -PassThru `
-        -WindowStyle Hidden
-
-    $spinner = @('|', '/', '-', '\')
-    $i = 0
-    while (-not $process.HasExited) {
-        $frame = $spinner[$i % $spinner.Length]
-        Write-Host "`rExecutando Winget... $frame" -NoNewline -ForegroundColor Gray
-        $i++
-        Start-Sleep -Milliseconds 200
-    }
-
-    $process.WaitForExit() | Out-Null
-    $exitCode = $process.ExitCode
-    if ($null -eq $exitCode) { $exitCode = 1 }
-
-    if (Test-Path $errPath) {
-        $errContent = Get-Content -Path $errPath -Raw -ErrorAction SilentlyContinue
-        if ($errContent) {
-            Add-Content -Path $logPath -Value "`n--- STDERR ---`n$errContent"
-        }
-        Remove-Item -Path $errPath -Force -ErrorAction SilentlyContinue
-    }
-
-    Write-Host "`r$(' ' * 40)`r" -NoNewline
-
-    if ($exitCode -ne 0) {
-        Write-Host "Verifique o log do Winget em: $logPath" -ForegroundColor Yellow
-    }
-
-    return $exitCode
-}
-
 function Install-SoftwareByWingetSafe {
     param(
         [string]$PackageId,
@@ -246,24 +169,26 @@ function Install-SoftwareByWingetSafe {
     }
 
     Write-AtlasSessionLog -Message "Instalacao winget iniciada" -Level "ACTION"
-    Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Instalacao" -Resultado "Iniciado"
+    Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao $DisplayName -Resultado "Iniciado"
 
-    $exitCode = Invoke-WingetWithLoading `
-        -ActionName "Instalando $DisplayName" `
-        -Arguments "install --id `"$PackageId`" --exact --accept-source-agreements --accept-package-agreements"
+    Write-Host ""
+    Write-Host "Instalando $DisplayName. Aguarde..."
+
+    & winget install --id $PackageId --exact --accept-source-agreements --accept-package-agreements *> $null
+    $exitCode = $LASTEXITCODE
 
     Write-Host ""
     if ($exitCode -eq 0) {
         Write-Host "[OK] Instalacao concluida: $DisplayName" -ForegroundColor Green
         Write-AtlasSessionLog -Message "Instalacao winget concluida" -Level "ACTION"
-        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao $DisplayName -Resultado "Sucesso"
+        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao $DisplayName -Resultado "Sucesso codigo $exitCode"
         return $true
     }
 
-    Write-Host "[ERRO] Falha na instalacao: $DisplayName" -ForegroundColor Red
-    if ($script:LastWingetLogPath) {
-        Write-Host "Verifique o log do Winget em: $script:LastWingetLogPath" -ForegroundColor Yellow
-    }
+    Write-Host "[ERRO] Nao foi possivel instalar: $DisplayName" -ForegroundColor Red
+    Write-Host "Codigo de saida: $exitCode" -ForegroundColor Yellow
+    Write-Host "Tente executar manualmente:" -ForegroundColor Yellow
+    Write-Host "winget install --id $PackageId --exact" -ForegroundColor Gray
     Write-AtlasSessionLog -Message "Instalacao winget falhou codigo $exitCode" -Level "ERROR"
     Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao $DisplayName -Resultado "Falha codigo $exitCode"
     return $false
@@ -587,12 +512,9 @@ function Get-WingetAvailableUpgrades {
         return $null
     }
 
-    $exitCode = Invoke-WingetWithLoading `
-        -ActionName "Verificando atualizacoes disponiveis" `
-        -Arguments "upgrade --accept-source-agreements"
+    & winget upgrade --accept-source-agreements *> $null
     return [PSCustomObject]@{
-        ExitCode = $exitCode
-        LogPath  = $script:LastWingetLogPath
+        ExitCode = $LASTEXITCODE
     }
 }
 
@@ -611,14 +533,9 @@ function Update-InstalledSoftwareSafe {
     }
 
     Write-Host ""
-    Write-Host "==========================================" -ForegroundColor Cyan
-    Write-Host "      ATLAS - ATUALIZACAO DE PROGRAMAS" -ForegroundColor Cyan
-    Write-Host "==========================================" -ForegroundColor Cyan
+    Write-Host "Esta opcao executa a atualizacao de programas via Winget."
     Write-Host ""
-    Write-Host "Esta opcao executa:"
-    Write-Host "winget upgrade --all"
-    Write-Host ""
-    Write-Host "Executar atualizacao dos programas agora? [S/N]: " -NoNewline
+    Write-Host "Executar atualizacao agora? [S/N]: " -NoNewline
     $resp = Read-Host
     if ($resp -notmatch '^[sS]$') {
         Write-Host "Operacao cancelada." -ForegroundColor Gray
@@ -630,22 +547,24 @@ function Update-InstalledSoftwareSafe {
     Write-AtlasSessionLog -Message "Atualizacao winget iniciada" -Level "ACTION"
     Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizacao" -Resultado "Iniciado"
 
-    $exitCode = Invoke-WingetWithLoading `
-        -ActionName "Atualizando programas instalados" `
-        -Arguments "upgrade --all --accept-source-agreements --accept-package-agreements"
+    Write-Host ""
+    Write-Host "Atualizando programas. Aguarde..."
+
+    & winget upgrade --all --accept-source-agreements --accept-package-agreements *> $null
+    $exitCode = $LASTEXITCODE
 
     Write-Host ""
     if ($exitCode -eq 0) {
-        Write-Host "[OK] Atualizacao concluida pelo Winget." -ForegroundColor Green
+        Write-Host "[OK] Atualizacao concluida." -ForegroundColor Green
         Write-AtlasSessionLog -Message "Atualizacao winget concluida" -Level "ACTION"
-        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizacao" -Resultado "Sucesso"
+        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizacao" -Resultado "Sucesso codigo $exitCode"
         return $true
     }
 
-    Write-Host "[ERRO] Atualizacao finalizada com erro ou cancelamento." -ForegroundColor Red
-    if ($script:LastWingetLogPath) {
-        Write-Host "Verifique o log do Winget em: $script:LastWingetLogPath" -ForegroundColor Yellow
-    }
+    Write-Host "[ERRO] Nao foi possivel concluir a atualizacao." -ForegroundColor Red
+    Write-Host "Codigo de saida: $exitCode" -ForegroundColor Yellow
+    Write-Host "Tente executar manualmente:" -ForegroundColor Yellow
+    Write-Host "winget upgrade --all --accept-source-agreements --accept-package-agreements" -ForegroundColor Gray
     Write-AtlasSessionLog -Message "Atualizacao winget falhou codigo $exitCode" -Level "ERROR"
     Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizacao" -Resultado "Falha codigo $exitCode"
     return $false
