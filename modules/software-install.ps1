@@ -112,178 +112,6 @@ function script:Test-WingetPackageExists {
     return ($LASTEXITCODE -eq 0)
 }
 
-function ConvertFrom-WingetUpgradeJson {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$JsonText
-    )
-
-    $entries = @()
-    if (-not $JsonText -or -not ($JsonText.Trim())) {
-        return $entries
-    }
-
-    $obj = $JsonText | ConvertFrom-Json
-    if (-not $obj.Sources) {
-        return $entries
-    }
-
-    foreach ($source in @($obj.Sources)) {
-        $packages = $null
-        if ($source.PSObject.Properties['Packages']) {
-            $packages = @($source.Packages)
-        } elseif ($source.PSObject.Properties['Upgrades']) {
-            $packages = @($source.Upgrades)
-        }
-
-        if (-not $packages) { continue }
-
-        foreach ($pkg in $packages) {
-            if (-not $pkg.Id) { continue }
-            $entries += [PSCustomObject]@{
-                Name             = $pkg.Name
-                Id               = $pkg.Id
-                Version          = $pkg.Version
-                AvailableVersion = $pkg.AvailableVersion
-            }
-        }
-    }
-
-    return $entries
-}
-
-function Get-WingetUpgradeEntries {
-    Write-AtlasSessionLog -Message "Consulta winget upgrade (JSON)" -Level "ACTION"
-
-    if (-not (script:Test-IsWindowsSoftwareInstall)) {
-        Write-AtlasWarning "Atualizacao via winget disponivel apenas no Windows."
-        return @()
-    }
-
-    $wingetCheck = Test-WingetAvailable
-    if (-not $wingetCheck.Available) {
-        Write-AtlasError $wingetCheck.Message
-        return @()
-    }
-
-    try {
-        Write-AtlasProgress "Verificando atualizacoes disponiveis..."
-        $rawOutput = & winget upgrade --include-unknown --disable-interactivity `
-            --accept-source-agreements --output json 2>&1 | Out-String
-
-        $jsonStart = $rawOutput.IndexOf('{')
-        if ($jsonStart -lt 0) {
-            Write-AtlasSessionLog -Message "winget upgrade JSON nao encontrado na saida" -Level "WARN"
-            return @()
-        }
-
-        $jsonText = $rawOutput.Substring($jsonStart).Trim()
-        $entries = ConvertFrom-WingetUpgradeJson -JsonText $jsonText
-        Write-AtlasSessionLog -Message "winget upgrade: $($entries.Count) pacote(s) pendente(s)" -Level "INFO"
-        return $entries
-    } catch {
-        Write-AtlasSessionLog -Message "Erro ao consultar winget upgrade: $_" -Level "ERROR"
-        Write-Log -Message "Erro Get-WingetUpgradeEntries: $_" -Level "ERROR"
-        return @()
-    }
-}
-
-function Show-WingetUpgradePreview {
-    param(
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyCollection()]
-        [array]$Upgrades
-    )
-
-    Show-AtlasHeader -Title "Atualizacoes"
-
-    if (-not $Upgrades -or $Upgrades.Count -eq 0) {
-        Write-AtlasInfo "Nenhuma atualizacao disponivel."
-        Write-Host ""
-        return
-    }
-
-    Write-Host "Programas com atualizacao disponivel:" -ForegroundColor White
-    Write-Host ""
-
-    for ($i = 0; $i -lt $Upgrades.Count; $i++) {
-        $item = $Upgrades[$i]
-        $num = $i + 1
-        $prefix = if ($num -lt 10) { ' ' } else { '' }
-        Write-Host -NoNewline "${prefix}[$num] "
-        Write-Host $item.Name -ForegroundColor White
-        Write-Host "     $($item.Version) -> $($item.AvailableVersion)" -ForegroundColor White
-        Write-Host ""
-    }
-
-    Write-Host ('=' * 42) -ForegroundColor Cyan
-    Write-Host "Total: $($Upgrades.Count) atualizacao(oes) disponivel(is)" -ForegroundColor White
-    Write-Host ('=' * 42) -ForegroundColor Cyan
-    Write-Host ""
-}
-
-function script:Show-AtlasUpgradeActionHeader {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$ProgramName
-    )
-
-    Write-Host ""
-    Write-Host ('=' * 42) -ForegroundColor Cyan
-    Write-Host " Atualizando:" -ForegroundColor Cyan
-    Write-Host " $ProgramName" -ForegroundColor White
-    Write-Host ('=' * 42) -ForegroundColor Cyan
-    Write-Host ""
-}
-
-function script:Show-AtlasUpgradeSummary {
-    param(
-        [array]$SuccessItems,
-        [array]$FailedItems,
-        [TimeSpan]$Elapsed
-    )
-
-    Write-Host ""
-    Write-Host ('=' * 42) -ForegroundColor Cyan
-    Write-Host (Format-AtlasCenteredText -Text "RESUMO") -ForegroundColor Cyan
-    Write-Host ('=' * 42) -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Sucesso:" -ForegroundColor Green
-    Write-Host ""
-
-    if ($SuccessItems -and $SuccessItems.Count -gt 0) {
-        foreach ($item in $SuccessItems) {
-            Write-Host "[OK] $item" -ForegroundColor Green
-        }
-    } else {
-        Write-Host "[OK] Nenhuma" -ForegroundColor Green
-    }
-
-    Write-Host ""
-    Write-Host "Falha:" -ForegroundColor Red
-    Write-Host ""
-
-    if ($FailedItems -and $FailedItems.Count -gt 0) {
-        foreach ($item in $FailedItems) {
-            Write-Host "[X] $item" -ForegroundColor Red
-        }
-    } else {
-        Write-Host "[X] Nenhuma" -ForegroundColor White
-    }
-
-    $hours = [int][math]::Floor($Elapsed.TotalHours)
-    $minutes = $Elapsed.Minutes
-    $seconds = $Elapsed.Seconds
-    $timeLabel = '{0:00}:{1:00}:{2:00}' -f $hours, $minutes, $seconds
-
-    Write-Host ""
-    Write-Host "Tempo total:" -ForegroundColor White
-    Write-Host $timeLabel -ForegroundColor White
-    Write-Host ""
-    Write-Host ('=' * 42) -ForegroundColor Cyan
-    Write-Host ""
-}
-
 function Install-SoftwareByWingetSafe {
     param(
         [string]$PackageId,
@@ -677,16 +505,6 @@ function Show-Microsoft365Menu {
     }
 }
 
-function Get-WingetAvailableUpgrades {
-    $entries = Get-WingetUpgradeEntries
-
-    return [PSCustomObject]@{
-        ExitCode = $(if ($entries.Count -gt 0) { 0 } else { -1 })
-        Upgrades = @($entries)
-        Count    = @($entries).Count
-    }
-}
-
 function Update-InstalledSoftwareSafe {
     Write-AtlasSessionLog -Message "Atualizacao de programas instalados solicitada" -Level "ACTION"
 
@@ -701,64 +519,40 @@ function Update-InstalledSoftwareSafe {
         return $false
     }
 
-    $upgrades = @(Get-WingetUpgradeEntries)
+    Show-AtlasHeader -Title "Atualizacao de Programas"
+    Write-Host "O Atlas vai executar o Winget nativo para verificar e atualizar programas." -ForegroundColor White
+    Write-Host ""
 
-    if ($upgrades.Count -eq 0) {
-        Write-AtlasInfo "Nenhuma atualizacao disponivel."
-        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Nenhuma atualizacao disponivel"
-        Write-AtlasSessionLog -Message "Nenhuma atualizacao disponivel" -Level "INFO"
-        return $true
-    }
-
-    Show-WingetUpgradePreview -Upgrades $upgrades
-
-    Write-Host "Deseja atualizar? [S/N]: " -NoNewline -ForegroundColor White
+    Write-Host "Deseja executar a atualizacao agora? [S/N]: " -NoNewline -ForegroundColor White
     $resp = Read-Host
     if ($resp -notmatch '^[sS]$') {
         Write-AtlasInfo "Operacao cancelada."
+        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Cancelado pelo usuario"
         Write-AtlasSessionLog -Message "Atualizacao winget cancelada pelo usuario" -Level "INFO"
         return $false
     }
 
-    $startedAt = Get-Date
-    $successList = New-Object System.Collections.Generic.List[string]
-    $failedList = New-Object System.Collections.Generic.List[string]
+    Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Iniciado"
+    Write-AtlasSessionLog -Message "Executando winget upgrade --all" -Level "ACTION"
 
-    foreach ($upgrade in $upgrades) {
-        script:Show-AtlasUpgradeActionHeader -ProgramName $upgrade.Name
-        Write-AtlasStep "Executando winget upgrade para $($upgrade.Id)..."
-        Write-AtlasSessionLog -Message "winget upgrade: $($upgrade.Id)" -Level "ACTION"
-
-        try {
-            & winget upgrade --id $upgrade.Id --exact `
-                --accept-source-agreements --accept-package-agreements
-            $exitCode = $LASTEXITCODE
-            Write-AtlasSessionLog -Message "winget upgrade $($upgrade.Id) codigo $exitCode" -Level "INFO"
-
-            if ($exitCode -eq 0) {
-                $successList.Add($upgrade.Name)
-                Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar $($upgrade.Name)" -Resultado "Sucesso"
-            } else {
-                $failedList.Add($upgrade.Name)
-                Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar $($upgrade.Name)" -Resultado "Falha"
-            }
-        } catch {
-            $failedList.Add($upgrade.Name)
-            Write-AtlasSessionLog -Message "Erro winget upgrade $($upgrade.Id): $_" -Level "ERROR"
-            Write-Log -Message "Erro winget upgrade $($upgrade.Id): $_" -Level "ERROR"
-            Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar $($upgrade.Name)" -Resultado "Falha"
-        }
+    try {
+        & winget upgrade --all --accept-source-agreements --accept-package-agreements --verbose-logs
+        $exitCode = $LASTEXITCODE
+    } catch {
+        Write-AtlasSessionLog -Message "Erro winget upgrade --all: $_" -Level "ERROR"
+        Write-Log -Message "Erro winget upgrade --all: $_" -Level "ERROR"
+        Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Falha"
+        return $false
     }
 
-    $elapsed = (Get-Date) - $startedAt
-    script:Show-AtlasUpgradeSummary -SuccessItems @($successList) -FailedItems @($failedList) -Elapsed $elapsed
-
-    if ($failedList.Count -eq 0) {
-        Write-AtlasSessionLog -Message "Atualizacao winget concluida ($($successList.Count) pacotes)" -Level "ACTION"
+    if ($exitCode -eq 0) {
+        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Sucesso"
+        Write-AtlasSessionLog -Message "winget upgrade --all concluido (codigo 0)" -Level "ACTION"
         return $true
     }
 
-    Write-AtlasSessionLog -Message "Atualizacao winget parcial: $($successList.Count) ok, $($failedList.Count) falha(s)" -Level "WARN"
+    Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Falha"
+    Write-AtlasSessionLog -Message "winget upgrade --all codigo $exitCode" -Level "WARN"
     return $false
 }
 
