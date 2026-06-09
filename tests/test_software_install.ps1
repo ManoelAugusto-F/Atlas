@@ -27,6 +27,9 @@ $functions = @(
     'Repair-Microsoft365Safe',
     'Open-Microsoft365InstallPage',
     'Show-Microsoft365Menu',
+    'Get-WingetUpgradeListText',
+    'Parse-WingetUpgradeList',
+    'Update-WingetPackageVisible',
     'Update-InstalledSoftwareSafe',
     'Export-SoftwareInventory',
     'Test-WingetCatalogItem',
@@ -132,10 +135,35 @@ if ($installSource -match 'Show-AtlasHeader -Title "Instalacao"') {
     Write-Host "  [FAIL] Cabecalho visual de instalacao ausente" -ForegroundColor Red
     $allOk = $false
 }
-if ($installSource -match 'Write-AtlasResult') {
+if ($installSource -match '\[OK\] Instalacao concluida:') {
     Write-Host "  [OK] Resultado amigavel de instalacao" -ForegroundColor Green
 } else {
     Write-Host "  [FAIL] Resultado amigavel ausente" -ForegroundColor Red
+    $allOk = $false
+}
+if ($installSource -match 'winget install --id') {
+    Write-Host "  [OK] Instalacao usa winget install --id" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Instalacao sem winget install --id" -ForegroundColor Red
+    $allOk = $false
+}
+if ($installSource -match 'winget install.*--exact') {
+    Write-Host "  [OK] Instalacao usa --exact" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Instalacao sem --exact" -ForegroundColor Red
+    $allOk = $false
+}
+$installBlock = (($installSource -split 'function Install-SoftwareByWingetSafe')[1] -split 'function Install-RsatFullSafe')[0]
+if ($installBlock -match '--verbose-logs') {
+    Write-Host "  [OK] Instalacao usa --verbose-logs" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Instalacao sem --verbose-logs" -ForegroundColor Red
+    $allOk = $false
+}
+if ($installSource -match 'ID Winget:') {
+    Write-Host "  [OK] Cabecalho exibe ID Winget" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Cabecalho sem ID Winget" -ForegroundColor Red
     $allOk = $false
 }
 if ($installSource -notmatch 'winget install.*Out-Null') {

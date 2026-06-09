@@ -27,40 +27,55 @@ function Test-Assert {
     }
 }
 
-Test-Assert ([bool](Get-Command Update-InstalledSoftwareSafe -ErrorAction SilentlyContinue)) "Funcao Update-InstalledSoftwareSafe"
-Test-Assert ([bool](Get-Command Show-SoftwareInstallMenu -ErrorAction SilentlyContinue)) "Funcao Show-SoftwareInstallMenu"
-
-$removed = @(
-    'ConvertFrom-WingetUpgradeJson',
-    'Get-WingetUpgradeEntries',
-    'Get-WingetAvailableUpgrades',
-    'Show-WingetUpgradePreview'
+$required = @(
+    'Get-WingetUpgradeListText',
+    'Parse-WingetUpgradeList',
+    'Update-WingetPackageVisible',
+    'Show-WingetUpgradeSummary',
+    'Update-InstalledSoftwareSafe',
+    'Show-SoftwareInstallMenu'
 )
 
-foreach ($fn in $removed) {
-    Test-Assert (-not (Get-Command $fn -ErrorAction SilentlyContinue)) "Funcao removida: $fn"
+foreach ($fn in $required) {
+    Test-Assert ([bool](Get-Command $fn -ErrorAction SilentlyContinue)) "Funcao $fn"
 }
+
+$sampleList = @'
+Nome                   ID                               Versão               Disponível           Origem
+--------------------------------------------------------------------------------------------------------
+Notepad++ (64-bit x64) Notepad++.Notepad++              8.9.6                8.9.6.4              winget
+Google Chrome          Google.Chrome                    149.0.7827.102       149.0.7827.103       winget
+7 atualizações disponíveis.
+Nome  ID          Versão   Disponível Origem
+--------------------------------------------
+MSYS2 MSYS2.MSYS2 20251213 20260322   winget
+'@
+
+$parsed = @(Parse-WingetUpgradeList -Text $sampleList)
+Test-Assert ($parsed.Count -ge 3) "Parser extrai pacotes da saida textual"
+Test-Assert ($parsed[0].Id -eq 'Notepad++.Notepad++') "Parser extrai ID Winget"
+Test-Assert ($parsed[0].Name -match 'Notepad') "Parser extrai nome do programa"
+Test-Assert ($parsed[0].Version -eq '8.9.6') "Parser extrai versao atual"
+Test-Assert ($parsed[0].AvailableVersion -eq '8.9.6.4') "Parser extrai versao disponivel"
 
 $source = Get-Content -Path (Join-Path $PSScriptRoot "../modules/software-install.ps1") -Raw
 
-Test-Assert ($source -match 'winget upgrade --all') "Comando winget upgrade --all"
+Test-Assert ($source -match 'winget upgrade --accept-source-agreements') "Lista inicial via winget upgrade"
+Test-Assert ($source -match 'Deseja atualizar todos os programas listados') "Confirmacao apos listagem"
+Test-Assert ($source -match 'Atualizando \$Index/\$Total') "Progresso Atualizando N/M"
+Test-Assert ($source -match 'winget upgrade --id') "Atualizacao individual por ID"
+Test-Assert ($source -match 'winget upgrade --all') "Fallback winget upgrade --all"
+Test-Assert ($source -match '--exact') "Flag --exact"
 Test-Assert ($source -match '--accept-source-agreements') "Flag --accept-source-agreements"
 Test-Assert ($source -match '--accept-package-agreements') "Flag --accept-package-agreements"
 Test-Assert ($source -match '--verbose-logs') "Flag --verbose-logs"
-Test-Assert ($source -match 'Show-AtlasHeader -Title "Atualizacao de Programas"') "Cabecalho de atualizacao"
-Test-Assert ($source -match 'Deseja executar a atualizacao agora') "Confirmacao antes do Winget"
-Test-Assert ($source -match 'Resultado "Iniciado"') "Log Iniciado"
-Test-Assert ($source -match 'Resultado "Sucesso"') "Log Sucesso"
-Test-Assert ($source -match 'Resultado "Falha"') "Log Falha"
-Test-Assert ($source -match 'Resultado "Cancelado pelo usuario"') "Log cancelamento"
+Test-Assert ($source -match 'Show-WingetUpgradeSummary') "Resumo final implementado"
 Test-Assert ($source -notmatch '--output json') "Sem --output json"
-Test-Assert ($source -notmatch 'ConvertFrom-WingetUpgradeJson') "Sem parser JSON de upgrades"
-Test-Assert ($source -notmatch 'Get-WingetUpgradeEntries') "Sem Get-WingetUpgradeEntries"
-Test-Assert ($source -notmatch '\[array\]\$Upgrades') "Sem parametro -Upgrades"
-Test-Assert ($source -notmatch 'Nenhuma atualizacao disponivel') "Sem mensagem prematura de lista vazia"
-Test-Assert ($source -notmatch 'winget upgrade --all.*Out-Null') "Saida do winget upgrade nao ocultada"
+$upgradeBlock = (($source -split 'function Update-InstalledSoftwareSafe')[1] -split 'function Export-SoftwareInventory')[0]
+Test-Assert ($upgradeBlock -notmatch 'ConvertFrom-Json') "Sem ConvertFrom-Json no fluxo de atualizacao"
+Test-Assert ($source -notmatch 'winget upgrade --id.*Out-Null') "Saida do upgrade por pacote nao ocultada"
+Test-Assert ($source -notmatch 'winget upgrade --all.*Out-Null') "Saida do fallback --all nao ocultada"
 Test-Assert ($source -match 'Show-AtlasHeader -Title "Instalacao de Programas"') "Menu abre diretamente por categorias"
-Test-Assert ($source -notmatch 'Show-SoftwareInstallProgramMenu') "Submenu intermediario removido"
 Test-Assert ($source -match 'Atualizar programas instalados') "Opcao atualizar no menu"
 
 Write-Host ""
