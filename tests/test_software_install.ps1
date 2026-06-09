@@ -113,93 +113,77 @@ if ($IsWindows -or $env:OS -eq 'Windows_NT') {
 
 Write-Host ""
 Write-Host "[TESTE] Visual de instalacao (software-install.ps1)" -ForegroundColor Magenta
-$installSource = Get-Content -Path (Join-Path $PSScriptRoot "../modules/software-install.ps1") -Raw
-if ($installSource -match 'Show-AtlasHeader -Title "Instalacao de Programas"') {
+$modulePath = Join-Path $PSScriptRoot "../modules/software-install.ps1"
+$moduleText = Get-Content $modulePath -Raw
+
+if ($moduleText -match 'Show-AtlasHeader -Title "Instalacao de Programas"') {
     Write-Host "  [OK] Menu abre diretamente por categorias" -ForegroundColor Green
 } else {
     Write-Host "  [FAIL] Menu nao exibe categorias diretamente" -ForegroundColor Red
     $allOk = $false
 }
-if ($installSource -notmatch 'Show-SoftwareInstallProgramMenu') {
+if ($moduleText -notmatch 'Show-SoftwareInstallProgramMenu') {
     Write-Host "  [OK] Submenu intermediario removido" -ForegroundColor Green
 } else {
     Write-Host "  [FAIL] Submenu intermediario ainda presente" -ForegroundColor Red
     $allOk = $false
 }
-if ($installSource -match 'Show-AtlasHeader -Title "Instalacao"') {
-    Write-Host "  [OK] Cabecalho visual de instalacao" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Cabecalho visual de instalacao ausente" -ForegroundColor Red
-    $allOk = $false
-}
-$installBlock = (($installSource -split 'function Install-SoftwareByWingetSafe')[1] -split 'function Install-RsatFullSafe')[0]
 
-if ($installBlock -match '\[OK\] Instalacao concluida') {
-    Write-Host "  [OK] Resultado amigavel de instalacao" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Resultado amigavel ausente" -ForegroundColor Red
+Write-Host ""
+Write-Host "[TESTE] Fluxo nativo Install-SoftwareByWingetSafe (analise de arquivo)" -ForegroundColor Magenta
+
+if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r?\nfunction ') {
+    Write-Host "  [FAIL] Nao foi possivel extrair Install-SoftwareByWingetSafe" -ForegroundColor Red
     $allOk = $false
-}
-if ($installBlock -match 'winget install --id') {
-    Write-Host "  [OK] Instalacao usa winget install --id" -ForegroundColor Green
 } else {
-    Write-Host "  [FAIL] Instalacao sem winget install --id" -ForegroundColor Red
-    $allOk = $false
-}
-if ($installBlock -match '--exact') {
-    Write-Host "  [OK] Instalacao usa --exact" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Instalacao sem --exact" -ForegroundColor Red
-    $allOk = $false
-}
-if ($installBlock -match '--accept-source-agreements') {
-    Write-Host "  [OK] Instalacao usa --accept-source-agreements" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Instalacao sem --accept-source-agreements" -ForegroundColor Red
-    $allOk = $false
-}
-if ($installBlock -match '--accept-package-agreements') {
-    Write-Host "  [OK] Instalacao usa --accept-package-agreements" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Instalacao sem --accept-package-agreements" -ForegroundColor Red
-    $allOk = $false
-}
-if ($installBlock -notmatch '--verbose-logs') {
-    Write-Host "  [OK] Instalacao sem --verbose-logs" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Instalacao usa --verbose-logs" -ForegroundColor Red
-    $allOk = $false
-}
-if ($installBlock -notmatch '--silent') {
-    Write-Host "  [OK] Instalacao sem --silent" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Instalacao usa --silent" -ForegroundColor Red
-    $allOk = $false
-}
-if ($installBlock -notmatch 'winget install.*--disable-interactivity') {
-    Write-Host "  [OK] Instalacao sem --disable-interactivity" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Instalacao usa --disable-interactivity" -ForegroundColor Red
-    $allOk = $false
-}
-if ($installBlock -match 'ID Winget:') {
-    Write-Host "  [OK] Cabecalho exibe ID Winget" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Cabecalho sem ID Winget" -ForegroundColor Red
-    $allOk = $false
-}
-if ($installBlock -notmatch 'winget install.*Out-Null') {
-    Write-Host "  [OK] Saida do winget install nao ocultada" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Saida do winget install ocultada" -ForegroundColor Red
-    $allOk = $false
+    $installBody = $Matches[1]
+
+    $requiredInstall = @(
+        'winget install',
+        '--id',
+        '--exact',
+        '--accept-source-agreements',
+        '--accept-package-agreements',
+        'ATLAS - INSTALACAO',
+        '[OK] Winget finalizou a instalacao.',
+        '[ERRO] Winget finalizou com erro ou a operacao foi cancelada.',
+        'Set-WingetConsoleEncoding'
+    )
+
+    foreach ($token in $requiredInstall) {
+        if ($installBody -match [regex]::Escape($token)) {
+            Write-Host "  [OK] Contem: $token" -ForegroundColor Green
+        } else {
+            Write-Host "  [FAIL] Ausente: $token" -ForegroundColor Red
+            $allOk = $false
+        }
+    }
+
+    $forbiddenInstall = @(
+        'Out-Null',
+        'Out-String',
+        '2>&1',
+        '--output json',
+        'ConvertFrom-Json',
+        '--silent',
+        '--disable-interactivity'
+    )
+
+    foreach ($token in $forbiddenInstall) {
+        if ($installBody -match [regex]::Escape($token)) {
+            Write-Host "  [FAIL] Proibido no fluxo de instalacao: $token" -ForegroundColor Red
+            $allOk = $false
+        } else {
+            Write-Host "  [OK] Ausente (correto): $token" -ForegroundColor Green
+        }
+    }
 }
 
 Write-Host ""
 if ($allOk) {
     Write-Host "[SUCESSO] test_software_install concluido (sem instalacao real)" -ForegroundColor Green
 } else {
-    Write-Host "[FALHA] Validacao do catalogo" -ForegroundColor Red
+    Write-Host "[FALHA] Validacao do modulo de instalacao" -ForegroundColor Red
     exit 1
 }
 

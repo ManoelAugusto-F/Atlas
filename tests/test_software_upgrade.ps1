@@ -1,5 +1,5 @@
 # ==========================================
-# Atlas - Teste Atualizacao de Software
+# Atlas - Teste Atualizacao de Programas
 # ==========================================
 
 . "$PSScriptRoot/../modules/logger.ps1"
@@ -8,27 +8,25 @@
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "[TESTE] Atualizacao de software" -ForegroundColor Magenta
+Write-Host "[TESTE] software-upgrade.ps1 MVP" -ForegroundColor Magenta
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-$script:UpgradeTestFailed = $false
+$functions = @(
+    'Get-WingetAvailableUpgrades',
+    'Update-InstalledSoftwareSafe',
+    'Set-WingetConsoleEncoding'
+)
 
-function Test-Assert {
-    param(
-        [bool]$Condition,
-        [string]$Name
-    )
-    if ($Condition) {
-        Write-Host "[OK]   $Name" -ForegroundColor Green
+$allOk = $true
+foreach ($fn in $functions) {
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "[OK] $fn" -ForegroundColor Green
     } else {
-        Write-Host "[FAIL] $Name" -ForegroundColor Red
-        $script:UpgradeTestFailed = $true
+        Write-Host "[FAIL] $fn" -ForegroundColor Red
+        $allOk = $false
     }
 }
-
-Test-Assert ([bool](Get-Command Update-InstalledSoftwareSafe -ErrorAction SilentlyContinue)) "Funcao Update-InstalledSoftwareSafe"
-Test-Assert ([bool](Get-Command Show-SoftwareInstallMenu -ErrorAction SilentlyContinue)) "Funcao Show-SoftwareInstallMenu"
 
 $removed = @(
     'Get-WingetUpgradeListText',
@@ -40,34 +38,80 @@ $removed = @(
 )
 
 foreach ($fn in $removed) {
-    Test-Assert (-not (Get-Command $fn -ErrorAction SilentlyContinue)) "Funcao removida: $fn"
+    if (Get-Command $fn -ErrorAction SilentlyContinue) {
+        Write-Host "[FAIL] Funcao removida ainda presente: $fn" -ForegroundColor Red
+        $allOk = $false
+    } else {
+        Write-Host "[OK] Funcao removida ausente: $fn" -ForegroundColor Green
+    }
 }
 
-$source = Get-Content -Path (Join-Path $PSScriptRoot "../modules/software-install.ps1") -Raw
-$upgradeBlock = (($source -split 'function Update-InstalledSoftwareSafe')[1] -split 'function Export-SoftwareInventory')[0]
-
-Test-Assert ($upgradeBlock -match 'winget upgrade --accept-source-agreements') "Lista via winget upgrade nativo"
-Test-Assert ($upgradeBlock -match 'Deseja executar winget upgrade --all agora') "Confirmacao antes do upgrade --all"
-Test-Assert ($upgradeBlock -match 'winget upgrade --all --accept-source-agreements --accept-package-agreements') "Upgrade completo nativo"
-Test-Assert ($upgradeBlock -match '\[OK\] Atualizacao concluida pelo Winget') "Mensagem de sucesso nativa"
-Test-Assert ($upgradeBlock -notmatch 'Parse-WingetUpgradeList') "Sem Parse-WingetUpgradeList"
-Test-Assert ($upgradeBlock -notmatch 'Update-WingetPackageVisible') "Sem Update-WingetPackageVisible"
-Test-Assert ($upgradeBlock -notmatch 'Show-WingetUpgradeSummary') "Sem resumo customizado"
-Test-Assert ($upgradeBlock -notmatch 'Atualizando') "Sem progresso Atualizando N/M"
-Test-Assert ($upgradeBlock -notmatch 'winget upgrade --id') "Sem upgrade pacote a pacote"
-Test-Assert ($upgradeBlock -notmatch '--output json') "Sem --output json"
-Test-Assert ($upgradeBlock -notmatch 'ConvertFrom-Json') "Sem ConvertFrom-Json"
-Test-Assert ($upgradeBlock -notmatch '--verbose-logs') "Sem --verbose-logs"
-Test-Assert ($upgradeBlock -notmatch 'Out-Null') "Sem Out-Null no fluxo de atualizacao"
-Test-Assert ($upgradeBlock -notmatch 'Out-String') "Sem Out-String no fluxo de atualizacao"
-Test-Assert ($source -match 'Show-AtlasHeader -Title "Instalacao de Programas"') "Menu abre diretamente por categorias"
-Test-Assert ($source -match 'Atualizar programas instalados') "Opcao atualizar no menu"
+$modulePath = Join-Path $PSScriptRoot "../modules/software-install.ps1"
+$moduleText = Get-Content $modulePath -Raw
 
 Write-Host ""
-if ($script:UpgradeTestFailed) {
-    Write-Host "[FALHA] test_software_upgrade.ps1" -ForegroundColor Red
+Write-Host "[TESTE] Fluxo nativo Update-InstalledSoftwareSafe (analise de arquivo)" -ForegroundColor Magenta
+
+if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r?\nfunction ') {
+    Write-Host "  [FAIL] Nao foi possivel extrair Update-InstalledSoftwareSafe" -ForegroundColor Red
+    $allOk = $false
+} else {
+    $upgradeBody = $Matches[1]
+
+    $requiredUpgrade = @(
+        'winget upgrade --accept-source-agreements',
+        'winget upgrade --all --accept-source-agreements --accept-package-agreements',
+        'ATLAS - ATUALIZACAO DE PROGRAMAS',
+        '[OK] Winget finalizou a atualizacao.',
+        '[ERRO] Winget finalizou com erro ou a operacao foi cancelada.',
+        'Set-WingetConsoleEncoding'
+    )
+
+    foreach ($token in $requiredUpgrade) {
+        if ($upgradeBody -match [regex]::Escape($token)) {
+            Write-Host "  [OK] Contem: $token" -ForegroundColor Green
+        } else {
+            Write-Host "  [FAIL] Ausente: $token" -ForegroundColor Red
+            $allOk = $false
+        }
+    }
+
+    $forbiddenUpgrade = @(
+        '--output json',
+        'ConvertFrom-Json',
+        'Parse-WingetUpgradeList',
+        'Update-WingetPackageVisible',
+        'Show-WingetUpgradeSummary',
+        '-Upgrades',
+        'Get-WingetAvailableUpgrades',
+        'Out-Null',
+        'Out-String',
+        'winget upgrade --id'
+    )
+
+    foreach ($token in $forbiddenUpgrade) {
+        if ($upgradeBody -match [regex]::Escape($token)) {
+            Write-Host "  [FAIL] Proibido no fluxo de atualizacao: $token" -ForegroundColor Red
+            $allOk = $false
+        } else {
+            Write-Host "  [OK] Ausente (correto): $token" -ForegroundColor Green
+        }
+    }
+}
+
+if ($moduleText -match 'Atualizar programas instalados') {
+    Write-Host "  [OK] Opcao atualizar no menu" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Opcao atualizar ausente no menu" -ForegroundColor Red
+    $allOk = $false
+}
+
+Write-Host ""
+if ($allOk) {
+    Write-Host "[SUCESSO] test_software_upgrade concluido (sem atualizacao real)" -ForegroundColor Green
+} else {
+    Write-Host "[FALHA] Validacao do modulo de atualizacao" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "[SUCESSO] test_software_upgrade.ps1" -ForegroundColor Green
-exit 0
+Write-Host ""
