@@ -13,6 +13,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 $functions = @(
+    'Invoke-WingetVisible',
     'Get-WingetAvailableUpgrades',
     'Update-InstalledSoftwareSafe',
     'Set-WingetConsoleEncoding'
@@ -59,11 +60,12 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
     $upgradeBody = $Matches[1]
 
     $requiredUpgrade = @(
-        'winget upgrade --accept-source-agreements',
-        'winget upgrade --all --accept-source-agreements --accept-package-agreements',
+        'Invoke-WingetVisible',
+        'upgrade --accept-source-agreements',
+        'upgrade --all --accept-source-agreements --accept-package-agreements',
         'ATLAS - ATUALIZACAO DE PROGRAMAS',
-        '[OK] Winget finalizou a atualizacao.',
-        '[ERRO] Winget finalizou com erro ou a operacao foi cancelada.',
+        'Write-AtlasSuccess "Winget finalizou a atualizacao."',
+        'Write-AtlasError "Winget finalizou com erro ou cancelamento. Codigo:',
         'Set-WingetConsoleEncoding'
     )
 
@@ -77,6 +79,7 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
     }
 
     $forbiddenUpgrade = @(
+        '& winget upgrade',
         '--output json',
         'ConvertFrom-Json',
         'Parse-WingetUpgradeList',
@@ -86,6 +89,7 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
         'Get-WingetAvailableUpgrades',
         'Out-Null',
         'Out-String',
+        'Start-Process',
         'winget upgrade --id'
     )
 

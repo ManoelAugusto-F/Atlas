@@ -15,6 +15,7 @@ Write-Host ""
 $functions = @(
     'Show-SoftwareInstallMenu',
     'Test-WingetAvailable',
+    'Invoke-WingetVisible',
     'Install-SoftwareByWingetSafe',
     'Get-SoftwareCatalog',
     'Get-SoftwareCategory',
@@ -139,14 +140,14 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     $installBody = $Matches[1]
 
     $requiredInstall = @(
-        'winget install',
-        '--id',
+        'Invoke-WingetVisible',
+        'install --id',
         '--exact',
         '--accept-source-agreements',
         '--accept-package-agreements',
         'ATLAS - INSTALACAO',
-        '[OK] Winget finalizou a instalacao.',
-        '[ERRO] Winget finalizou com erro ou a operacao foi cancelada.',
+        'Write-AtlasSuccess "Winget finalizou a instalacao."',
+        'Write-AtlasError "Winget finalizou com erro ou cancelamento. Codigo:',
         'Set-WingetConsoleEncoding'
     )
 
@@ -160,18 +161,63 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     }
 
     $forbiddenInstall = @(
+        '& winget install',
         'Out-Null',
         'Out-String',
         '2>&1',
         '--output json',
         'ConvertFrom-Json',
         '--silent',
-        '--disable-interactivity'
+        '--disable-interactivity',
+        'Start-Process'
     )
 
     foreach ($token in $forbiddenInstall) {
         if ($installBody -match [regex]::Escape($token)) {
             Write-Host "  [FAIL] Proibido no fluxo de instalacao: $token" -ForegroundColor Red
+            $allOk = $false
+        } else {
+            Write-Host "  [OK] Ausente (correto): $token" -ForegroundColor Green
+        }
+    }
+}
+
+Write-Host ""
+Write-Host "[TESTE] Invoke-WingetVisible (analise de arquivo)" -ForegroundColor Magenta
+
+if ($moduleText -notmatch '(?s)function Invoke-WingetVisible\s*\{(.+?)\r?\nfunction ') {
+    Write-Host "  [FAIL] Nao foi possivel extrair Invoke-WingetVisible" -ForegroundColor Red
+    $allOk = $false
+} else {
+    $wingetVisibleBody = $Matches[1]
+
+    $requiredVisible = @(
+        '$env:ComSpec',
+        '/c',
+        'Comando executado:',
+        'Get-Command winget -ErrorAction SilentlyContinue'
+    )
+
+    foreach ($token in $requiredVisible) {
+        if ($wingetVisibleBody -match [regex]::Escape($token)) {
+            Write-Host "  [OK] Contem: $token" -ForegroundColor Green
+        } else {
+            Write-Host "  [FAIL] Ausente: $token" -ForegroundColor Red
+            $allOk = $false
+        }
+    }
+
+    $forbiddenVisible = @(
+        'ConvertFrom-Json',
+        '--output json',
+        'Start-Process',
+        'Out-Null',
+        'Out-String'
+    )
+
+    foreach ($token in $forbiddenVisible) {
+        if ($wingetVisibleBody -match [regex]::Escape($token)) {
+            Write-Host "  [FAIL] Proibido em Invoke-WingetVisible: $token" -ForegroundColor Red
             $allOk = $false
         } else {
             Write-Host "  [OK] Ausente (correto): $token" -ForegroundColor Green
