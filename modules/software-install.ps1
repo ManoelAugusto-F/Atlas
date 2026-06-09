@@ -112,162 +112,15 @@ function script:Test-WingetPackageExists {
     return ($LASTEXITCODE -eq 0)
 }
 
-function script:Split-WingetUpgradeRest {
-    param([string]$Rest)
+function script:Set-AtlasWingetConsoleEncoding {
+    try {
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+        $OutputEncoding = [System.Text.Encoding]::UTF8
+    } catch { }
 
-    if (-not $Rest) {
-        return @{ Version = ''; AvailableVersion = '' }
-    }
-
-    $tokens = @($Rest -split '\s+' | Where-Object { $_ })
-    if ($tokens.Count -gt 0 -and $tokens[-1] -match '^(?i)winget|msstore$') {
-        $tokens = $tokens[0..($tokens.Count - 2)]
-    }
-
-    if ($tokens.Count -ge 2) {
-        return @{
-            Version          = ($tokens[0..($tokens.Count - 2)] -join ' ')
-            AvailableVersion = $tokens[-1]
-        }
-    }
-
-    if ($tokens.Count -eq 1) {
-        return @{ Version = $tokens[0]; AvailableVersion = '' }
-    }
-
-    return @{ Version = ''; AvailableVersion = '' }
-}
-
-function Parse-WingetUpgradeList {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Text
-    )
-
-    $entries = @()
-    if (-not $Text -or -not ($Text.Trim())) {
-        return $entries
-    }
-
-    $idPattern = '[\w\-\+\.]+\.[\w\-\+\.]+(?:\.[\w\-\+\.]+)*'
-
-    foreach ($line in ($Text -split "`r?`n")) {
-        $trimmed = $line.Trim()
-        if (-not $trimmed) { continue }
-        if ($trimmed -match '^-+$') { continue }
-        if ($trimmed -match '^(?i)(Nome|Name)\s') { continue }
-        if ($trimmed -match '(?i)atualiza.{0,20}dispon') { continue }
-        if ($trimmed -match '(?i)(pacotes têm|packages have|segmenta)') { continue }
-        if ($trimmed -match '^[\-\\\|/\s]+$') { continue }
-
-        if ($trimmed -match "\s($idPattern)(\s|$)") {
-            $id = $matches[1]
-            $idIndex = $trimmed.IndexOf($id)
-            $name = $trimmed.Substring(0, $idIndex).Trim()
-            $rest = $trimmed.Substring($idIndex + $id.Length).Trim()
-            $versionInfo = script:Split-WingetUpgradeRest -Rest $rest
-
-            if ($name -and $id) {
-                $entries += [PSCustomObject]@{
-                    Name             = $name
-                    Id               = $id
-                    Version          = $versionInfo.Version
-                    AvailableVersion = $versionInfo.AvailableVersion
-                }
-            }
-        }
-    }
-
-    $seen = @{}
-    $unique = @()
-    foreach ($entry in $entries) {
-        if (-not $seen.ContainsKey($entry.Id)) {
-            $seen[$entry.Id] = $true
-            $unique += $entry
-        }
-    }
-
-    return $unique
-}
-
-function Get-WingetUpgradeListText {
-    Write-AtlasSessionLog -Message "Consulta winget upgrade (texto)" -Level "ACTION"
-
-    $output = & winget upgrade --accept-source-agreements --disable-interactivity 2>&1
-    foreach ($line in @($output)) {
-        Write-Host $line
-    }
-
-    return ($output | Out-String)
-}
-
-function Update-WingetPackageVisible {
-    param(
-        [Parameter(Mandatory = $true)]
-        $Package,
-        [Parameter(Mandatory = $true)]
-        [int]$Index,
-        [Parameter(Mandatory = $true)]
-        [int]$Total
-    )
-
-    Write-Host ""
-    Write-Host ('=' * 42) -ForegroundColor Cyan
-    Write-Host "Atualizando $Index/$Total" -ForegroundColor Cyan
-    Write-Host "Programa: $($Package.Name)" -ForegroundColor White
-    Write-Host "ID: $($Package.Id)" -ForegroundColor White
-    Write-Host ('=' * 42) -ForegroundColor Cyan
-    Write-Host ""
-
-    Write-AtlasSessionLog -Message "winget upgrade: $($Package.Id) ($Index/$Total)" -Level "ACTION"
-
-    & winget upgrade --id $Package.Id --exact `
-        --accept-source-agreements --accept-package-agreements --verbose-logs
-    return $LASTEXITCODE
-}
-
-function Show-WingetUpgradeSummary {
-    param(
-        [array]$SuccessItems,
-        [array]$FailedItems,
-        [int]$TotalFound
-    )
-
-    $successCount = @($SuccessItems).Count
-    $failedCount = @($FailedItems).Count
-
-    Write-Host ""
-    Write-Host ('=' * 42) -ForegroundColor Cyan
-    Write-Host "Resumo da atualizacao" -ForegroundColor Cyan
-    Write-Host ('=' * 42) -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Sucesso:" -ForegroundColor Green
-
-    if ($successCount -gt 0) {
-        foreach ($item in $SuccessItems) {
-            Write-Host "- $item" -ForegroundColor Green
-        }
-    } else {
-        Write-Host "- Nenhum" -ForegroundColor White
-    }
-
-    Write-Host ""
-    Write-Host "Falha:" -ForegroundColor Red
-
-    if ($failedCount -gt 0) {
-        foreach ($item in $FailedItems) {
-            Write-Host "- $item" -ForegroundColor Red
-        }
-    } else {
-        Write-Host "- Nenhuma" -ForegroundColor White
-    }
-
-    Write-Host ""
-    Write-Host "Total:" -ForegroundColor White
-    Write-Host "$TotalFound encontrados" -ForegroundColor White
-    Write-Host "$successCount sucesso" -ForegroundColor White
-    Write-Host "$failedCount falha" -ForegroundColor White
-    Write-Host ""
+    try {
+        chcp 65001 | Out-Null
+    } catch { }
 }
 
 function Install-SoftwareByWingetSafe {
@@ -327,37 +180,36 @@ function Install-SoftwareByWingetSafe {
     Write-Host "ID Winget: $PackageId" -ForegroundColor White
     Write-Host ""
     Write-Host "O Winget sera executado agora." -ForegroundColor White
-    Write-Host "Acompanhe o download e instalacao abaixo." -ForegroundColor White
+    Write-Host "Acompanhe o processo abaixo." -ForegroundColor White
     Write-Host ""
     Write-Host ('=' * 42) -ForegroundColor Cyan
     Write-Host ""
     Write-AtlasSessionLog -Message "Executando winget install: $PackageId" -Level "ACTION"
 
+    script:Set-AtlasWingetConsoleEncoding
+
     try {
         & winget install --id $PackageId --exact `
-            --accept-source-agreements --accept-package-agreements --verbose-logs
+            --accept-source-agreements --accept-package-agreements
         $exitCode = $LASTEXITCODE
         Write-AtlasSessionLog -Message "winget install finalizado ($PackageId) codigo $exitCode" -Level "INFO"
 
         Write-Host ""
         if ($exitCode -eq 0) {
-            Write-Host "[OK] Instalacao concluida: $DisplayName" -ForegroundColor Green
+            Write-Host "[OK] Instalacao concluida" -ForegroundColor Green
             Write-AtlasSessionLog -Message "Instalacao concluida: $PackageId" -Level "ACTION"
-            Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao $DisplayName -Resultado "Sucesso"
             return $true
         }
 
-        Write-Host "[ERRO] Falha ao instalar: $DisplayName" -ForegroundColor Red
+        Write-Host "[ERRO] Instalacao finalizada com erro pelo Winget" -ForegroundColor Red
         Write-AtlasSessionLog -Message "Instalacao falhou (codigo $exitCode): $PackageId" -Level "ERROR"
         Write-Log -Message "winget install falhou para $PackageId codigo $exitCode" -Level "ERROR"
-        Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao $DisplayName -Resultado "Falha"
         return $false
     } catch {
         Write-Host ""
-        Write-Host "[ERRO] Falha ao instalar: $DisplayName" -ForegroundColor Red
+        Write-Host "[ERRO] Instalacao finalizada com erro pelo Winget" -ForegroundColor Red
         Write-AtlasSessionLog -Message "Erro winget install $PackageId : $_" -Level "ERROR"
         Write-Log -Message "Erro ao instalar $PackageId : $_" -Level "ERROR"
-        Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao $DisplayName -Resultado "Falha"
         return $false
     }
 }
@@ -681,79 +533,49 @@ function Update-InstalledSoftwareSafe {
     }
 
     Show-AtlasHeader -Title "Atualizacao de Programas"
-    Write-Host "Verificando atualizacoes disponiveis com o Winget..." -ForegroundColor White
+    Write-Host "O Winget sera executado para verificar atualizacoes." -ForegroundColor White
+    Write-Host "A lista abaixo e exibida diretamente pelo Winget." -ForegroundColor White
     Write-Host ""
 
-    $listText = Get-WingetUpgradeListText
-    $packages = @(Parse-WingetUpgradeList -Text $listText)
+    script:Set-AtlasWingetConsoleEncoding
+    & winget upgrade --accept-source-agreements
 
     Write-Host ""
-    Write-Host "Deseja atualizar todos os programas listados? [S/N]: " -NoNewline -ForegroundColor White
+    Write-Host "Deseja executar winget upgrade --all agora? [S/N]: " -NoNewline -ForegroundColor White
     $resp = Read-Host
     if ($resp -notmatch '^[sS]$') {
         Write-AtlasInfo "Operacao cancelada."
-        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Cancelado pelo usuario"
-        Write-AtlasSessionLog -Message "Atualizacao winget cancelada pelo usuario" -Level "INFO"
+        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Atualizacao cancelada pelo usuario"
+        Write-AtlasSessionLog -Message "Atualizacao cancelada pelo usuario" -Level "INFO"
         return $false
     }
 
-    Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Iniciado"
+    Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Atualizacao iniciada"
+    Write-AtlasSessionLog -Message "Atualizacao iniciada" -Level "ACTION"
 
-    if ($packages.Count -eq 0) {
+    try {
+        & winget upgrade --all --accept-source-agreements --accept-package-agreements
+        $exitCode = $LASTEXITCODE
+    } catch {
+        Write-AtlasSessionLog -Message "Erro winget upgrade --all: $_" -Level "ERROR"
+        Write-Log -Message "Erro winget upgrade --all: $_" -Level "ERROR"
+        Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Atualizacao com erro"
         Write-Host ""
-        Write-Host "Nao foi possivel identificar pacotes individualmente." -ForegroundColor Yellow
-        Write-Host "Executando atualizacao completa via Winget..." -ForegroundColor White
-        Write-Host ""
-        Write-AtlasSessionLog -Message "Fallback winget upgrade --all" -Level "ACTION"
-
-        try {
-            & winget upgrade --all --accept-source-agreements --accept-package-agreements --verbose-logs
-            $exitCode = $LASTEXITCODE
-        } catch {
-            Write-AtlasSessionLog -Message "Erro winget upgrade --all: $_" -Level "ERROR"
-            Write-Log -Message "Erro winget upgrade --all: $_" -Level "ERROR"
-            Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Falha"
-            return $false
-        }
-
-        if ($exitCode -eq 0) {
-            Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Sucesso"
-            Write-AtlasSessionLog -Message "winget upgrade --all concluido (codigo 0)" -Level "ACTION"
-            return $true
-        }
-
-        Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Falha"
-        Write-AtlasSessionLog -Message "winget upgrade --all codigo $exitCode" -Level "WARN"
+        Write-Host "[ERRO] Winget finalizou com erro ou operacao cancelada" -ForegroundColor Red
         return $false
     }
 
-    $successList = New-Object System.Collections.Generic.List[string]
-    $failedList = New-Object System.Collections.Generic.List[string]
-    $total = $packages.Count
-
-    for ($i = 0; $i -lt $total; $i++) {
-        $pkg = $packages[$i]
-        $exitCode = Update-WingetPackageVisible -Package $pkg -Index ($i + 1) -Total $total
-
-        if ($exitCode -eq 0) {
-            $successList.Add($pkg.Name)
-            Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar $($pkg.Name)" -Resultado "Sucesso"
-        } else {
-            $failedList.Add($pkg.Name)
-            Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar $($pkg.Name)" -Resultado "Falha"
-        }
-    }
-
-    Show-WingetUpgradeSummary -SuccessItems @($successList) -FailedItems @($failedList) -TotalFound $total
-
-    if ($failedList.Count -eq 0) {
-        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Sucesso"
-        Write-AtlasSessionLog -Message "Atualizacao concluida ($($successList.Count) pacotes)" -Level "ACTION"
+    Write-Host ""
+    if ($exitCode -eq 0) {
+        Write-Host "[OK] Atualizacao concluida pelo Winget" -ForegroundColor Green
+        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Atualizacao concluida"
+        Write-AtlasSessionLog -Message "Atualizacao concluida" -Level "ACTION"
         return $true
     }
 
-    Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Falha"
-    Write-AtlasSessionLog -Message "Atualizacao parcial: $($successList.Count) ok, $($failedList.Count) falha(s)" -Level "WARN"
+    Write-Host "[ERRO] Winget finalizou com erro ou operacao cancelada" -ForegroundColor Red
+    Write-AtlasLog -Nivel ERROR -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Atualizacao com erro"
+    Write-AtlasSessionLog -Message "Atualizacao com erro (codigo $exitCode)" -Level "WARN"
     return $false
 }
 
