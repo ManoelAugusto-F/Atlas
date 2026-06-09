@@ -13,10 +13,9 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 $functions = @(
-    'Invoke-WingetVisible',
+    'Invoke-WingetWithLoading',
     'Get-WingetAvailableUpgrades',
-    'Update-InstalledSoftwareSafe',
-    'Set-WingetConsoleEncoding'
+    'Update-InstalledSoftwareSafe'
 )
 
 $allOk = $true
@@ -30,6 +29,7 @@ foreach ($fn in $functions) {
 }
 
 $removed = @(
+    'Invoke-WingetVisible',
     'Get-WingetUpgradeListText',
     'Parse-WingetUpgradeList',
     'Update-WingetPackageVisible',
@@ -51,7 +51,7 @@ $modulePath = Join-Path $PSScriptRoot "../modules/software-install.ps1"
 $moduleText = Get-Content $modulePath -Raw
 
 Write-Host ""
-Write-Host "[TESTE] Fluxo nativo Update-InstalledSoftwareSafe (analise de arquivo)" -ForegroundColor Magenta
+Write-Host "[TESTE] Fluxo Update-InstalledSoftwareSafe (analise de arquivo)" -ForegroundColor Magenta
 
 if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r?\nfunction ') {
     Write-Host "  [FAIL] Nao foi possivel extrair Update-InstalledSoftwareSafe" -ForegroundColor Red
@@ -60,13 +60,14 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
     $upgradeBody = $Matches[1]
 
     $requiredUpgrade = @(
-        'Invoke-WingetVisible',
-        'upgrade --accept-source-agreements',
+        'Invoke-WingetWithLoading',
         'upgrade --all --accept-source-agreements --accept-package-agreements',
-        'ATLAS - ATUALIZACAO DE PROGRAMAS',
-        'Write-AtlasSuccess "Winget finalizou a atualizacao."',
-        'Write-AtlasError "Winget finalizou com erro ou cancelamento. Codigo:',
-        'Set-WingetConsoleEncoding'
+        'Esta opcao executa:',
+        'winget upgrade --all',
+        'Executar atualizacao dos programas agora? [S/N]',
+        '[OK] Atualizacao concluida pelo Winget.',
+        '[ERRO] Atualizacao finalizada com erro ou cancelamento.',
+        'Verifique o log do Winget em:'
     )
 
     foreach ($token in $requiredUpgrade) {
@@ -79,6 +80,10 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
     }
 
     $forbiddenUpgrade = @(
+        'Invoke-WingetVisible',
+        '$env:ComSpec',
+        '/c',
+        'upgrade --accept-source-agreements',
         '& winget upgrade',
         '--output json',
         'ConvertFrom-Json',
@@ -87,9 +92,6 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
         'Show-WingetUpgradeSummary',
         '-Upgrades',
         'Get-WingetAvailableUpgrades',
-        'Out-Null',
-        'Out-String',
-        'Start-Process',
         'winget upgrade --id'
     )
 

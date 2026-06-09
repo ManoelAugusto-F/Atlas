@@ -15,7 +15,7 @@ Write-Host ""
 $functions = @(
     'Show-SoftwareInstallMenu',
     'Test-WingetAvailable',
-    'Invoke-WingetVisible',
+    'Invoke-WingetWithLoading',
     'Install-SoftwareByWingetSafe',
     'Get-SoftwareCatalog',
     'Get-SoftwareCategory',
@@ -131,7 +131,7 @@ if ($moduleText -notmatch 'Show-SoftwareInstallProgramMenu') {
 }
 
 Write-Host ""
-Write-Host "[TESTE] Fluxo nativo Install-SoftwareByWingetSafe (analise de arquivo)" -ForegroundColor Magenta
+Write-Host "[TESTE] Fluxo Install-SoftwareByWingetSafe (analise de arquivo)" -ForegroundColor Magenta
 
 if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r?\nfunction ') {
     Write-Host "  [FAIL] Nao foi possivel extrair Install-SoftwareByWingetSafe" -ForegroundColor Red
@@ -140,15 +140,15 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     $installBody = $Matches[1]
 
     $requiredInstall = @(
-        'Invoke-WingetVisible',
+        'Invoke-WingetWithLoading',
         'install --id',
         '--exact',
         '--accept-source-agreements',
         '--accept-package-agreements',
         'ATLAS - INSTALACAO',
-        'Write-AtlasSuccess "Winget finalizou a instalacao."',
-        'Write-AtlasError "Winget finalizou com erro ou cancelamento. Codigo:',
-        'Set-WingetConsoleEncoding'
+        '[OK] Instalacao concluida:',
+        '[ERRO] Falha na instalacao:',
+        'Verifique o log do Winget em:'
     )
 
     foreach ($token in $requiredInstall) {
@@ -161,15 +161,14 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     }
 
     $forbiddenInstall = @(
+        'Invoke-WingetVisible',
+        '$env:ComSpec',
+        '/c',
         '& winget install',
-        'Out-Null',
-        'Out-String',
-        '2>&1',
         '--output json',
         'ConvertFrom-Json',
-        '--silent',
-        '--disable-interactivity',
-        'Start-Process'
+        'Parse-WingetUpgradeList',
+        'Update-WingetPackageVisible'
     )
 
     foreach ($token in $forbiddenInstall) {
@@ -183,23 +182,26 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
 }
 
 Write-Host ""
-Write-Host "[TESTE] Invoke-WingetVisible (analise de arquivo)" -ForegroundColor Magenta
+Write-Host "[TESTE] Invoke-WingetWithLoading (analise de arquivo)" -ForegroundColor Magenta
 
-if ($moduleText -notmatch '(?s)function Invoke-WingetVisible\s*\{(.+?)\r?\nfunction ') {
-    Write-Host "  [FAIL] Nao foi possivel extrair Invoke-WingetVisible" -ForegroundColor Red
+if ($moduleText -notmatch '(?s)function Invoke-WingetWithLoading\s*\{(.+?)\r?\nfunction ') {
+    Write-Host "  [FAIL] Nao foi possivel extrair Invoke-WingetWithLoading" -ForegroundColor Red
     $allOk = $false
 } else {
-    $wingetVisibleBody = $Matches[1]
+    $wingetLoadingBody = $Matches[1]
 
-    $requiredVisible = @(
-        '$env:ComSpec',
-        '/c',
-        'Comando executado:',
-        'Get-Command winget -ErrorAction SilentlyContinue'
+    $requiredLoading = @(
+        'Start-Process',
+        'RedirectStandardOutput',
+        'RedirectStandardError',
+        'ExitCode',
+        'Executando Winget...',
+        'Atlas\Logs',
+        'winget_'
     )
 
-    foreach ($token in $requiredVisible) {
-        if ($wingetVisibleBody -match [regex]::Escape($token)) {
+    foreach ($token in $requiredLoading) {
+        if ($wingetLoadingBody -match [regex]::Escape($token)) {
             Write-Host "  [OK] Contem: $token" -ForegroundColor Green
         } else {
             Write-Host "  [FAIL] Ausente: $token" -ForegroundColor Red
@@ -207,17 +209,18 @@ if ($moduleText -notmatch '(?s)function Invoke-WingetVisible\s*\{(.+?)\r?\nfunct
         }
     }
 
-    $forbiddenVisible = @(
+    $forbiddenLoading = @(
+        '$env:ComSpec',
+        '/c',
         'ConvertFrom-Json',
         '--output json',
-        'Start-Process',
-        'Out-Null',
-        'Out-String'
+        'Parse-WingetUpgradeList',
+        'Update-WingetPackageVisible'
     )
 
-    foreach ($token in $forbiddenVisible) {
-        if ($wingetVisibleBody -match [regex]::Escape($token)) {
-            Write-Host "  [FAIL] Proibido em Invoke-WingetVisible: $token" -ForegroundColor Red
+    foreach ($token in $forbiddenLoading) {
+        if ($wingetLoadingBody -match [regex]::Escape($token)) {
+            Write-Host "  [FAIL] Proibido em Invoke-WingetWithLoading: $token" -ForegroundColor Red
             $allOk = $false
         } else {
             Write-Host "  [OK] Ausente (correto): $token" -ForegroundColor Green
