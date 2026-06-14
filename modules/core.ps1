@@ -4,6 +4,28 @@
 
 $script:AtlasMenuWidth = 42
 
+function Get-AtlasVersion {
+    $repoRoot = Split-Path $PSScriptRoot -Parent
+    $versionFile = Join-Path $repoRoot "version.txt"
+
+    if (Test-Path $versionFile) {
+        $raw = (Get-Content -Path $versionFile -TotalCount 1 -ErrorAction SilentlyContinue)
+        if ($raw -and $raw.Trim() -match '^v\d+\.\d+\.\d+') {
+            return $raw.Trim()
+        }
+    }
+
+    $versionMd = Join-Path $repoRoot "VERSION.md"
+    if (Test-Path $versionMd) {
+        $line = Get-Content -Path $versionMd -TotalCount 1 -ErrorAction SilentlyContinue
+        if ($line -match '(v\d+\.\d+\.\d+)') {
+            return $Matches[1]
+        }
+    }
+
+    return "v0.0.0"
+}
+
 function Show-FeaturePlaceholder {
     param([string]$FeatureName)
 
@@ -48,7 +70,7 @@ function Show-AtlasHeader {
     if ($Title) {
         $headerText = "ATLAS - $($Title.ToUpper())"
     } else {
-        $headerText = 'ATLAS'
+        $headerText = "Atlas $(Get-AtlasVersion)"
     }
 
     Write-Host (Format-AtlasCenteredText -Text $headerText) -ForegroundColor Cyan

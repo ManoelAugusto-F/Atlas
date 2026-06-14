@@ -1,8 +1,13 @@
-# Versao Atual: Atlas v0.4.3
+# Versao Atual: Atlas v0.5.0
 
 ---
 
 ## Historico de Versoes
+
+### v0.5.0 - Bootstrap por Release e Gestao de Versoes
+- **Bootstrap**: consulta GitHub Releases (`Get-LatestAtlasRelease`, `Download-AtlasRelease`)
+- **Versao**: exibida no menu via `version.txt` e `Get-AtlasVersion`
+- **Documentacao**: `docs/CHANGELOG.md` e `docs/RELEASE_PROCESS.md`
 
 ### v0.4.3 - Correcoes da homologacao Windows 11
 - **Diagnostico Windows**: status explicitos (REQUER_ADMIN, NAO_INTERPRETADO, NAO_EXECUTADO) sem unknown

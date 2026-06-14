@@ -1,9 +1,100 @@
 # Atlas Online Bootstrap
-# Baixa o Atlas para TEMP, executa e remove os arquivos ao sair.
+# Baixa a release estavel do GitHub para TEMP, executa e remove os arquivos ao sair.
 
 $ErrorActionPreference = "Stop"
 
-$AtlasZipUrl = "https://github.com/ManoelAugusto-F/Atlas/archive/refs/heads/main.zip"
+$AtlasGithubRepo = "ManoelAugusto-F/Atlas"
+$AtlasReleasesApiUrl = "https://api.github.com/repos/$AtlasGithubRepo/releases/latest"
+$AtlasFallbackZipUrl = "https://github.com/ManoelAugusto-F/Atlas/archive/refs/heads/main.zip"
+
+function Get-LatestAtlasRelease {
+    try {
+        $headers = @{ 'User-Agent' = 'Atlas-Bootstrap' }
+        $response = Invoke-RestMethod `
+            -Uri $AtlasReleasesApiUrl `
+            -Method Get `
+            -Headers $headers `
+            -UseBasicParsing `
+            -ErrorAction Stop
+
+        if (-not $response -or -not $response.tag_name) {
+            return $null
+        }
+
+        $downloadUrl = $null
+        if ($response.zipball_url) {
+            $downloadUrl = $response.zipball_url
+        } elseif ($response.assets) {
+            $asset = @($response.assets | Where-Object { $_.name -like '*.zip' } | Select-Object -First 1)
+            if ($asset) {
+                $downloadUrl = $asset.browser_download_url
+            }
+        }
+
+        if (-not $downloadUrl) {
+            return $null
+        }
+
+        return [PSCustomObject]@{
+            Version     = $response.tag_name
+            Tag         = $response.tag_name
+            DownloadUrl = $downloadUrl
+        }
+    } catch {
+        return $null
+    }
+}
+
+function Download-AtlasRelease {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$DownloadUrl,
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationPath,
+        [Parameter(Mandatory = $true)]
+        [string]$ExtractPath
+    )
+
+    Invoke-WebRequest -Uri $DownloadUrl -OutFile $DestinationPath -UseBasicParsing
+
+    if (-not (Test-Path $DestinationPath)) {
+        throw "Download concluido, mas o arquivo ZIP nao foi encontrado."
+    }
+
+    $zipInfo = Get-Item $DestinationPath
+    if ($zipInfo.Length -le 0) {
+        throw "Arquivo ZIP baixado esta vazio."
+    }
+
+    if (-not (Test-Path $ExtractPath)) {
+        New-Item -ItemType Directory -Path $ExtractPath -Force | Out-Null
+    }
+
+    if (-not (Get-Command Expand-Archive -ErrorAction SilentlyContinue)) {
+        throw "Expand-Archive nao esta disponivel nesta versao do PowerShell."
+    }
+
+    Expand-Archive `
+        -Path $DestinationPath `
+        -DestinationPath $ExtractPath `
+        -Force
+
+    $atlasFolder = Get-ChildItem `
+        -Path $ExtractPath `
+        -Directory |
+        Select-Object -First 1
+
+    if (-not $atlasFolder) {
+        throw "Nao foi possivel localizar a pasta extraida do Atlas."
+    }
+
+    $atlasEntry = Join-Path $atlasFolder.FullName "bootstrap\install.ps1"
+    if (-not (Test-Path $atlasEntry)) {
+        throw "Arquivo principal do Atlas nao encontrado: $atlasEntry"
+    }
+
+    return $atlasEntry
+}
 
 function Clear-OldAtlasTempFolders {
     param(
@@ -52,46 +143,29 @@ try {
 
     New-Item -ItemType Directory -Path $TempRoot -Force | Out-Null
 
-    Write-Host "Baixando Atlas..."
-    Invoke-WebRequest -Uri $AtlasZipUrl -OutFile $ZipPath -UseBasicParsing
+    $release = Get-LatestAtlasRelease
+    $downloadUrl = $null
+    $releaseVersion = "main"
 
-    if (-not (Test-Path $ZipPath)) {
-        throw "Download concluido, mas o arquivo ZIP nao foi encontrado."
+    if ($release) {
+        $releaseVersion = $release.Version
+        Write-Host "Versao encontrada: $releaseVersion"
+        Write-Host "Baixando Atlas $releaseVersion..."
+        $downloadUrl = $release.DownloadUrl
+    } else {
+        Write-Host "Nao foi possivel consultar releases."
+        Write-Host "Tentando metodo alternativo."
+        Write-Host "Baixando Atlas (branch main)..."
+        $downloadUrl = $AtlasFallbackZipUrl
     }
 
-    $zipInfo = Get-Item $ZipPath
-    if ($zipInfo.Length -le 0) {
-        throw "Arquivo ZIP baixado esta vazio."
-    }
+    Write-Host "Instalacao iniciada..."
+    Write-Host ""
 
-    Write-Host "Extraindo arquivos..."
-    New-Item -ItemType Directory -Path $ExtractPath -Force | Out-Null
-
-    if (-not (Get-Command Expand-Archive -ErrorAction SilentlyContinue)) {
-        throw "Expand-Archive nao esta disponivel nesta versao do PowerShell."
-    }
-
-    Expand-Archive `
-        -Path $ZipPath `
-        -DestinationPath $ExtractPath `
-        -Force
-
-    $AtlasFolder = Get-ChildItem `
-        -Path $ExtractPath `
-        -Directory |
-        Select-Object -First 1
-
-    if (-not $AtlasFolder) {
-        throw "Nao foi possivel localizar a pasta extraida do Atlas."
-    }
-
-    $AtlasEntry = Join-Path `
-        $AtlasFolder.FullName `
-        "bootstrap\install.ps1"
-
-    if (-not (Test-Path $AtlasEntry)) {
-        throw "Arquivo principal do Atlas nao encontrado: $AtlasEntry"
-    }
+    $atlasEntry = Download-AtlasRelease `
+        -DownloadUrl $downloadUrl `
+        -DestinationPath $ZipPath `
+        -ExtractPath $ExtractPath
 
     Write-Host ""
     Write-Host "Iniciando Atlas..."
@@ -99,7 +173,7 @@ try {
 
     powershell.exe `
         -ExecutionPolicy Bypass `
-        -File $AtlasEntry
+        -File $atlasEntry
 }
 catch {
     Write-Host ""

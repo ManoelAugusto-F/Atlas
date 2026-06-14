@@ -16,6 +16,34 @@ Abra o **Windows PowerShell 5.1** ou **PowerShell 7+** como administrador e exec
 irm https://a.bitsdeconhecimento.blog.br/i.ps1 | iex
 ```
 
+O bootstrap online instala automaticamente a **release estavel mais recente** publicada no GitHub. Se a API de releases nao estiver disponivel, usa fallback para a branch `main`.
+
+---
+
+## Distribuicao
+
+### Instalacao online
+
+```powershell
+irm https://a.bitsdeconhecimento.blog.br/i.ps1 | iex
+```
+
+Fluxo:
+
+1. Consulta `https://api.github.com/repos/ManoelAugusto-F/Atlas/releases/latest`
+2. Baixa o ZIP da release (`zipball_url`)
+3. Extrai em pasta temporaria
+4. Executa o Atlas
+5. Remove arquivos temporarios ao sair
+
+### Versoes e releases
+
+- Versao atual: arquivo `version.txt` na raiz do repositorio
+- Historico: `docs/CHANGELOG.md`
+- Processo de publicacao: `docs/RELEASE_PROCESS.md`
+
+Repositorio: https://github.com/ManoelAugusto-F/Atlas
+
 ---
 
 ## O que o Atlas faz?
@@ -262,4 +290,4 @@ Toda contribuição ajuda a tornar o projeto mais útil para a comunidade de TI.
 
 ---
 
-**Versão Atual:** v0.4.3 — Correções da homologação Windows 11
+**Versão Atual:** v0.5.0 — Bootstrap por Release e Gestão de Versões
