@@ -1,8 +1,13 @@
-# Versao Atual: Atlas v0.3.8
+# Versao Atual: Atlas v0.3.9
 
 ---
 
 ## Historico de Versoes
+
+### v0.3.9 - Organizacao de modulos legados
+- **Legado**: 16 modulos antigos movidos para `legacy/modules/`
+- **Runtime**: bootstrap mantido apenas com modulos ativos
+- **Preservacao**: historico tecnico mantido em `legacy/README.md`
 
 ### v0.3.8 - Correcao da validacao de sucesso do Winget
 - **Validacao**: `Test-WingetOperationSucceeded` analisa log e ExitCode (nao apenas ExitCode)
