@@ -15,6 +15,8 @@ Write-Host ""
 $functions = @(
     'Show-SoftwareInstallMenu',
     'Test-WingetAvailable',
+    'Invoke-WingetManaged',
+    'Show-AtlasProgressBar',
     'Install-SoftwareByWingetSafe',
     'Get-SoftwareCatalog',
     'Get-SoftwareCategory',
@@ -139,19 +141,13 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     $installBody = $Matches[1]
 
     $requiredInstall = @(
-        'winget install',
-        '--exact',
-        '--accept-source-agreements',
-        '--accept-package-agreements',
-        '*> $null',
-        '$LASTEXITCODE',
-        'Instalando',
-        'Aguarde...',
+        'Invoke-WingetManaged',
+        'ATLAS - INSTALACAO',
+        'Instalar agora? [S/N]',
         '[OK] Instalacao concluida:',
-        '[ERRO] Nao foi possivel instalar:',
+        '[ERRO] Falha na instalacao:',
         'Codigo de saida:',
-        'Tente executar manualmente:',
-        'winget install --id'
+        'Log:'
     )
 
     foreach ($token in $requiredInstall) {
@@ -164,16 +160,14 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     }
 
     $forbiddenInstall = @(
-        'Invoke-WingetWithLoading',
-        'Invoke-WingetVisible',
-        'Start-Process',
-        '$env:ComSpec',
-        'RedirectStandardOutput',
-        'RedirectStandardError',
-        'winget_',
-        'Executando Winget',
-        '--output json',
+        '*> $null',
+        '$LASTEXITCODE',
         'ConvertFrom-Json',
+        '--output json',
+        '$env:ComSpec',
+        'cmd.exe',
+        'Invoke-WingetVisible',
+        'Invoke-WingetWithLoading',
         'Parse-WingetUpgradeList',
         'Update-WingetPackageVisible'
     )
@@ -189,16 +183,45 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
 }
 
 Write-Host ""
-Write-Host "[TESTE] Funcoes winget removidas (analise de arquivo)" -ForegroundColor Magenta
+Write-Host "[TESTE] Invoke-WingetManaged e Show-AtlasProgressBar (analise de arquivo)" -ForegroundColor Magenta
 
-$removedWingetFns = @('Invoke-WingetWithLoading', 'Invoke-WingetVisible')
-foreach ($fn in $removedWingetFns) {
-    if ($moduleText -match "function $fn\s*\{") {
-        Write-Host "  [FAIL] Funcao ainda presente: $fn" -ForegroundColor Red
-        $allOk = $false
-    } else {
-        Write-Host "  [OK] Funcao removida: $fn" -ForegroundColor Green
+if ($moduleText -notmatch '(?s)function Invoke-WingetManaged\s*\{(.+?)\r?\nfunction ') {
+    Write-Host "  [FAIL] Nao foi possivel extrair Invoke-WingetManaged" -ForegroundColor Red
+    $allOk = $false
+} else {
+    $managedBody = $Matches[1]
+
+    $requiredManaged = @(
+        'Start-Process',
+        'RedirectStandardOutput',
+        'RedirectStandardError',
+        'ExitCode',
+        'Get-WingetLogsDirectory',
+        'Show-AtlasProgressBar'
+    )
+
+    foreach ($token in $requiredManaged) {
+        if ($managedBody -match [regex]::Escape($token)) {
+            Write-Host "  [OK] Contem: $token" -ForegroundColor Green
+        } else {
+            Write-Host "  [FAIL] Ausente: $token" -ForegroundColor Red
+            $allOk = $false
+        }
     }
+}
+
+if ($moduleText -match 'Atlas\\Logs\\Winget') {
+    Write-Host "  [OK] Pasta de logs Winget definida" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Pasta Atlas\Logs\Winget ausente no modulo" -ForegroundColor Red
+    $allOk = $false
+}
+
+if ($moduleText -notmatch '(?s)function Show-AtlasProgressBar\s*\{') {
+    Write-Host "  [FAIL] Show-AtlasProgressBar ausente" -ForegroundColor Red
+    $allOk = $false
+} else {
+    Write-Host "  [OK] Show-AtlasProgressBar definida" -ForegroundColor Green
 }
 
 Write-Host ""

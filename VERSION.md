@@ -1,8 +1,14 @@
-# Versao Atual: Atlas v0.3.6
+# Versao Atual: Atlas v0.3.7
 
 ---
 
 ## Historico de Versoes
+
+### v0.3.7 - Winget com execucao gerenciada e progresso visual
+- **Winget**: `Invoke-WingetManaged` executa winget em background com logs em `C:\ProgramData\Atlas\Logs\Winget`
+- **Progresso**: barra propria do Atlas (`Show-AtlasProgressBar`) com percentual aproximado
+- **Instalacao/Atualizacao**: sem saida bruta do Winget no terminal; resultado claro ao final
+- **Testes**: validacao de execucao gerenciada em `test_software_install.ps1` e `test_software_upgrade.ps1`
 
 ### v0.3.6 - Melhorias visuais em instalacoes e atualizacoes
 - **Instalacao**: cabecalho visual, saida real do winget e resultado amigavel (`Write-AtlasStep`, `Write-AtlasResult`)

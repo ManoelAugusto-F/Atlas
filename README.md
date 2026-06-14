@@ -90,8 +90,9 @@ Ferramentas de limpeza e correções básicas.
 
 Catálogo integrado utilizando Winget para instalação e atualização de aplicações.
 
-- **Instalação visual** — saída real do Winget com progresso de download e instalação
-- **Atualização guiada** — lista pacotes pendentes com versões, confirmação e resumo final
+- **Progresso próprio do Atlas** — barra visual com percentual aproximado durante instalação e atualização
+- **Execução gerenciada** — Winget roda em background; saída técnica não aparece no terminal
+- **Logs técnicos** — detalhes do Winget ficam em `C:\ProgramData\Atlas\Logs\Winget` para consulta em caso de falha
 
 ---
 
@@ -251,4 +252,4 @@ Toda contribuição ajuda a tornar o projeto mais útil para a comunidade de TI.
 
 ---
 
-**Versão Atual:** v0.3.6 — Melhorias visuais em instalações e atualizações
+**Versão Atual:** v0.3.7 — Winget com execução gerenciada e progresso visual

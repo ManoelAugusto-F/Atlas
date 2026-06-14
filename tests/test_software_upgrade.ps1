@@ -13,6 +13,8 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 $functions = @(
+    'Invoke-WingetManaged',
+    'Show-AtlasProgressBar',
     'Get-WingetAvailableUpgrades',
     'Update-InstalledSoftwareSafe'
 )
@@ -51,6 +53,60 @@ $modulePath = Join-Path $PSScriptRoot "../modules/software-install.ps1"
 $moduleText = Get-Content $modulePath -Raw
 
 Write-Host ""
+Write-Host "[TESTE] Invoke-WingetManaged (analise de arquivo)" -ForegroundColor Magenta
+
+if ($moduleText -notmatch '(?s)function Invoke-WingetManaged\s*\{(.+?)\r?\nfunction ') {
+    Write-Host "  [FAIL] Nao foi possivel extrair Invoke-WingetManaged" -ForegroundColor Red
+    $allOk = $false
+} else {
+    $managedBody = $Matches[1]
+
+    $requiredManaged = @(
+        'Start-Process',
+        'RedirectStandardOutput',
+        'RedirectStandardError',
+        'ExitCode',
+        'Get-WingetLogsDirectory',
+        'Show-AtlasProgressBar',
+        'Get-Command winget -ErrorAction SilentlyContinue'
+    )
+
+    foreach ($token in $requiredManaged) {
+        if ($managedBody -match [regex]::Escape($token)) {
+            Write-Host "  [OK] Contem: $token" -ForegroundColor Green
+        } else {
+            Write-Host "  [FAIL] Ausente: $token" -ForegroundColor Red
+            $allOk = $false
+        }
+    }
+
+    $forbiddenManaged = @(
+        'ConvertFrom-Json',
+        '--output json',
+        '$env:ComSpec',
+        'cmd.exe',
+        'Parse-WingetUpgradeList',
+        'Update-WingetPackageVisible'
+    )
+
+    foreach ($token in $forbiddenManaged) {
+        if ($managedBody -match [regex]::Escape($token)) {
+            Write-Host "  [FAIL] Proibido em Invoke-WingetManaged: $token" -ForegroundColor Red
+            $allOk = $false
+        } else {
+            Write-Host "  [OK] Ausente (correto): $token" -ForegroundColor Green
+        }
+    }
+}
+
+if ($moduleText -match 'Atlas\\Logs\\Winget') {
+    Write-Host "  [OK] Pasta de logs Winget definida" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Pasta Atlas\Logs\Winget ausente no modulo" -ForegroundColor Red
+    $allOk = $false
+}
+
+Write-Host ""
 Write-Host "[TESTE] Fluxo Update-InstalledSoftwareSafe (analise de arquivo)" -ForegroundColor Magenta
 
 if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r?\nfunction ') {
@@ -60,18 +116,15 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
     $upgradeBody = $Matches[1]
 
     $requiredUpgrade = @(
+        'Invoke-WingetManaged',
+        'ATLAS - ATUALIZACAO DE PROGRAMAS',
         'winget upgrade --all',
-        '--accept-source-agreements',
-        '--accept-package-agreements',
-        '*> $null',
-        '$LASTEXITCODE',
-        'Esta opcao executa a atualizacao de programas via Winget.',
         'Executar atualizacao agora? [S/N]',
-        'Atualizando programas. Aguarde...',
+        'Atualizando programas',
         '[OK] Atualizacao concluida.',
-        '[ERRO] Nao foi possivel concluir a atualizacao.',
+        '[ERRO] Falha na atualizacao.',
         'Codigo de saida:',
-        'Tente executar manualmente:'
+        'Log:'
     )
 
     foreach ($token in $requiredUpgrade) {
@@ -84,21 +137,15 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
     }
 
     $forbiddenUpgrade = @(
-        'Invoke-WingetWithLoading',
-        'Invoke-WingetVisible',
-        'Start-Process',
-        '$env:ComSpec',
-        'RedirectStandardOutput',
-        'RedirectStandardError',
-        'winget_',
-        'Executando Winget',
-        '--output json',
+        '*> $null',
+        '$LASTEXITCODE',
         'ConvertFrom-Json',
+        '--output json',
+        '$env:ComSpec',
+        'cmd.exe',
         'Parse-WingetUpgradeList',
         'Update-WingetPackageVisible',
         'Show-WingetUpgradeSummary',
-        '-Upgrades',
-        'Get-WingetAvailableUpgrades',
         'winget upgrade --id'
     )
 
