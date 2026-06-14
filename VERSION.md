@@ -1,8 +1,12 @@
-# Versao Atual: Atlas v0.4.0
+# Versao Atual: Atlas v0.4.1
 
 ---
 
 ## Historico de Versoes
+
+### v0.4.1 - Limpeza de logs legados
+- **Migracao**: `Invoke-AtlasLegacyLogCleanup` remove `provisionador.log` e reorganiza `winget_*.log` da raiz
+- **Inicializacao**: limpeza automatica em `Initialize-AtlasLogger`
 
 ### v0.4.0 - Padronizacao e retencao de logs
 - **Logs**: estrutura centralizada em `C:\ProgramData\Atlas\Logs`

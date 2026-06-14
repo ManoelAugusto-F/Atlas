@@ -67,6 +67,36 @@ function Get-AtlasWingetLogsRoot {
     return $dir
 }
 
+function Invoke-AtlasLegacyLogCleanup {
+    try {
+        $logsDir = Get-AtlasLogsRoot
+        if (-not $logsDir -or -not (Test-Path $logsDir)) {
+            return
+        }
+
+        $provisionadorPath = Join-Path $logsDir "provisionador.log"
+        if (Test-Path $provisionadorPath) {
+            try {
+                Remove-Item -Path $provisionadorPath -Force -ErrorAction Stop
+            } catch { }
+        }
+
+        $wingetDir = Get-AtlasWingetLogsRoot
+        $legacyWingetLogs = Get-ChildItem -Path $logsDir -File -Filter 'winget_*.log' -ErrorAction SilentlyContinue
+
+        foreach ($legacyFile in $legacyWingetLogs) {
+            try {
+                $destination = Join-Path $wingetDir $legacyFile.Name
+                if (Test-Path $destination) {
+                    Remove-Item -Path $legacyFile.FullName -Force -ErrorAction Stop
+                } else {
+                    Move-Item -Path $legacyFile.FullName -Destination $destination -Force -ErrorAction Stop
+                }
+            } catch { }
+        }
+    } catch { }
+}
+
 function Invoke-AtlasLogRetention {
     param(
         [int]$MaxFiles = 30
@@ -124,6 +154,10 @@ function Initialize-AtlasLogger {
             } catch { }
         }
     }
+
+    try {
+        Invoke-AtlasLegacyLogCleanup
+    } catch { }
 
     $script:AtlasOperationalLogPath = Join-Path $logsDir "atlas.log"
     if (-not (Test-Path $script:AtlasOperationalLogPath)) {

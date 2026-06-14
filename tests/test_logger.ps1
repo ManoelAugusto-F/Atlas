@@ -39,6 +39,7 @@ $required = @(
     'Get-AtlasSessionLogsRoot',
     'Get-AtlasWingetLogsRoot',
     'Initialize-AtlasLogger',
+    'Invoke-AtlasLegacyLogCleanup',
     'Invoke-AtlasLogRetention',
     'Write-AtlasLog',
     'Start-AtlasSessionLog',
@@ -64,7 +65,13 @@ foreach ($dir in $scanDirs) {
     }
 }
 
-Test-Assert ($loggerSource -notmatch 'provisionador\.log') "Logger nao referencia provisionador.log"
+Test-Assert ($loggerSource -match 'function Invoke-AtlasLegacyLogCleanup') "Limpeza de logs legados implementada"
+Test-Assert ($loggerSource -match 'Initialize-AtlasLogger[\s\S]+Invoke-AtlasLegacyLogCleanup') "Initialize-AtlasLogger chama limpeza legada"
+if ($loggerSource -match '(?s)function Write-Log\s*\{(.+?)\r?\n\}') {
+    Test-Assert ($Matches[1] -notmatch 'provisionador\.log') "Write-Log nao grava provisionador.log"
+} else {
+    Test-Assert $false "Nao foi possivel validar corpo de Write-Log"
+}
 Test-Assert ($loggerSource -notmatch '\.\./logs') "Logger nao usa caminho relativo ../logs"
 Test-Assert ($loggerSource -notmatch 'logs/sessions') "Logger nao usa caminho relativo logs/sessions"
 Test-Assert ($loggerSource -notmatch 'logs\\sessions') "Logger nao usa caminho relativo logs\sessions"
@@ -73,7 +80,9 @@ $forbiddenRefs = @()
 foreach ($file in $activeSources) {
     $raw = Get-Content -Path $file.FullName -Raw -ErrorAction SilentlyContinue
     if ($raw -match 'provisionador\.log') {
-        $forbiddenRefs += $file.FullName
+        if ($file.Name -ne 'logger.ps1') {
+            $forbiddenRefs += $file.FullName
+        }
     }
     if ($raw -match '(?<![A-Za-z])logs/sessions') {
         $forbiddenRefs += $file.FullName
@@ -111,6 +120,49 @@ try {
     Test-Assert ((Get-AtlasLogPath) -eq $expectedLogPath) "Get-AtlasLogPath retorna caminho correto"
     Test-Assert ((Get-AtlasSessionLogsRoot) -eq $expectedSessionsDir) "Get-AtlasSessionLogsRoot retorna Sessions"
     Test-Assert ((Get-AtlasWingetLogsRoot) -eq $expectedWingetDir) "Get-AtlasWingetLogsRoot retorna Winget"
+
+    Write-Host ""
+    Write-Host "[TESTE] Invoke-AtlasLegacyLogCleanup" -ForegroundColor Magenta
+
+    $legacyTestRoot = Join-Path $tempBase ("AtlasLegacyCleanup_" + [guid]::NewGuid().ToString())
+    $legacyLogsDir = Join-Path $legacyTestRoot "Logs"
+    $legacyWingetDir = Join-Path $legacyLogsDir "Winget"
+    New-Item -ItemType Directory -Path $legacyWingetDir -Force | Out-Null
+
+    $fakeProvisionador = Join-Path $legacyLogsDir "provisionador.log"
+    $fakeWingetRoot = Join-Path $legacyLogsDir "winget_legacy.log"
+    Set-Content -Path $fakeProvisionador -Value "legado provisionador" -Encoding UTF8
+    Set-Content -Path $fakeWingetRoot -Value "winget antigo na raiz" -Encoding UTF8
+
+    $script:AtlasOperationalLogPath = $null
+    $script:AtlasLogsDir = $null
+    $script:AtlasLoggerInitialized = $false
+
+    Initialize-AtlasLogger -LogRoot $legacyTestRoot | Out-Null
+
+    $movedWingetPath = Join-Path $legacyWingetDir "winget_legacy.log"
+    Test-Assert (-not (Test-Path $fakeProvisionador)) "provisionador.log removido apos Initialize-AtlasLogger"
+    Test-Assert (-not (Test-Path $fakeWingetRoot)) "winget_legacy.log removido da raiz de Logs"
+    Test-Assert (Test-Path $movedWingetPath) "winget_legacy.log movido para Winget"
+
+    $duplicateRoot = Join-Path $legacyLogsDir "winget_duplicado.log"
+    $duplicateDest = Join-Path $legacyWingetDir "winget_duplicado.log"
+    Set-Content -Path $duplicateDest -Value "ja existe" -Encoding UTF8
+    Set-Content -Path $duplicateRoot -Value "duplicado na raiz" -Encoding UTF8
+    Invoke-AtlasLegacyLogCleanup
+    Test-Assert (-not (Test-Path $duplicateRoot)) "winget duplicado na raiz removido quando ja existe em Winget"
+
+    if (Test-Path $legacyTestRoot) {
+        Remove-Item -Path $legacyTestRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    $script:AtlasOperationalLogPath = $null
+    $script:AtlasLogsDir = $null
+    $script:AtlasLoggerInitialized = $false
+    $script:AtlasSessionLogPath = $null
+    $script:AtlasSessionActive = $false
+
+    $logPath = Initialize-AtlasLogger -LogRoot $testRoot
 
     Write-AtlasLog -Nivel INFO -Modulo "Teste" -Acao "Escrita" -Resultado "Sucesso"
     $content = Get-Content -Path $logPath -Raw
