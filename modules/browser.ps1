@@ -31,10 +31,12 @@ function Get-BrowserProfiles {
             }
         }
         $results += [PSCustomObject]@{
-            Browser   = "Google Chrome"
-            Installed = $chromeInstalled
-            Profiles  = $chromeProfiles
-            CachePath = if ($chromeInstalled) { $chromeUserData } else { "N/A" }
+            Name        = "Google Chrome"
+            Browser     = "Chrome"
+            Installed   = $chromeInstalled
+            Profiles    = $chromeProfiles
+            ProfilePath = if ($chromeInstalled) { $chromeUserData } else { "N/A" }
+            CachePath   = if ($chromeInstalled) { $chromeUserData } else { "N/A" }
         }
 
         # Microsoft Edge
@@ -51,10 +53,12 @@ function Get-BrowserProfiles {
             }
         }
         $results += [PSCustomObject]@{
-            Browser   = "Microsoft Edge"
-            Installed = $edgeInstalled
-            Profiles  = $edgeProfiles
-            CachePath = if ($edgeInstalled) { $edgeUserData } else { "N/A" }
+            Name        = "Microsoft Edge"
+            Browser     = "Edge"
+            Installed   = $edgeInstalled
+            Profiles    = $edgeProfiles
+            ProfilePath = if ($edgeInstalled) { $edgeUserData } else { "N/A" }
+            CachePath   = if ($edgeInstalled) { $edgeUserData } else { "N/A" }
         }
 
         # Mozilla Firefox
@@ -71,18 +75,22 @@ function Get-BrowserProfiles {
             } catch {}
         }
         $results += [PSCustomObject]@{
-            Browser   = "Mozilla Firefox"
-            Installed = $firefoxInstalled
-            Profiles  = $firefoxProfiles
-            CachePath = if ($firefoxInstalled) { $firefoxProfileDir } else { "N/A" }
+            Name        = "Mozilla Firefox"
+            Browser     = "Firefox"
+            Installed   = $firefoxInstalled
+            Profiles    = $firefoxProfiles
+            ProfilePath = if ($firefoxInstalled) { $firefoxProfileDir } else { "N/A" }
+            CachePath   = if ($firefoxInstalled) { $firefoxProfileDir } else { "N/A" }
         }
     } else {
         Write-Log -Level "INFO" -Message "Plataforma nao-Windows. Retornando informacoes de teste de navegadores."
         $results += [PSCustomObject]@{
-            Browser   = "N/A (Nao-Windows)"
-            Installed = $false
-            Profiles  = @()
-            CachePath = "N/A"
+            Name        = "N/A (Nao-Windows)"
+            Browser     = "N/A"
+            Installed   = $false
+            Profiles    = @()
+            ProfilePath = "N/A"
+            CachePath   = "N/A"
         }
     }
 
@@ -209,7 +217,7 @@ function Get-BrowserStatus {
     foreach ($browser in $profiles) {
         $status = if ($browser.Installed) { "Instalado" } else { "Nao instalado" }
         $statusColor = if ($browser.Installed) { "Green" } else { "Gray" }
-        Write-Host "$($browser.Browser): " -NoNewline
+        Write-Host "$($browser.Name): " -NoNewline
         Write-Host $status -ForegroundColor $statusColor
         if ($browser.Installed -and $browser.Profiles.Count -gt 0) {
             Write-Host "  Perfis: $($browser.Profiles -join ', ')" -ForegroundColor Gray
@@ -398,7 +406,7 @@ function Show-BrowserMenu {
                 Write-Host "Navegadores instalados:" -ForegroundColor Cyan
                 foreach ($p in $profiles) {
                     $status = if ($p.Installed) { "[OK]" } else { "[--]" }
-                    Write-Host "$status $($p.Browser)" -ForegroundColor Green
+                    Write-Host "$status $($p.Name)" -ForegroundColor Green
                 }
                 Write-Log -Level "INFO" -Message "Navegadores detectados."
                 Wait-UserInput

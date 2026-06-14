@@ -41,8 +41,14 @@ function Get-PrinterList {
 
     Write-Host ""
     try {
-        $printers = Get-Printer -ErrorAction Stop
-        if ($printers) {
+        $printers = @(Get-Printer -ErrorAction Stop)
+        $total = $printers.Count
+
+        if ($total -eq 0) {
+            Write-Host "Nenhuma impressora instalada encontrada." -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "Total: 0 impressora(s)" -ForegroundColor Gray
+        } else {
             Write-Host "Impressoras instaladas:" -ForegroundColor Cyan
             $printers | ForEach-Object {
                 $defaultMark = if ($_.Default) { " [PADRAO]" } else { "" }
@@ -50,9 +56,7 @@ function Get-PrinterList {
                 Write-Host ("  {0}{1}{2} - {3}" -f $_.Name, $defaultMark, $shared, $_.PrinterStatus) -ForegroundColor White
             }
             Write-Host ""
-            Write-Host ("Total: {0} impressora(s)" -f $printers.Count) -ForegroundColor Gray
-        } else {
-            Write-Host "Nenhuma impressora instalada encontrada." -ForegroundColor Yellow
+            Write-Host "Total: $total impressora(s)" -ForegroundColor Gray
         }
         Write-AtlasLog -Nivel INFO -Modulo "Impressoras" -Acao "Diagnostico" -Resultado "Sucesso"
     } catch {

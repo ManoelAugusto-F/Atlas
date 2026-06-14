@@ -315,8 +315,16 @@ function Reset-WindowsUpdateSafe {
 # ------------------------------------------
 
 function script:Invoke-SfcVerifyOnlyCapture {
+    if (-not (script:Test-RepairAdmin)) {
+        return @{ Status = "REQUER_ADMIN"; Output = "" }
+    }
+
     try {
         $output = & sfc /verifyonly 2>&1 | Out-String
+        if ($output -match '(?i)(requires elevation|elevated privileges|administrator|administrador|privilegios elevados)') {
+            return @{ Status = "REQUER_ADMIN"; Output = $output }
+        }
+
         $hasCorruption = $output -match '(?i)(found corrupt|corrupt files|arquivos corrompidos|integrity violations were found)'
         $isClean = $output -match '(?i)(did not find any integrity violations|nao encontrou violac|n.o encontrou viola)'
 
@@ -326,15 +334,23 @@ function script:Invoke-SfcVerifyOnlyCapture {
         if ($isClean) {
             return @{ Status = "ok"; Output = $output }
         }
-        return @{ Status = "unknown"; Output = $output }
+        return @{ Status = "NAO_INTERPRETADO"; Output = $output }
     } catch {
-        return @{ Status = "error"; Output = $_.Exception.Message }
+        return @{ Status = "NAO_EXECUTADO"; Output = $_.Exception.Message }
     }
 }
 
 function script:Invoke-DismCheckHealthCapture {
+    if (-not (script:Test-RepairAdmin)) {
+        return @{ Status = "REQUER_ADMIN"; Output = "" }
+    }
+
     try {
         $output = & DISM /Online /Cleanup-Image /CheckHealth 2>&1 | Out-String
+        if ($output -match '(?i)(requires elevation|elevated privileges|administrator|administrador|privilegios elevados|access is denied|acesso negado)') {
+            return @{ Status = "REQUER_ADMIN"; Output = $output }
+        }
+
         $hasCorruption = $output -match '(?i)(corruption was detected|corrupcao.*detectada|component store is repairable|reparavel)'
         $isClean = $output -match '(?i)(no component store corruption|nenhuma corrupcao)'
 
@@ -344,9 +360,9 @@ function script:Invoke-DismCheckHealthCapture {
         if ($isClean) {
             return @{ Status = "ok"; Output = $output }
         }
-        return @{ Status = "unknown"; Output = $output }
+        return @{ Status = "NAO_INTERPRETADO"; Output = $output }
     } catch {
-        return @{ Status = "error"; Output = $_.Exception.Message }
+        return @{ Status = "NAO_EXECUTADO"; Output = $_.Exception.Message }
     }
 }
 
@@ -441,8 +457,16 @@ function Start-WindowsDiagnostic {
         $recommendations.Add("Executar opcao [3] Corrigir arquivos do Windows")
     } elseif ($sfcResult.Status -eq "ok") {
         $findings.Add("SFC: Nenhum problema encontrado nos arquivos do Windows")
-    } else {
+    } elseif ($sfcResult.Status -eq "REQUER_ADMIN") {
+        $findings.Add("SFC: Nao foi possivel executar esta verificacao sem privilegios de administrador.")
+        $hasAttention = $true
+        $recommendations.Add("Recomendacao: execute [2] Verificar arquivos do Windows.")
+    } elseif ($sfcResult.Status -eq "NAO_INTERPRETADO") {
         $findings.Add("SFC: Nao foi possivel interpretar o resultado.")
+        $hasAttention = $true
+        $recommendations.Add("Recomendacao: execute [2] Verificar arquivos do Windows.")
+    } else {
+        $findings.Add("SFC: Verificacao nao executada.")
         $hasAttention = $true
         $recommendations.Add("Recomendacao: execute [2] Verificar arquivos do Windows.")
     }
@@ -455,8 +479,16 @@ function Start-WindowsDiagnostic {
         }
     } elseif ($dismResult.Status -eq "ok") {
         $findings.Add("DISM: Imagem do Windows em bom estado")
-    } else {
+    } elseif ($dismResult.Status -eq "REQUER_ADMIN") {
+        $findings.Add("DISM: Nao foi possivel executar esta verificacao sem privilegios de administrador.")
+        $hasAttention = $true
+        $recommendations.Add("Recomendacao: execute [4] Verificar imagem do Windows.")
+    } elseif ($dismResult.Status -eq "NAO_INTERPRETADO") {
         $findings.Add("DISM: Nao foi possivel interpretar o resultado.")
+        $hasAttention = $true
+        $recommendations.Add("Recomendacao: execute [4] Verificar imagem do Windows.")
+    } else {
+        $findings.Add("DISM: Verificacao nao executada.")
         $hasAttention = $true
         $recommendations.Add("Recomendacao: execute [4] Verificar imagem do Windows.")
     }

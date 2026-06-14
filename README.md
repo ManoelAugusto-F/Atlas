@@ -262,4 +262,4 @@ Toda contribuição ajuda a tornar o projeto mais útil para a comunidade de TI.
 
 ---
 
-**Versão Atual:** v0.4.1 — Limpeza de logs legados
+**Versão Atual:** v0.4.3 — Correções da homologação Windows 11

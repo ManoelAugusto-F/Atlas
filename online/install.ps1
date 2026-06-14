@@ -5,11 +5,41 @@ $ErrorActionPreference = "Stop"
 
 $AtlasZipUrl = "https://github.com/ManoelAugusto-F/Atlas/archive/refs/heads/main.zip"
 
+function Clear-OldAtlasTempFolders {
+    param(
+        [string]$ExcludePath = $null
+    )
+
+    try {
+        if (-not $env:TEMP -or -not (Test-Path $env:TEMP)) {
+            return
+        }
+
+        $cutoff = (Get-Date).AddHours(-24)
+        $oldFolders = Get-ChildItem -Path $env:TEMP -Directory -Filter 'Atlas_*' -ErrorAction SilentlyContinue |
+            Where-Object {
+                $_.FullName -ne $ExcludePath -and $_.LastWriteTime -lt $cutoff
+            }
+
+        if (-not $oldFolders) {
+            return
+        }
+
+        Write-Host "Limpando execucoes antigas do Atlas..." -ForegroundColor Gray
+        foreach ($folder in $oldFolders) {
+            try {
+                Remove-Item -Path $folder.FullName -Recurse -Force -ErrorAction Stop
+            } catch { }
+        }
+    } catch { }
+}
+
 if (-not $env:TEMP -or -not (Test-Path $env:TEMP)) {
     throw "Variavel TEMP invalida ou inacessivel."
 }
 
 $TempRoot = Join-Path $env:TEMP ("Atlas_" + [guid]::NewGuid().ToString())
+Clear-OldAtlasTempFolders -ExcludePath $TempRoot
 $ZipPath = Join-Path $TempRoot "atlas.zip"
 $ExtractPath = Join-Path $TempRoot "src"
 

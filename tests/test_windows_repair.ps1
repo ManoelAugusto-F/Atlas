@@ -58,8 +58,13 @@ Test-Assert ($repairSource -match 'Resetar Windows Update') "Menu contem reset d
 Test-Assert ($repairSource -notmatch '-Risk ') "Reparos Windows sem nivel de risco"
 Test-Assert ($repairSource -match 'Start-WindowsDiagnostic') "Diagnostico guiado implementado"
 Test-Assert ($repairSource -match 'Diagnostico do Sistema') "Resumo de diagnostico implementado"
-Test-Assert ($repairSource -match 'SFC: Nao foi possivel interpretar o resultado\.') "SFC com mensagem amigavel para resultado inconclusivo"
-Test-Assert ($repairSource -match 'DISM: Nao foi possivel interpretar o resultado\.') "DISM com mensagem amigavel para resultado inconclusivo"
+Test-Assert ($repairSource -match 'SFC: Nao foi possivel executar esta verificacao sem privilegios de administrador\.') "SFC com mensagem de admin"
+Test-Assert ($repairSource -match 'DISM: Nao foi possivel executar esta verificacao sem privilegios de administrador\.') "DISM com mensagem de admin"
+Test-Assert ($repairSource -match 'REQUER_ADMIN') "Status REQUER_ADMIN implementado"
+Test-Assert ($repairSource -match 'NAO_INTERPRETADO') "Status NAO_INTERPRETADO implementado"
+Test-Assert ($repairSource -match 'NAO_EXECUTADO') "Status NAO_EXECUTADO implementado"
+Test-Assert ($repairSource -notmatch 'Status = "unknown"') "Captura sem status unknown"
+Test-Assert ($repairSource -notmatch '"unknown"') "Codigo sem string unknown"
 Test-Assert ($repairSource -match 'Recomendacao: execute \[2\] Verificar arquivos do Windows\.') "Recomendacao SFC amigavel presente"
 Test-Assert ($repairSource -match 'Recomendacao: execute \[4\] Verificar imagem do Windows\.') "Recomendacao DISM amigavel presente"
 
@@ -69,6 +74,8 @@ if ($repairSource -match '(?s)function Start-WindowsDiagnostic\s*\{(.+?)\r?\nfun
 }
 Test-Assert ($diagnosticBody -notmatch 'Write-Host.*unknown') "Saida final do diagnostico sem texto unknown"
 Test-Assert ($diagnosticBody -notmatch 'Write-Atlas.*unknown') "Helpers de UI do diagnostico sem texto unknown"
+Test-Assert ($diagnosticBody -match 'Diagnostico SFC:') "Log explicito de status SFC"
+Test-Assert ($diagnosticBody -match 'Diagnostico DISM:') "Log explicito de status DISM"
 
 Test-Assert ($menuSource -match 'Show-AtlasCompactOption') "Menu principal usa formato compacto"
 Test-Assert ($menuSource -notmatch 'Show-AtlasDescribedOption') "Menu principal sem descricoes"

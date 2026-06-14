@@ -1,8 +1,14 @@
-# Versao Atual: Atlas v0.4.1
+# Versao Atual: Atlas v0.4.3
 
 ---
 
 ## Historico de Versoes
+
+### v0.4.3 - Correcoes da homologacao Windows 11
+- **Diagnostico Windows**: status explicitos (REQUER_ADMIN, NAO_INTERPRETADO, NAO_EXECUTADO) sem unknown
+- **Bootstrap online**: `Clear-OldAtlasTempFolders` remove pastas `Atlas_*` com mais de 24h no TEMP
+- **Impressoras**: total exibido corretamente com `@(Get-Printer)` e contagem explicita
+- **Navegadores**: propriedade `Name` legivel em `Get-BrowserProfiles`
 
 ### v0.4.1 - Limpeza de logs legados
 - **Migracao**: `Invoke-AtlasLegacyLogCleanup` remove `provisionador.log` e reorganiza `winget_*.log` da raiz
