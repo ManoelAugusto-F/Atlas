@@ -1,8 +1,13 @@
-# Versao Atual: Atlas v0.3.9
+# Versao Atual: Atlas v0.4.0
 
 ---
 
 ## Historico de Versoes
+
+### v0.4.0 - Padronizacao e retencao de logs
+- **Logs**: estrutura centralizada em `C:\ProgramData\Atlas\Logs`
+- **Retencao**: `Invoke-AtlasLogRetention` mantem 30 arquivos em Sessions e Winget
+- **Legado**: `provisionador.log` desativado; `Write-Log` grava apenas no session log
 
 ### v0.3.9 - Organizacao de modulos legados
 - **Legado**: 16 modulos antigos movidos para `legacy/modules/`

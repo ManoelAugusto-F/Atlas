@@ -69,7 +69,7 @@ if ($moduleText -notmatch '(?s)function Invoke-WingetManaged\s*\{(.+?)\r?\nfunct
         'RedirectStandardOutput',
         'RedirectStandardError',
         'WaitForExit',
-        'Get-WingetLogsDirectory'
+        'Get-AtlasWingetLogsRoot'
     )
 
     foreach ($token in $requiredManaged) {

@@ -209,6 +209,16 @@ O histórico pode ser consultado diretamente pelo menu do Atlas.
 
 ---
 
+## Logs
+
+No Windows, os logs ficam centralizados em `C:\ProgramData\Atlas\Logs\`:
+
+- **atlas.log** — histórico principal de eventos importantes (ações, sucesso/falha)
+- **Sessions/** — logs detalhados de cada sessão (`session_yyyyMMdd_HHmmss.log`)
+- **Winget/** — logs técnicos de instalação e atualização para troubleshooting
+
+---
+
 ## Compatibilidade
 
 ### Sistemas Operacionais
@@ -252,4 +262,4 @@ Toda contribuição ajuda a tornar o projeto mais útil para a comunidade de TI.
 
 ---
 
-**Versão Atual:** v0.3.7 — Winget com execução gerenciada e progresso visual
+**Versão Atual:** v0.4.0 — Padronização e retenção de logs

@@ -200,10 +200,10 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     }
 }
 
-if ($moduleText -match 'Atlas\\Logs\\Winget') {
-    Write-Host "  [OK] Pasta de logs Winget definida" -ForegroundColor Green
+if ($moduleText -match 'Get-AtlasWingetLogsRoot') {
+    Write-Host "  [OK] Logs Winget usam Get-AtlasWingetLogsRoot" -ForegroundColor Green
 } else {
-    Write-Host "  [FAIL] Pasta Atlas\Logs\Winget ausente no modulo" -ForegroundColor Red
+    Write-Host "  [FAIL] software-install sem Get-AtlasWingetLogsRoot" -ForegroundColor Red
     $allOk = $false
 }
 

@@ -42,6 +42,10 @@ foreach ($fn in $required) {
     Test-Assert ([bool](Get-Command $fn -ErrorAction SilentlyContinue)) "Funcao $fn"
 }
 
+$historySource = Get-Content -Path (Join-Path $PSScriptRoot "../modules/history.ps1") -Raw
+Test-Assert ($historySource -match 'Get-AtlasLogPath') "Historico usa Get-AtlasLogPath"
+Test-Assert ($historySource -notmatch 'provisionador\.log') "Historico sem provisionador.log"
+
 try {
     Initialize-AtlasLogger -LogRoot $testRoot | Out-Null
     $logPath = Get-AtlasLogPath

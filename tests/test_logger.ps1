@@ -11,9 +11,14 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 $script:LoggerTestFailed = $false
-$expectedLogsDir = Join-Path $env:ProgramData "Atlas\Logs"
+$tempBase = if ($env:TEMP) { $env:TEMP } elseif ($env:TMP) { $env:TMP } else { [System.IO.Path]::GetTempPath() }
+$testRoot = Join-Path $tempBase ("AtlasLoggerTest_" + [guid]::NewGuid().ToString())
+$expectedLogsDir = Join-Path $testRoot "Logs"
 $expectedLogPath = Join-Path $expectedLogsDir "atlas.log"
 $expectedSessionsDir = Join-Path $expectedLogsDir "Sessions"
+$expectedWingetDir = Join-Path $expectedLogsDir "Winget"
+$runningOnWindows = ($IsWindows -or $env:OS -eq 'Windows_NT')
+$windowsLogsDir = if ($env:ProgramData) { Join-Path $env:ProgramData "Atlas\Logs" } else { $null }
 
 function Test-Assert {
     param(
@@ -29,10 +34,17 @@ function Test-Assert {
 }
 
 $required = @(
-    'Initialize-AtlasLogger',
-    'Write-AtlasLog',
+    'Get-AtlasLogsRoot',
     'Get-AtlasLogPath',
-    'Start-AtlasSessionLog'
+    'Get-AtlasSessionLogsRoot',
+    'Get-AtlasWingetLogsRoot',
+    'Initialize-AtlasLogger',
+    'Invoke-AtlasLogRetention',
+    'Write-AtlasLog',
+    'Start-AtlasSessionLog',
+    'Write-AtlasSessionLog',
+    'Stop-AtlasSessionLog',
+    'Write-Log'
 )
 
 foreach ($fn in $required) {
@@ -40,41 +52,108 @@ foreach ($fn in $required) {
 }
 
 $loggerSource = Get-Content -Path (Join-Path $PSScriptRoot "../modules/logger.ps1") -Raw
+$projectRoot = Join-Path $PSScriptRoot ".."
+$activeSources = @()
+$scanDirs = @(
+    (Join-Path $projectRoot "modules"),
+    (Join-Path $projectRoot "bootstrap")
+)
+foreach ($dir in $scanDirs) {
+    if (Test-Path $dir) {
+        $activeSources += Get-ChildItem -Path $dir -Recurse -Include *.ps1 -File -ErrorAction SilentlyContinue
+    }
+}
+
+Test-Assert ($loggerSource -notmatch 'provisionador\.log') "Logger nao referencia provisionador.log"
 Test-Assert ($loggerSource -notmatch '\.\./logs') "Logger nao usa caminho relativo ../logs"
 Test-Assert ($loggerSource -notmatch 'logs/sessions') "Logger nao usa caminho relativo logs/sessions"
 Test-Assert ($loggerSource -notmatch 'logs\\sessions') "Logger nao usa caminho relativo logs\sessions"
 
+$forbiddenRefs = @()
+foreach ($file in $activeSources) {
+    $raw = Get-Content -Path $file.FullName -Raw -ErrorAction SilentlyContinue
+    if ($raw -match 'provisionador\.log') {
+        $forbiddenRefs += $file.FullName
+    }
+    if ($raw -match '(?<![A-Za-z])logs/sessions') {
+        $forbiddenRefs += $file.FullName
+    }
+}
+Test-Assert ($forbiddenRefs.Count -eq 0) "Sem referencias ativas a provisionador.log ou logs/sessions"
+
+if ($runningOnWindows -and $windowsLogsDir) {
+    $script:AtlasOperationalLogPath = $null
+    $script:AtlasLogsDir = $null
+    $script:AtlasLoggerInitialized = $false
+
+    Test-Assert ((Join-Path $env:ProgramData "Atlas\Logs") -eq (Get-AtlasLogsRoot)) "Get-AtlasLogsRoot retorna C:\ProgramData\Atlas\Logs no Windows"
+    Test-Assert ((Join-Path $env:ProgramData "Atlas\Logs\atlas.log") -eq (Get-AtlasLogPath)) "Get-AtlasLogPath retorna C:\ProgramData\Atlas\Logs\atlas.log no Windows"
+    Test-Assert ((Join-Path $env:ProgramData "Atlas\Logs\Sessions") -eq (Get-AtlasSessionLogsRoot)) "Get-AtlasSessionLogsRoot retorna C:\ProgramData\Atlas\Logs\Sessions no Windows"
+    Test-Assert ((Join-Path $env:ProgramData "Atlas\Logs\Winget") -eq (Get-AtlasWingetLogsRoot)) "Get-AtlasWingetLogsRoot retorna C:\ProgramData\Atlas\Logs\Winget no Windows"
+} else {
+    Write-Host "[INFO] Caminhos ProgramData validados apenas no Windows" -ForegroundColor Gray
+}
+
 try {
     $script:AtlasOperationalLogPath = $null
+    $script:AtlasLogsDir = $null
     $script:AtlasLoggerInitialized = $false
     $script:AtlasSessionLogPath = $null
     $script:AtlasSessionActive = $false
 
-    Test-Assert ((Get-AtlasLogPath) -eq $expectedLogPath) "Get-AtlasLogPath retorna C:\ProgramData\Atlas\Logs\atlas.log"
-
-    $logPath = Initialize-AtlasLogger
-    Test-Assert (Test-Path $expectedLogsDir) "Pasta C:\ProgramData\Atlas\Logs criada"
-    Test-Assert (Test-Path $expectedSessionsDir) "Pasta C:\ProgramData\Atlas\Logs\Sessions criada"
+    $logPath = Initialize-AtlasLogger -LogRoot $testRoot
+    Test-Assert (Test-Path $expectedLogsDir) "Pasta Logs criada"
+    Test-Assert (Test-Path $expectedSessionsDir) "Pasta Sessions criada"
+    Test-Assert (Test-Path $expectedWingetDir) "Pasta Winget criada"
     Test-Assert (Test-Path $logPath) "Arquivo atlas.log criado"
-    Test-Assert ($logPath -eq $expectedLogPath) "Initialize-AtlasLogger usa ProgramData"
-    Test-Assert ($logPath -eq (Get-AtlasLogPath)) "Get-AtlasLogPath retorna caminho correto"
+    Test-Assert ($logPath -eq $expectedLogPath) "Initialize-AtlasLogger usa atlas.log"
+    Test-Assert ((Get-AtlasLogsRoot) -eq $expectedLogsDir) "Get-AtlasLogsRoot retorna pasta Logs do teste"
+    Test-Assert ((Get-AtlasLogPath) -eq $expectedLogPath) "Get-AtlasLogPath retorna caminho correto"
+    Test-Assert ((Get-AtlasSessionLogsRoot) -eq $expectedSessionsDir) "Get-AtlasSessionLogsRoot retorna Sessions"
+    Test-Assert ((Get-AtlasWingetLogsRoot) -eq $expectedWingetDir) "Get-AtlasWingetLogsRoot retorna Winget"
 
     Write-AtlasLog -Nivel INFO -Modulo "Teste" -Acao "Escrita" -Resultado "Sucesso"
     $content = Get-Content -Path $logPath -Raw
-
     Test-Assert ($content -match "Teste") "Log contem modulo Teste"
     Test-Assert ($content -match "Escrita") "Log contem acao Escrita"
     Test-Assert ($content -match "Sucesso") "Log contem resultado Sucesso"
     Test-Assert ($content -match "\| INFO \|") "Log contem nivel INFO"
 
     $sessionLog = Start-AtlasSessionLog
-    Test-Assert ($sessionLog.StartsWith($expectedSessionsDir)) "Log de sessao em ProgramData\Logs\Sessions"
+    Test-Assert ($sessionLog.StartsWith($expectedSessionsDir)) "Log de sessao em Logs\Sessions"
     Test-Assert ($sessionLog -match 'session_\d{8}_\d{6}\.log$') "Nome do log de sessao no formato esperado"
     Test-Assert (Test-Path $sessionLog) "Arquivo de sessao criado"
 
     Write-AtlasSessionLog -Message "Teste de sessao" -Level "INFO"
     $sessionContent = Get-Content -Path $sessionLog -Raw
     Test-Assert ($sessionContent -match "Teste de sessao") "Log de sessao gravado com sucesso"
+
+    Write-Log -Message "Teste Write-Log wrapper" -Level "INFO"
+    $provisionadorPath = Join-Path $expectedLogsDir "provisionador.log"
+    Test-Assert (-not (Test-Path $provisionadorPath)) "Write-Log nao cria provisionador.log"
+    $sessionAfterWriteLog = Get-Content -Path $sessionLog -Raw
+    Test-Assert ($sessionAfterWriteLog -match "Teste Write-Log wrapper") "Write-Log grava no session log"
+
+    for ($i = 1; $i -le 35; $i++) {
+        $file = Join-Path $expectedSessionsDir ("session_retention_{0:D2}.log" -f $i)
+        Set-Content -Path $file -Value "retencao $i" -Encoding UTF8
+        (Get-Item $file).LastWriteTime = (Get-Date).AddMinutes(-$i)
+    }
+    for ($i = 1; $i -le 35; $i++) {
+        $file = Join-Path $expectedWingetDir ("winget_install_retention_{0:D2}.log" -f $i)
+        Set-Content -Path $file -Value "winget $i" -Encoding UTF8
+        (Get-Item $file).LastWriteTime = (Get-Date).AddMinutes(-$i)
+    }
+
+    Invoke-AtlasLogRetention -MaxFiles 30
+    $sessionCount = @(Get-ChildItem -Path $expectedSessionsDir -File).Count
+    $wingetCount = @(Get-ChildItem -Path $expectedWingetDir -File).Count
+    Test-Assert ($sessionCount -eq 30) "Retencao Sessions mantem 30 arquivos (obteve $sessionCount)"
+    Test-Assert ($wingetCount -eq 30) "Retencao Winget mantem 30 arquivos (obteve $wingetCount)"
+
+    $softwareInstallSource = Get-Content -Path (Join-Path $PSScriptRoot "../modules/software-install.ps1") -Raw
+    Test-Assert ($softwareInstallSource -match 'Get-AtlasWingetLogsRoot') "software-install usa Get-AtlasWingetLogsRoot"
+    Test-Assert ($softwareInstallSource -notmatch 'Get-WingetLogsDirectory') "software-install sem Get-WingetLogsDirectory local"
 
     $modulesDir = Join-Path $PSScriptRoot "../modules"
     $integrationChecks = @(
@@ -100,6 +179,11 @@ try {
 catch {
     Write-Host "[FAIL] Erro no teste: $_" -ForegroundColor Red
     $script:LoggerTestFailed = $true
+}
+finally {
+    if (Test-Path $testRoot) {
+        Remove-Item -Path $testRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
 }
 
 Write-Host ""

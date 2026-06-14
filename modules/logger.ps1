@@ -5,6 +5,7 @@
 $script:AtlasSessionLogPath = $null
 $script:AtlasSessionActive = $false
 $script:AtlasOperationalLogPath = $null
+$script:AtlasLogsDir = $null
 $script:AtlasLoggerInitialized = $false
 
 function script:Test-IsWindowsAtlasLogger {
@@ -32,17 +33,71 @@ function script:Ensure-AtlasLogDirectory {
 
     $dir = Split-Path $FilePath -Parent
     if ($dir -and -not (Test-Path $dir)) {
-        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        try {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        } catch { }
     }
+}
+
+function Get-AtlasLogsRoot {
+    if ($script:AtlasLogsDir) {
+        return $script:AtlasLogsDir
+    }
+    return Join-Path (script:Get-AtlasDefaultRoot) "Logs"
 }
 
 function Get-AtlasLogPath {
     if ($script:AtlasOperationalLogPath) {
         return $script:AtlasOperationalLogPath
     }
+    return Join-Path (Get-AtlasLogsRoot) "atlas.log"
+}
 
-    $logsDir = Join-Path (script:Get-AtlasDefaultRoot) "Logs"
-    return Join-Path $logsDir "atlas.log"
+function Get-AtlasSessionLogsRoot {
+    return Join-Path (Get-AtlasLogsRoot) "Sessions"
+}
+
+function Get-AtlasWingetLogsRoot {
+    $dir = Join-Path (Get-AtlasLogsRoot) "Winget"
+    if (-not (Test-Path $dir)) {
+        try {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        } catch { }
+    }
+    return $dir
+}
+
+function Invoke-AtlasLogRetention {
+    param(
+        [int]$MaxFiles = 30
+    )
+
+    $targets = @(
+        (Get-AtlasSessionLogsRoot),
+        (Get-AtlasWingetLogsRoot)
+    )
+
+    foreach ($dir in $targets) {
+        if (-not $dir) { continue }
+
+        try {
+            if (-not (Test-Path $dir)) {
+                New-Item -ItemType Directory -Path $dir -Force | Out-Null
+            }
+
+            $files = Get-ChildItem -Path $dir -File -ErrorAction SilentlyContinue |
+                Sort-Object LastWriteTime -Descending
+
+            if (-not $files) { continue }
+
+            $toRemove = @($files | Select-Object -Skip $MaxFiles)
+            foreach ($file in $toRemove) {
+                try {
+                    Remove-Item -Path $file.FullName -Force -ErrorAction Stop
+                } catch { }
+            }
+        } catch { }
+    }
 }
 
 function Initialize-AtlasLogger {
@@ -58,20 +113,31 @@ function Initialize-AtlasLogger {
 
     $logsDir = Join-Path $atlasRoot "Logs"
     $sessionsDir = Join-Path $logsDir "Sessions"
+    $wingetDir = Join-Path $logsDir "Winget"
 
-    if (-not (Test-Path $logsDir)) {
-        New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
-    }
-    if (-not (Test-Path $sessionsDir)) {
-        New-Item -ItemType Directory -Path $sessionsDir -Force | Out-Null
+    $script:AtlasLogsDir = $logsDir
+
+    foreach ($dir in @($logsDir, $sessionsDir, $wingetDir)) {
+        if (-not (Test-Path $dir)) {
+            try {
+                New-Item -ItemType Directory -Path $dir -Force | Out-Null
+            } catch { }
+        }
     }
 
     $script:AtlasOperationalLogPath = Join-Path $logsDir "atlas.log"
     if (-not (Test-Path $script:AtlasOperationalLogPath)) {
-        New-Item -ItemType File -Path $script:AtlasOperationalLogPath -Force | Out-Null
+        try {
+            New-Item -ItemType File -Path $script:AtlasOperationalLogPath -Force | Out-Null
+        } catch { }
     }
 
     $script:AtlasLoggerInitialized = $true
+
+    try {
+        Invoke-AtlasLogRetention
+    } catch { }
+
     return $script:AtlasOperationalLogPath
 }
 
@@ -101,10 +167,6 @@ function Write-AtlasLog {
     } catch { }
 }
 
-function Get-AtlasLogsRoot {
-    return Join-Path (script:Get-AtlasDefaultRoot) "Logs"
-}
-
 function Get-AtlasSessionLogPath {
     return $script:AtlasSessionLogPath
 }
@@ -114,11 +176,12 @@ function Start-AtlasSessionLog {
         Initialize-AtlasLogger | Out-Null
     }
 
-    $logsRoot = Get-AtlasLogsRoot
-    $sessionsDir = Join-Path $logsRoot "Sessions"
+    $sessionsDir = Get-AtlasSessionLogsRoot
 
     if (-not (Test-Path $sessionsDir)) {
-        New-Item -ItemType Directory -Path $sessionsDir -Force | Out-Null
+        try {
+            New-Item -ItemType Directory -Path $sessionsDir -Force | Out-Null
+        } catch { }
     }
 
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -189,7 +252,6 @@ function Stop-AtlasSessionLog {
 }
 
 function Write-Log {
-
     param(
         [string]$Message,
         [ValidateSet("INFO", "WARN", "ERROR")]
@@ -208,14 +270,6 @@ function Write-Log {
     if (-not $script:AtlasLoggerInitialized) {
         Initialize-AtlasLogger | Out-Null
     }
-
-    $logDir = Get-AtlasLogsRoot
-    $logFile = Join-Path $logDir "provisionador.log"
-
-    try {
-        script:Ensure-AtlasLogDirectory -FilePath $logFile
-        Add-Content -Path $logFile -Value $logLine -Encoding UTF8
-    } catch { }
 
     if ($script:AtlasSessionActive) {
         Write-AtlasSessionLog -Message $Message -Level $Level

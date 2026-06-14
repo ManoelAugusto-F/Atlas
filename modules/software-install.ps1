@@ -118,14 +118,6 @@ function script:Test-WingetPackageExists {
     return ($LASTEXITCODE -eq 0)
 }
 
-function script:Get-WingetLogsDirectory {
-    $logDir = Join-Path $env:ProgramData "Atlas\Logs\Winget"
-    if (-not (Test-Path $logDir)) {
-        New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-    }
-    return $logDir
-}
-
 function Test-WingetOperationSucceeded {
     param(
         [Parameter(Mandatory = $true)]
@@ -233,7 +225,7 @@ function Invoke-WingetManaged {
         }
     }
 
-    $logDir = script:Get-WingetLogsDirectory
+    $logDir = Get-AtlasWingetLogsRoot
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $logPath = Join-Path $logDir "winget_${LogPrefix}_$timestamp.log"
     $errPath = Join-Path $logDir "winget_${LogPrefix}_${timestamp}.err"
