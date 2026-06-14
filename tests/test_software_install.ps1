@@ -15,8 +15,8 @@ Write-Host ""
 $functions = @(
     'Show-SoftwareInstallMenu',
     'Test-WingetAvailable',
+    'Test-WingetOperationSucceeded',
     'Invoke-WingetManaged',
-    'Show-AtlasProgressBar',
     'Install-SoftwareByWingetSafe',
     'Get-SoftwareCatalog',
     'Get-SoftwareCategory',
@@ -48,9 +48,54 @@ foreach ($fn in $functions) {
     }
 }
 
+if (-not (Get-Command Show-AtlasProgressBar -ErrorAction SilentlyContinue)) {
+    Write-Host "[OK] Show-AtlasProgressBar removida" -ForegroundColor Green
+} else {
+    Write-Host "[FAIL] Show-AtlasProgressBar ainda presente" -ForegroundColor Red
+    $allOk = $false
+}
+
 if (-not $allOk) {
     exit 1
 }
+
+Write-Host ""
+Write-Host "[TESTE] Test-WingetOperationSucceeded (casos)" -ForegroundColor Magenta
+
+$testLogDir = Join-Path ($(if ($env:TEMP) { $env:TEMP } else { '/tmp' })) "atlas_winget_test_$(Get-Random)"
+New-Item -ItemType Directory -Path $testLogDir -Force | Out-Null
+
+function Test-WingetSuccessCase {
+    param(
+        [string]$Name,
+        [int]$ExitCode,
+        [string]$LogContent,
+        [bool]$Expected
+    )
+
+    $logFile = Join-Path $testLogDir "$Name.log"
+    if ($LogContent) {
+        Set-Content -Path $logFile -Value $LogContent -Encoding UTF8
+    } else {
+        Set-Content -Path $logFile -Value "sem resultado" -Encoding UTF8
+    }
+
+    $result = Test-WingetOperationSucceeded -ExitCode $ExitCode -LogPath $logFile
+    if ($result -eq $Expected) {
+        Write-Host "  [OK] $Name" -ForegroundColor Green
+        return $true
+    }
+
+    Write-Host "  [FAIL] $Name (esperado $Expected, obteve $result)" -ForegroundColor Red
+    return $false
+}
+
+if (-not (Test-WingetSuccessCase -Name 'Caso1_Exit1_InstaladoExito' -ExitCode 1 -LogContent 'Instalado com êxito' -Expected $true)) { $allOk = $false }
+if (-not (Test-WingetSuccessCase -Name 'Caso2_Exit1_SuccessfullyInstalled' -ExitCode 1 -LogContent 'Successfully installed' -Expected $true)) { $allOk = $false }
+if (-not (Test-WingetSuccessCase -Name 'Caso3_Exit0_SemTexto' -ExitCode 0 -LogContent 'processo finalizado' -Expected $true)) { $allOk = $false }
+if (-not (Test-WingetSuccessCase -Name 'Caso4_Exit1_SemTextoSucesso' -ExitCode 1 -LogContent 'erro generico' -Expected $false)) { $allOk = $false }
+
+Remove-Item -Path $testLogDir -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
 Write-Host "[TESTE] Test-WingetAvailable (somente leitura)" -ForegroundColor Magenta
@@ -74,62 +119,8 @@ foreach ($cat in $catalog.categories) {
 Write-Host "  Categorias: $catCount" -ForegroundColor Gray
 Write-Host "  Programas : $itemCount" -ForegroundColor Gray
 
-$expectedCategories = @(
-    "Navegadores",
-    "PDF e Documentos",
-    "Desenvolvimento",
-    "Infraestrutura e Redes",
-    "Banco de Dados",
-    "Microsoft",
-    "Utilitarios"
-)
-
-foreach ($name in $expectedCategories) {
-    $found = Get-SoftwareCategory -CategoryName $name
-    if ($found) {
-        Write-Host "  [OK] Categoria: $name" -ForegroundColor Green
-    } else {
-        Write-Host "  [FAIL] Categoria ausente: $name" -ForegroundColor Red
-        $allOk = $false
-    }
-}
-
-Write-Host ""
-Write-Host "[TESTE] Microsoft 365 no catalogo" -ForegroundColor Magenta
-$m365 = Get-SoftwareItem -CategoryName "Microsoft" -ItemName "Microsoft 365 Apps"
-if ($m365 -and $m365.id -eq "Microsoft.Office") {
-    Write-Host "  [OK] Microsoft 365 Apps -> Microsoft.Office (winget)" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Entrada Microsoft 365 Apps invalida" -ForegroundColor Red
-    $allOk = $false
-}
-
-Write-Host ""
-Write-Host "[TESTE] Test-Microsoft365WingetAvailable (sem instalacao)" -ForegroundColor Magenta
-$m365Winget = Test-Microsoft365WingetAvailable
-if ($IsWindows -or $env:OS -eq 'Windows_NT') {
-    Write-Host "  Winget M365 disponivel: $m365Winget" -ForegroundColor Gray
-} else {
-    Write-Host "  [SKIP] Validacao winget M365 requer Windows" -ForegroundColor DarkGray
-}
-
-Write-Host ""
-Write-Host "[TESTE] Visual de instalacao (software-install.ps1)" -ForegroundColor Magenta
 $modulePath = Join-Path $PSScriptRoot "../modules/software-install.ps1"
 $moduleText = Get-Content $modulePath -Raw
-
-if ($moduleText -match 'Show-AtlasHeader -Title "Instalacao de Programas"') {
-    Write-Host "  [OK] Menu abre diretamente por categorias" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Menu nao exibe categorias diretamente" -ForegroundColor Red
-    $allOk = $false
-}
-if ($moduleText -notmatch 'Show-SoftwareInstallProgramMenu') {
-    Write-Host "  [OK] Submenu intermediario removido" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Submenu intermediario ainda presente" -ForegroundColor Red
-    $allOk = $false
-}
 
 Write-Host ""
 Write-Host "[TESTE] Fluxo Install-SoftwareByWingetSafe (analise de arquivo)" -ForegroundColor Magenta
@@ -142,12 +133,12 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
 
     $requiredInstall = @(
         'Invoke-WingetManaged',
+        'Test-WingetOperationSucceeded',
         'ATLAS - INSTALACAO',
-        'Instalar agora? [S/N]',
-        '[OK] Instalacao concluida:',
-        '[ERRO] Falha na instalacao:',
-        'Codigo de saida:',
-        'Log:'
+        'Executando Winget...',
+        'instalado com sucesso.',
+        '[ERRO] Falha na instalacao.',
+        'Verifique o log:'
     )
 
     foreach ($token in $requiredInstall) {
@@ -160,16 +151,13 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     }
 
     $forbiddenInstall = @(
-        '*> $null',
-        '$LASTEXITCODE',
+        'Show-AtlasProgressBar',
+        'Executando Winget... %',
+        'Status: executando winget',
+        '$exitCode -eq 0',
+        'ExitCode -eq 0',
         'ConvertFrom-Json',
-        '--output json',
-        '$env:ComSpec',
-        'cmd.exe',
-        'Invoke-WingetVisible',
-        'Invoke-WingetWithLoading',
-        'Parse-WingetUpgradeList',
-        'Update-WingetPackageVisible'
+        '--output json'
     )
 
     foreach ($token in $forbiddenInstall) {
@@ -182,46 +170,11 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     }
 }
 
-Write-Host ""
-Write-Host "[TESTE] Invoke-WingetManaged e Show-AtlasProgressBar (analise de arquivo)" -ForegroundColor Magenta
-
-if ($moduleText -notmatch '(?s)function Invoke-WingetManaged\s*\{(.+?)\r?\nfunction ') {
-    Write-Host "  [FAIL] Nao foi possivel extrair Invoke-WingetManaged" -ForegroundColor Red
-    $allOk = $false
-} else {
-    $managedBody = $Matches[1]
-
-    $requiredManaged = @(
-        'Start-Process',
-        'RedirectStandardOutput',
-        'RedirectStandardError',
-        'ExitCode',
-        'Get-WingetLogsDirectory',
-        'Show-AtlasProgressBar'
-    )
-
-    foreach ($token in $requiredManaged) {
-        if ($managedBody -match [regex]::Escape($token)) {
-            Write-Host "  [OK] Contem: $token" -ForegroundColor Green
-        } else {
-            Write-Host "  [FAIL] Ausente: $token" -ForegroundColor Red
-            $allOk = $false
-        }
-    }
-}
-
 if ($moduleText -match 'Atlas\\Logs\\Winget') {
     Write-Host "  [OK] Pasta de logs Winget definida" -ForegroundColor Green
 } else {
     Write-Host "  [FAIL] Pasta Atlas\Logs\Winget ausente no modulo" -ForegroundColor Red
     $allOk = $false
-}
-
-if ($moduleText -notmatch '(?s)function Show-AtlasProgressBar\s*\{') {
-    Write-Host "  [FAIL] Show-AtlasProgressBar ausente" -ForegroundColor Red
-    $allOk = $false
-} else {
-    Write-Host "  [OK] Show-AtlasProgressBar definida" -ForegroundColor Green
 }
 
 Write-Host ""

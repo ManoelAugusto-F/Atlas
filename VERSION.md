@@ -1,8 +1,13 @@
-# Versao Atual: Atlas v0.3.7
+# Versao Atual: Atlas v0.3.8
 
 ---
 
 ## Historico de Versoes
+
+### v0.3.8 - Correcao da validacao de sucesso do Winget
+- **Validacao**: `Test-WingetOperationSucceeded` analisa log e ExitCode (nao apenas ExitCode)
+- **Winget**: removida barra de progresso artificial; tela limpa com "Executando Winget..."
+- **Instalacao/Atualizacao**: mensagens de sucesso/falha baseadas em conteudo do log
 
 ### v0.3.7 - Winget com execucao gerenciada e progresso visual
 - **Winget**: `Invoke-WingetManaged` executa winget em background com logs em `C:\ProgramData\Atlas\Logs\Winget`

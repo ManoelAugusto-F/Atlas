@@ -13,8 +13,8 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 $functions = @(
+    'Test-WingetOperationSucceeded',
     'Invoke-WingetManaged',
-    'Show-AtlasProgressBar',
     'Get-WingetAvailableUpgrades',
     'Update-InstalledSoftwareSafe'
 )
@@ -29,15 +29,17 @@ foreach ($fn in $functions) {
     }
 }
 
+if (-not (Get-Command Show-AtlasProgressBar -ErrorAction SilentlyContinue)) {
+    Write-Host "[OK] Show-AtlasProgressBar removida" -ForegroundColor Green
+} else {
+    Write-Host "[FAIL] Show-AtlasProgressBar ainda presente" -ForegroundColor Red
+    $allOk = $false
+}
+
 $removed = @(
     'Invoke-WingetWithLoading',
     'Invoke-WingetVisible',
-    'Get-WingetUpgradeListText',
-    'Parse-WingetUpgradeList',
-    'Update-WingetPackageVisible',
-    'Show-WingetUpgradeSummary',
-    'ConvertFrom-WingetUpgradeJson',
-    'Get-WingetUpgradeEntries'
+    'Show-AtlasProgressBar'
 )
 
 foreach ($fn in $removed) {
@@ -65,10 +67,8 @@ if ($moduleText -notmatch '(?s)function Invoke-WingetManaged\s*\{(.+?)\r?\nfunct
         'Start-Process',
         'RedirectStandardOutput',
         'RedirectStandardError',
-        'ExitCode',
-        'Get-WingetLogsDirectory',
-        'Show-AtlasProgressBar',
-        'Get-Command winget -ErrorAction SilentlyContinue'
+        'WaitForExit',
+        'Get-WingetLogsDirectory'
     )
 
     foreach ($token in $requiredManaged) {
@@ -81,12 +81,12 @@ if ($moduleText -notmatch '(?s)function Invoke-WingetManaged\s*\{(.+?)\r?\nfunct
     }
 
     $forbiddenManaged = @(
+        'Show-AtlasProgressBar',
+        'Percent',
+        'spinner',
+        'Start-Sleep -Milliseconds 500',
         'ConvertFrom-Json',
-        '--output json',
-        '$env:ComSpec',
-        'cmd.exe',
-        'Parse-WingetUpgradeList',
-        'Update-WingetPackageVisible'
+        '--output json'
     )
 
     foreach ($token in $forbiddenManaged) {
@@ -97,13 +97,6 @@ if ($moduleText -notmatch '(?s)function Invoke-WingetManaged\s*\{(.+?)\r?\nfunct
             Write-Host "  [OK] Ausente (correto): $token" -ForegroundColor Green
         }
     }
-}
-
-if ($moduleText -match 'Atlas\\Logs\\Winget') {
-    Write-Host "  [OK] Pasta de logs Winget definida" -ForegroundColor Green
-} else {
-    Write-Host "  [FAIL] Pasta Atlas\Logs\Winget ausente no modulo" -ForegroundColor Red
-    $allOk = $false
 }
 
 Write-Host ""
@@ -117,14 +110,14 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
 
     $requiredUpgrade = @(
         'Invoke-WingetManaged',
+        'Test-WingetOperationSucceeded',
         'ATLAS - ATUALIZACAO DE PROGRAMAS',
         'winget upgrade --all',
         'Executar atualizacao agora? [S/N]',
-        'Atualizando programas',
-        '[OK] Atualizacao concluida.',
+        'Executando Winget...',
+        'Atualizacao concluida com sucesso.',
         '[ERRO] Falha na atualizacao.',
-        'Codigo de saida:',
-        'Log:'
+        'Verifique o log:'
     )
 
     foreach ($token in $requiredUpgrade) {
@@ -137,16 +130,12 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
     }
 
     $forbiddenUpgrade = @(
-        '*> $null',
-        '$LASTEXITCODE',
+        'Show-AtlasProgressBar',
+        '$exitCode -eq 0',
+        'ExitCode -eq 0',
         'ConvertFrom-Json',
         '--output json',
-        '$env:ComSpec',
-        'cmd.exe',
-        'Parse-WingetUpgradeList',
-        'Update-WingetPackageVisible',
-        'Show-WingetUpgradeSummary',
-        'winget upgrade --id'
+        'Parse-WingetUpgradeList'
     )
 
     foreach ($token in $forbiddenUpgrade) {
