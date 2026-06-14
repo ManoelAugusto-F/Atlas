@@ -16,6 +16,7 @@ $functions = @(
     'Show-SoftwareInstallMenu',
     'Test-WingetAvailable',
     'Test-WingetOperationSucceeded',
+    'Test-WingetInstallNoChangeNeeded',
     'Invoke-WingetManaged',
     'Install-SoftwareByWingetSafe',
     'Get-SoftwareCatalog',
@@ -95,6 +96,33 @@ if (-not (Test-WingetSuccessCase -Name 'Caso2_Exit1_SuccessfullyInstalled' -Exit
 if (-not (Test-WingetSuccessCase -Name 'Caso3_Exit0_SemTexto' -ExitCode 0 -LogContent 'processo finalizado' -Expected $true)) { $allOk = $false }
 if (-not (Test-WingetSuccessCase -Name 'Caso4_Exit1_SemTextoSucesso' -ExitCode 1 -LogContent 'erro generico' -Expected $false)) { $allOk = $false }
 
+Write-Host ""
+Write-Host "[TESTE] Test-WingetInstallNoChangeNeeded (casos)" -ForegroundColor Magenta
+
+function Test-WingetNoChangeCase {
+    param(
+        [string]$Name,
+        [string]$LogContent,
+        [bool]$Expected
+    )
+
+    $logFile = Join-Path $testLogDir "$Name.log"
+    Set-Content -Path $logFile -Value $LogContent -Encoding UTF8
+
+    $result = Test-WingetInstallNoChangeNeeded -LogPath $logFile
+    if ($result -eq $Expected) {
+        Write-Host "  [OK] $Name" -ForegroundColor Green
+        return $true
+    }
+
+    Write-Host "  [FAIL] $Name (esperado $Expected, obteve $result)" -ForegroundColor Red
+    return $false
+}
+
+if (-not (Test-WingetNoChangeCase -Name 'Caso5_PackageAlreadyInstalled' -LogContent 'Package already installed' -Expected $true)) { $allOk = $false }
+if (-not (Test-WingetNoChangeCase -Name 'Caso6_NoApplicableUpdate' -LogContent 'No applicable update found' -Expected $true)) { $allOk = $false }
+if (-not (Test-WingetNoChangeCase -Name 'Caso7_SemFraseNoChange' -LogContent 'erro generico' -Expected $false)) { $allOk = $false }
+
 Remove-Item -Path $testLogDir -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
@@ -134,9 +162,11 @@ if ($moduleText -notmatch '(?s)function Install-SoftwareByWingetSafe\s*\{(.+?)\r
     $requiredInstall = @(
         'Invoke-WingetManaged',
         'Test-WingetOperationSucceeded',
+        'Test-WingetInstallNoChangeNeeded',
         'ATLAS - INSTALACAO',
         'Executando Winget...',
         'instalado com sucesso.',
+        '[AVISO] Programa ja instalado ou sem alteracao necessaria.',
         '[ERRO] Falha na instalacao.',
         'Verifique o log:'
     )

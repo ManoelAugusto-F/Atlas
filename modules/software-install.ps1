@@ -157,6 +157,65 @@ function Test-WingetOperationSucceeded {
     return ($ExitCode -eq 0)
 }
 
+function Test-WingetNoUpdatesAvailable {
+    param(
+        [string]$LogPath
+    )
+
+    $noUpdatePhrases = @(
+        'Nenhum pacote instalado foi encontrado que corresponda aos critérios de entrada',
+        'Nenhum pacote instalado foi encontrado que corresponda aos criterios de entrada',
+        'No installed package found matching input criteria',
+        'No available upgrade found',
+        'No installed package found'
+    )
+
+    if (-not $LogPath -or -not (Test-Path $LogPath)) {
+        return $false
+    }
+
+    $content = Get-Content -Path $LogPath -Raw -ErrorAction SilentlyContinue
+    if (-not $content) {
+        return $false
+    }
+
+    foreach ($phrase in $noUpdatePhrases) {
+        if ($content -match [regex]::Escape($phrase)) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Test-WingetInstallNoChangeNeeded {
+    param(
+        [string]$LogPath
+    )
+
+    $noChangePhrases = @(
+        'No applicable update found',
+        'Package already installed'
+    )
+
+    if (-not $LogPath -or -not (Test-Path $LogPath)) {
+        return $false
+    }
+
+    $content = Get-Content -Path $LogPath -Raw -ErrorAction SilentlyContinue
+    if (-not $content) {
+        return $false
+    }
+
+    foreach ($phrase in $noChangePhrases) {
+        if ($content -match [regex]::Escape($phrase)) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
 function Invoke-WingetManaged {
     param(
         [Parameter(Mandatory = $true)]
@@ -266,12 +325,20 @@ function Install-SoftwareByWingetSafe {
         -LogPrefix 'install'
 
     $succeeded = Test-WingetOperationSucceeded -ExitCode $result.ExitCode -LogPath $result.LogPath
+    $noChangeNeeded = Test-WingetInstallNoChangeNeeded -LogPath $result.LogPath
 
     Write-Host ""
     if ($succeeded) {
         Write-Host "[OK] $DisplayName instalado com sucesso." -ForegroundColor Green
         Write-AtlasSessionLog -Message "Instalacao winget concluida" -Level "ACTION"
         Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao $DisplayName -Resultado "Sucesso"
+        return $true
+    }
+
+    if ($noChangeNeeded) {
+        Write-Host "[AVISO] Programa ja instalado ou sem alteracao necessaria." -ForegroundColor Yellow
+        Write-AtlasSessionLog -Message "Instalacao winget: programa ja instalado ($PackageId)" -Level "INFO"
+        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao $DisplayName -Resultado "Ja instalado ou sem alteracao"
         return $true
     }
 
@@ -656,12 +723,20 @@ function Update-InstalledSoftwareSafe {
         -LogPrefix 'upgrade'
 
     $succeeded = Test-WingetOperationSucceeded -ExitCode $result.ExitCode -LogPath $result.LogPath
+    $noUpdates = Test-WingetNoUpdatesAvailable -LogPath $result.LogPath
 
     Write-Host ""
     if ($succeeded) {
         Write-Host "[OK] Atualizacao concluida com sucesso." -ForegroundColor Green
         Write-AtlasSessionLog -Message "Atualizacao winget concluida" -Level "ACTION"
         Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Sucesso"
+        return $true
+    }
+
+    if ($noUpdates) {
+        Write-Host "[AVISO] Nenhuma atualizacao disponivel." -ForegroundColor Yellow
+        Write-AtlasSessionLog -Message "Atualizacao winget: nenhuma atualizacao disponivel" -Level "INFO"
+        Write-AtlasLog -Nivel INFO -Modulo "Instalacao" -Acao "Atualizar programas instalados" -Resultado "Nenhuma atualizacao disponivel"
         return $true
     }
 

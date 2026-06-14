@@ -14,6 +14,7 @@ Write-Host ""
 
 $functions = @(
     'Test-WingetOperationSucceeded',
+    'Test-WingetNoUpdatesAvailable',
     'Invoke-WingetManaged',
     'Get-WingetAvailableUpgrades',
     'Update-InstalledSoftwareSafe'
@@ -111,13 +112,16 @@ if ($moduleText -notmatch '(?s)function Update-InstalledSoftwareSafe\s*\{(.+?)\r
     $requiredUpgrade = @(
         'Invoke-WingetManaged',
         'Test-WingetOperationSucceeded',
+        'Test-WingetNoUpdatesAvailable',
         'ATLAS - ATUALIZACAO DE PROGRAMAS',
         'winget upgrade --all',
         'Executar atualizacao agora? [S/N]',
         'Executando Winget...',
         'Atualizacao concluida com sucesso.',
+        '[AVISO] Nenhuma atualizacao disponivel.',
         '[ERRO] Falha na atualizacao.',
-        'Verifique o log:'
+        'Verifique o log:',
+        'Nenhuma atualizacao disponivel'
     )
 
     foreach ($token in $requiredUpgrade) {
@@ -154,6 +158,58 @@ if ($moduleText -match 'Atualizar programas instalados') {
     Write-Host "  [FAIL] Opcao atualizar ausente no menu" -ForegroundColor Red
     $allOk = $false
 }
+
+Write-Host ""
+Write-Host "[TESTE] Test-WingetNoUpdatesAvailable (casos)" -ForegroundColor Magenta
+
+$testLogDir = Join-Path ($(if ($env:TEMP) { $env:TEMP } else { '/tmp' })) "atlas_winget_upgrade_test_$(Get-Random)"
+New-Item -ItemType Directory -Path $testLogDir -Force | Out-Null
+
+function Test-WingetNoUpdateCase {
+    param(
+        [string]$Name,
+        [string]$LogContent,
+        [bool]$Expected
+    )
+
+    $logFile = Join-Path $testLogDir "$Name.log"
+    Set-Content -Path $logFile -Value $LogContent -Encoding UTF8
+
+    $result = Test-WingetNoUpdatesAvailable -LogPath $logFile
+    if ($result -eq $Expected) {
+        Write-Host "  [OK] $Name" -ForegroundColor Green
+        return $true
+    }
+
+    Write-Host "  [FAIL] $Name (esperado $Expected, obteve $result)" -ForegroundColor Red
+    return $false
+}
+
+$noUpdateLog = 'Nenhum pacote instalado foi encontrado que corresponda aos critérios de entrada.'
+if (-not (Test-WingetNoUpdateCase -Name 'Caso1_SemPacotesPt' -LogContent $noUpdateLog -Expected $true)) { $allOk = $false }
+if (-not (Test-WingetNoUpdateCase -Name 'Caso2_NoInstalledPackageEn' -LogContent 'No installed package found matching input criteria' -Expected $true)) { $allOk = $false }
+if (-not (Test-WingetNoUpdateCase -Name 'Caso3_NoAvailableUpgrade' -LogContent 'No available upgrade found' -Expected $true)) { $allOk = $false }
+if (-not (Test-WingetNoUpdateCase -Name 'Caso4_SemFraseNoUpdate' -LogContent 'erro generico' -Expected $false)) { $allOk = $false }
+
+Remove-Item -Path $testLogDir -Recurse -Force -ErrorAction SilentlyContinue
+
+Write-Host ""
+Write-Host "[TESTE] Test-WingetOperationSucceeded upgrade (casos)" -ForegroundColor Magenta
+
+$upgradeTestDir = Join-Path ($(if ($env:TEMP) { $env:TEMP } else { '/tmp' })) "atlas_winget_success_test_$(Get-Random)"
+New-Item -ItemType Directory -Path $upgradeTestDir -Force | Out-Null
+
+$successLog = Join-Path $upgradeTestDir 'success.log'
+Set-Content -Path $successLog -Value 'Instalado com êxito' -Encoding UTF8
+$successResult = Test-WingetOperationSucceeded -ExitCode 1 -LogPath $successLog
+if ($successResult) {
+    Write-Host "  [OK] Exit1_InstaladoExito = SUCESSO" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] Exit1_InstaladoExito deveria ser SUCESSO" -ForegroundColor Red
+    $allOk = $false
+}
+
+Remove-Item -Path $upgradeTestDir -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
 if ($allOk) {

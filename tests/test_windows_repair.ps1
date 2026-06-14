@@ -58,6 +58,17 @@ Test-Assert ($repairSource -match 'Resetar Windows Update') "Menu contem reset d
 Test-Assert ($repairSource -notmatch '-Risk ') "Reparos Windows sem nivel de risco"
 Test-Assert ($repairSource -match 'Start-WindowsDiagnostic') "Diagnostico guiado implementado"
 Test-Assert ($repairSource -match 'Diagnostico do Sistema') "Resumo de diagnostico implementado"
+Test-Assert ($repairSource -match 'SFC: Nao foi possivel interpretar o resultado\.') "SFC com mensagem amigavel para resultado inconclusivo"
+Test-Assert ($repairSource -match 'DISM: Nao foi possivel interpretar o resultado\.') "DISM com mensagem amigavel para resultado inconclusivo"
+Test-Assert ($repairSource -match 'Recomendacao: execute \[2\] Verificar arquivos do Windows\.') "Recomendacao SFC amigavel presente"
+Test-Assert ($repairSource -match 'Recomendacao: execute \[4\] Verificar imagem do Windows\.') "Recomendacao DISM amigavel presente"
+
+$diagnosticBody = ''
+if ($repairSource -match '(?s)function Start-WindowsDiagnostic\s*\{(.+?)\r?\nfunction ') {
+    $diagnosticBody = $Matches[1]
+}
+Test-Assert ($diagnosticBody -notmatch 'Write-Host.*unknown') "Saida final do diagnostico sem texto unknown"
+Test-Assert ($diagnosticBody -notmatch 'Write-Atlas.*unknown') "Helpers de UI do diagnostico sem texto unknown"
 
 Test-Assert ($menuSource -match 'Show-AtlasCompactOption') "Menu principal usa formato compacto"
 Test-Assert ($menuSource -notmatch 'Show-AtlasDescribedOption') "Menu principal sem descricoes"

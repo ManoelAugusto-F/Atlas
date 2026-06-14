@@ -432,51 +432,55 @@ function Start-WindowsDiagnostic {
     Write-Log -Message "Diagnostico Windows Update: $($wuResult.HasIssue)" -Level "INFO"
 
     $findings = [System.Collections.Generic.List[string]]::new()
-    $recommendation = $null
-    $recommendOption = $null
+    $recommendations = [System.Collections.Generic.List[string]]::new()
+    $hasAttention = $false
 
     if ($sfcResult.Status -eq "problem") {
-        $findings.Add("Arquivos corrompidos detectados")
-        if (-not $recommendation) {
-            $recommendation = "Executar opcao [3] Corrigir arquivos do Windows"
-            $recommendOption = "3"
-        }
+        $findings.Add("SFC: Arquivos corrompidos detectados")
+        $hasAttention = $true
+        $recommendations.Add("Executar opcao [3] Corrigir arquivos do Windows")
     } elseif ($sfcResult.Status -eq "ok") {
-        $findings.Add("Nenhum problema encontrado nos arquivos do Windows")
+        $findings.Add("SFC: Nenhum problema encontrado nos arquivos do Windows")
     } else {
-        $findings.Add("Nao foi possivel confirmar integridade dos arquivos do Windows")
+        $findings.Add("SFC: Nao foi possivel interpretar o resultado.")
+        $hasAttention = $true
+        $recommendations.Add("Recomendacao: execute [2] Verificar arquivos do Windows.")
     }
 
     if ($dismResult.Status -eq "problem") {
-        $findings.Add("Problemas detectados na imagem do Windows")
-        $recommendation = "Executar opcao [5] Reparar imagem do Windows"
-        $recommendOption = "5"
+        $findings.Add("DISM: Problemas detectados na imagem do Windows")
+        $hasAttention = $true
+        if (-not ($recommendations -contains "Executar opcao [5] Reparar imagem do Windows")) {
+            $recommendations.Add("Executar opcao [5] Reparar imagem do Windows")
+        }
     } elseif ($dismResult.Status -eq "ok") {
-        $findings.Add("Imagem do Windows em bom estado")
+        $findings.Add("DISM: Imagem do Windows em bom estado")
     } else {
-        $findings.Add("Nao foi possivel confirmar integridade da imagem do Windows")
+        $findings.Add("DISM: Nao foi possivel interpretar o resultado.")
+        $hasAttention = $true
+        $recommendations.Add("Recomendacao: execute [4] Verificar imagem do Windows.")
     }
 
     if ($rebootResult.Pending) {
         $reasonText = ($rebootResult.Reasons -join ", ")
         $findings.Add("Reinicializacao pendente detectada ($reasonText)")
-        if (-not $recommendation) {
-            $recommendation = "Reinicie o computador antes de continuar com reparos"
-            $recommendOption = $null
+        $hasAttention = $true
+        if ($recommendations.Count -eq 0) {
+            $recommendations.Add("Reinicie o computador antes de continuar com reparos")
         }
     }
 
     if ($wuResult.HasIssue) {
         $findings.Add("Problemas com Windows Update: $($wuResult.Detail)")
-        if (-not $recommendation -or $recommendOption -eq $null) {
-            $recommendation = "Executar opcao [6] Resetar Windows Update"
-            $recommendOption = "6"
+        $hasAttention = $true
+        if ($recommendations.Count -eq 0) {
+            $recommendations.Add("Executar opcao [6] Resetar Windows Update")
         }
     } elseif ($rebootResult.Reasons -contains "Windows Update") {
         $findings.Add("Atualizacoes pendentes detectadas")
-        if (-not $recommendation) {
-            $recommendation = "Executar opcao [6] Resetar Windows Update"
-            $recommendOption = "6"
+        $hasAttention = $true
+        if ($recommendations.Count -eq 0) {
+            $recommendations.Add("Executar opcao [6] Resetar Windows Update")
         }
     }
 
@@ -486,23 +490,23 @@ function Start-WindowsDiagnostic {
     Write-Host "==========================================" -ForegroundColor Cyan
     Write-Host ""
 
-    $hasAttention = $false
     foreach ($finding in $findings) {
         $isOk = $finding -match '(?i)(nenhum problema|em bom estado)'
         if ($isOk) {
             Write-Host "[OK]" -ForegroundColor Green -NoNewline
             Write-Host " $finding" -ForegroundColor White
         } else {
-            $hasAttention = $true
             Write-Host "[ATENCAO]" -ForegroundColor Yellow -NoNewline
             Write-Host " $finding" -ForegroundColor White
         }
     }
 
     Write-Host ""
-    if ($recommendation) {
+    if ($recommendations.Count -gt 0) {
         Write-Host "Recomendacao:" -ForegroundColor Cyan
-        Write-Host $recommendation -ForegroundColor White
+        foreach ($rec in $recommendations) {
+            Write-Host $rec -ForegroundColor White
+        }
     } elseif (-not $hasAttention) {
         Write-AtlasSuccess "Seu sistema parece estar em ordem. Nenhuma acao necessaria no momento."
     } else {
@@ -512,7 +516,8 @@ function Start-WindowsDiagnostic {
     Write-Host ""
     Write-Host "==========================================" -ForegroundColor Cyan
 
-    Write-AtlasLog -Nivel INFO -Modulo "Reparos Windows" -Acao "Diagnostico Guiado" -Resultado $(if ($recommendOption) { "Recomendacao: opcao $recommendOption" } else { "Concluido" })
+    $logResult = if ($recommendations.Count -gt 0) { ($recommendations -join "; ") } else { "Concluido" }
+    Write-AtlasLog -Nivel INFO -Modulo "Reparos Windows" -Acao "Diagnostico Guiado" -Resultado $logResult
 }
 
 # ------------------------------------------
