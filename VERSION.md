@@ -1,8 +1,15 @@
-# Versao Atual: Atlas v0.5.0
+# Versao Atual: Atlas v0.5.1
 
 ---
 
 ## Historico de Versoes
+
+### v0.5.1 - Correcoes de UX pos-teste completo Windows 11
+- **Outlook**: corrigido typo no log de diagnostico
+- **Menu**: indicador `Administrador: SIM/NAO` no cabecalho principal
+- **Reparos Windows**: recomendacoes sem duplicacao de "Recomendacao:"
+- **Rede**: resumo amigavel de configuracao; detalhes completos em opcao separada
+- **Menu**: alinhamento visual das opcoes [1] a [10]
 
 ### v0.5.0 - Bootstrap por Release e Gestao de Versoes
 - **Bootstrap**: consulta GitHub Releases (`Get-LatestAtlasRelease`, `Download-AtlasRelease`)

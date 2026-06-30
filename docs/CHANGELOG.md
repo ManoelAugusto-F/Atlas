@@ -6,6 +6,13 @@ Formato baseado em versoes semanticas `vMAJOR.MINOR.PATCH`.
 
 ---
 
+## v0.5.1
+- Corrigido typo no diagnostico do Outlook.
+- Adicionado indicador Administrador: SIM/NAO no menu principal.
+- Corrigida duplicacao de "Recomendacao:" em Reparos Windows.
+- Melhorada saida de configuracao de rede com resumo amigavel.
+- Ajustado alinhamento visual do menu principal.
+
 ## v0.5.0
 - Bootstrap por GitHub Releases (`Get-LatestAtlasRelease`, `Download-AtlasRelease`)
 - Versao exibida no menu principal via `version.txt` / `Get-AtlasVersion`

@@ -19,7 +19,7 @@ function Get-OutlookStatus {
     [CmdletBinding()]
     param()
 
-    Write-Log -Level "INFO" -Message "Iniciante diagnostico do Microsoft Outlook..."
+    Write-Log -Level "INFO" -Message "Iniciando diagnostico do Microsoft Outlook..."
 
     # Inicializa variaveis padrao
     $installed = $false

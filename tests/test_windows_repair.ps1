@@ -65,8 +65,11 @@ Test-Assert ($repairSource -match 'NAO_INTERPRETADO') "Status NAO_INTERPRETADO i
 Test-Assert ($repairSource -match 'NAO_EXECUTADO') "Status NAO_EXECUTADO implementado"
 Test-Assert ($repairSource -notmatch 'Status = "unknown"') "Captura sem status unknown"
 Test-Assert ($repairSource -notmatch '"unknown"') "Codigo sem string unknown"
-Test-Assert ($repairSource -match 'Recomendacao: execute \[2\] Verificar arquivos do Windows\.') "Recomendacao SFC amigavel presente"
-Test-Assert ($repairSource -match 'Recomendacao: execute \[4\] Verificar imagem do Windows\.') "Recomendacao DISM amigavel presente"
+Test-Assert ($repairSource -match 'Execute o Atlas como Administrador e rode novamente esta opcao\.') "Recomendacao contextual para REQUER_ADMIN"
+Test-Assert ($repairSource -match 'Execute a opcao \[2\] Verificar arquivos do Windows\.') "Recomendacao SFC amigavel presente"
+Test-Assert ($repairSource -match 'Execute a opcao \[4\] Verificar imagem do Windows\.') "Recomendacao DISM amigavel presente"
+Test-Assert ($repairSource -notmatch 'Recomendacao: Recomendacao:') "Sem duplicacao de Recomendacao"
+Test-Assert ($repairSource -notmatch 'recommendations\.Add\("Recomendacao:') "Itens de recomendacao sem prefixo duplicado"
 
 $diagnosticBody = ''
 if ($repairSource -match '(?s)function Start-WindowsDiagnostic\s*\{(.+?)\r?\nfunction ') {

@@ -26,6 +26,20 @@ function Get-AtlasVersion {
     return "v0.0.0"
 }
 
+function Test-AtlasAdmin {
+    if (-not ($IsWindows -or $env:OS -eq 'Windows_NT')) {
+        return $false
+    }
+
+    try {
+        $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+        $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+        return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    } catch {
+        return $false
+    }
+}
+
 function Show-FeaturePlaceholder {
     param([string]$FeatureName)
 
@@ -75,6 +89,12 @@ function Show-AtlasHeader {
 
     Write-Host (Format-AtlasCenteredText -Text $headerText) -ForegroundColor Cyan
     Write-Host $bar -ForegroundColor Cyan
+
+    if (-not $Title) {
+        $adminLabel = if (Test-AtlasAdmin) { 'SIM' } else { 'NAO' }
+        Write-Host (Format-AtlasCenteredText -Text "Administrador: $adminLabel") -ForegroundColor Gray
+    }
+
     Write-Host ""
 }
 
@@ -86,8 +106,8 @@ function Show-AtlasCompactOption {
         [string]$Name
     )
 
-    $prefix = if ($Number.Length -eq 1) { ' ' } else { '' }
-    Write-Host -NoNewline "${prefix}[$Number] " -ForegroundColor Yellow
+    $numberLabel = "[{0,2}] " -f $Number
+    Write-Host -NoNewline $numberLabel -ForegroundColor Yellow
     Write-Host $Name -ForegroundColor White
 }
 
@@ -101,8 +121,8 @@ function Show-AtlasDescribedOption {
         [string]$Description
     )
 
-    $prefix = if ($Number.Length -eq 1) { ' ' } else { '' }
-    Write-Host -NoNewline "${prefix}[$Number] " -ForegroundColor Yellow
+    $numberLabel = "[{0,2}] " -f $Number
+    Write-Host -NoNewline $numberLabel -ForegroundColor Yellow
     Write-Host $Name -ForegroundColor White
     Write-Host "     $Description" -ForegroundColor White
     Write-Host ""

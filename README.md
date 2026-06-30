@@ -290,4 +290,4 @@ Toda contribuição ajuda a tornar o projeto mais útil para a comunidade de TI.
 
 ---
 
-**Versão Atual:** v0.5.0 — Bootstrap por Release e Gestão de Versões
+**Versão Atual:** v0.5.1 — Correções de UX pós-teste completo Windows 11

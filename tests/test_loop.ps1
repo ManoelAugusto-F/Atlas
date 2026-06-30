@@ -602,6 +602,7 @@ Write-Host "========================================" -ForegroundColor DarkCyan
 $uiFunctions = @(
     'Show-AtlasHeader',
     'Get-AtlasVersion',
+    'Test-AtlasAdmin',
     'Show-AtlasCompactOption',
     'Show-AtlasDescribedOption',
     'Show-AtlasBackOption',

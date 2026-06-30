@@ -108,17 +108,96 @@ function Test-DnsBasic {
 # [3] Mostrar configuracao de rede
 # ──────────────────────────────────────────
 
+function script:Write-AtlasNetworkSummaryField {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Label,
+        [Parameter(Mandatory = $true)]
+        [string]$Value
+    )
+
+    Write-Host ("{0,-12}....: {1}" -f $Label, $Value)
+}
+
+function script:Get-AtlasNetworkAdapterSummaries {
+    $summaries = @()
+
+    if (-not (script:Test-IsWindowsNetwork)) {
+        return $summaries
+    }
+
+    try {
+        $configs = Get-NetIPConfiguration -ErrorAction Stop |
+            Where-Object { $_.NetAdapter -and $_.NetAdapter.Status -ne 'Not Present' }
+
+        foreach ($cfg in $configs) {
+            $adapter = $cfg.NetAdapter
+            if (-not $adapter) { continue }
+
+            $ipv4 = ($cfg.IPv4Address | Select-Object -First 1).IPAddress
+            $gateway = ($cfg.IPv4DefaultGateway | Select-Object -First 1).NextHop
+            $dnsList = @()
+            if ($cfg.DnsServer -and $cfg.DnsServer.ServerAddresses) {
+                $dnsList = @($cfg.DnsServer.ServerAddresses | Where-Object { $_ -match '\.' })
+            }
+            $dns = if ($dnsList.Count -gt 0) { ($dnsList -join ', ') } else { 'N/A' }
+
+            $status = switch ($adapter.Status) {
+                'Up' { 'Conectado' }
+                'Disconnected' { 'Desconectado' }
+                default { $adapter.Status }
+            }
+
+            $dhcp = 'N/A'
+            if ($cfg.NetIPv4Interface) {
+                $dhcp = if ($cfg.NetIPv4Interface.Dhcp -eq 'Enabled') { 'Sim' } else { 'Nao' }
+            }
+
+            $summaries += [PSCustomObject]@{
+                Adapter = $adapter.Name
+                Status  = $status
+                IPv4    = if ($ipv4) { $ipv4 } else { 'N/A' }
+                Gateway = if ($gateway) { $gateway } else { 'N/A' }
+                DNS     = $dns
+                MAC     = if ($adapter.MacAddress) { $adapter.MacAddress } else { 'N/A' }
+                DHCP    = $dhcp
+            }
+        }
+    } catch { }
+
+    return $summaries
+}
+
 function Get-NetworkConfigBasic {
     Write-Log -Message "Exibindo configuracao de rede" -Level "INFO"
     Write-Host ""
+    Write-Host "==========================================" -ForegroundColor Cyan
+    Write-Host " Configuracao de Rede" -ForegroundColor Cyan
+    Write-Host "==========================================" -ForegroundColor Cyan
+    Write-Host ""
 
     if (script:Test-IsWindowsNetwork) {
-        Write-Host "Configuracao de rede (ipconfig /all):" -ForegroundColor Cyan
-        try {
-            & ipconfig /all
-        } catch {
-            Write-Log -Message "Erro ao executar ipconfig: $_" -Level "ERROR"
-            Write-Host "Erro ao obter configuracao de rede." -ForegroundColor Red
+        $summaries = script:Get-AtlasNetworkAdapterSummaries
+
+        if (-not $summaries -or $summaries.Count -eq 0) {
+            Write-Host "Nenhum adaptador de rede ativo encontrado." -ForegroundColor Yellow
+            return
+        }
+
+        $index = 0
+        foreach ($item in $summaries) {
+            if ($index -gt 0) {
+                Write-Host ""
+            }
+
+            script:Write-AtlasNetworkSummaryField -Label 'Adaptador' -Value $item.Adapter
+            script:Write-AtlasNetworkSummaryField -Label 'Status' -Value $item.Status
+            script:Write-AtlasNetworkSummaryField -Label 'IPv4' -Value $item.IPv4
+            script:Write-AtlasNetworkSummaryField -Label 'Gateway' -Value $item.Gateway
+            script:Write-AtlasNetworkSummaryField -Label 'DNS' -Value $item.DNS
+            script:Write-AtlasNetworkSummaryField -Label 'MAC' -Value $item.MAC
+            script:Write-AtlasNetworkSummaryField -Label 'DHCP' -Value $item.DHCP
+            $index++
         }
     } else {
         Write-Host "Enderecos de rede (ip addr):" -ForegroundColor Cyan
@@ -137,6 +216,24 @@ function Get-NetworkConfigBasic {
                 Write-Host "  /etc/resolv.conf nao encontrado." -ForegroundColor Gray
             }
         } catch { Write-Host "  Erro ao ler resolv.conf." -ForegroundColor Gray }
+    }
+}
+
+function Get-NetworkConfigFull {
+    Write-Log -Message "Exibindo detalhes completos da rede" -Level "INFO"
+    Write-Host ""
+
+    if (script:Test-IsWindowsNetwork) {
+        Write-Host "Detalhes completos (ipconfig /all):" -ForegroundColor Cyan
+        Write-Host ""
+        try {
+            & ipconfig /all
+        } catch {
+            Write-Log -Message "Erro ao executar ipconfig: $_" -Level "ERROR"
+            Write-Host "Erro ao obter configuracao de rede." -ForegroundColor Red
+        }
+    } else {
+        Get-NetworkConfigBasic
     }
 }
 
@@ -303,6 +400,7 @@ function Show-NetworkMenu {
         Show-AtlasCompactOption -Number "5" -Name "Renovar IP"
         Show-AtlasCompactOption -Number "6" -Name "Reset Winsock"
         Show-AtlasCompactOption -Number "7" -Name "Reset TCP/IP"
+        Show-AtlasCompactOption -Number "8" -Name "Ver detalhes completos da rede"
 
         Show-AtlasBackOption
         $opt = Read-AtlasMenuChoice
@@ -315,6 +413,7 @@ function Show-NetworkMenu {
             "5" { Update-IpAddressLeaseSafe;      Wait-UserInput }
             "6" { Reset-WinsockSafe;             Wait-UserInput }
             "7" { Reset-TcpIpSafe;               Wait-UserInput }
+            "8" { Get-NetworkConfigFull;         Wait-UserInput }
             "0" {
                 Write-Log -Message "Saindo do menu de rede" -Level "INFO"
                 $netRunning = $false

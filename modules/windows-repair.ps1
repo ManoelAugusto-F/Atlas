@@ -451,6 +451,8 @@ function Start-WindowsDiagnostic {
     $recommendations = [System.Collections.Generic.List[string]]::new()
     $hasAttention = $false
 
+    $adminRecommendation = "Execute o Atlas como Administrador e rode novamente esta opcao."
+
     if ($sfcResult.Status -eq "problem") {
         $findings.Add("SFC: Arquivos corrompidos detectados")
         $hasAttention = $true
@@ -460,15 +462,17 @@ function Start-WindowsDiagnostic {
     } elseif ($sfcResult.Status -eq "REQUER_ADMIN") {
         $findings.Add("SFC: Nao foi possivel executar esta verificacao sem privilegios de administrador.")
         $hasAttention = $true
-        $recommendations.Add("Recomendacao: execute [2] Verificar arquivos do Windows.")
+        if ($recommendations -notcontains $adminRecommendation) {
+            $recommendations.Add($adminRecommendation)
+        }
     } elseif ($sfcResult.Status -eq "NAO_INTERPRETADO") {
         $findings.Add("SFC: Nao foi possivel interpretar o resultado.")
         $hasAttention = $true
-        $recommendations.Add("Recomendacao: execute [2] Verificar arquivos do Windows.")
+        $recommendations.Add("Execute a opcao [2] Verificar arquivos do Windows.")
     } else {
         $findings.Add("SFC: Verificacao nao executada.")
         $hasAttention = $true
-        $recommendations.Add("Recomendacao: execute [2] Verificar arquivos do Windows.")
+        $recommendations.Add("Execute a opcao [2] Verificar arquivos do Windows.")
     }
 
     if ($dismResult.Status -eq "problem") {
@@ -482,15 +486,17 @@ function Start-WindowsDiagnostic {
     } elseif ($dismResult.Status -eq "REQUER_ADMIN") {
         $findings.Add("DISM: Nao foi possivel executar esta verificacao sem privilegios de administrador.")
         $hasAttention = $true
-        $recommendations.Add("Recomendacao: execute [4] Verificar imagem do Windows.")
+        if ($recommendations -notcontains $adminRecommendation) {
+            $recommendations.Add($adminRecommendation)
+        }
     } elseif ($dismResult.Status -eq "NAO_INTERPRETADO") {
         $findings.Add("DISM: Nao foi possivel interpretar o resultado.")
         $hasAttention = $true
-        $recommendations.Add("Recomendacao: execute [4] Verificar imagem do Windows.")
+        $recommendations.Add("Execute a opcao [4] Verificar imagem do Windows.")
     } else {
         $findings.Add("DISM: Verificacao nao executada.")
         $hasAttention = $true
-        $recommendations.Add("Recomendacao: execute [4] Verificar imagem do Windows.")
+        $recommendations.Add("Execute a opcao [4] Verificar imagem do Windows.")
     }
 
     if ($rebootResult.Pending) {
